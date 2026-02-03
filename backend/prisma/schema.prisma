@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("staff") // admin, staff
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  orders    Order[]
+}
+
+model Category {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  image       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  snakes      Snake[]
+}
+
+model Snake {
+  id          Int         @id @default(autoincrement())
+  name        String
+  description String?
+  price       Float
+  stock       Int         @default(0)
+  image       String?
+  color       String?
+  age         String?     // เช่น "6 เดือน", "1 ปี"
+  gender      String?     // male, female
+  categoryId  Int
+  category    Category    @relation(fields: [categoryId], references: [id])
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  orderItems  OrderItem[]
+}
+
+model Order {
+  id         Int         @id @default(autoincrement())
+  orderNo    String      @unique @default(cuid())
+  total      Float
+  status     String      @default("completed") // pending, completed, cancelled
+  paymentMethod String   @default("cash") // cash, transfer, card
+  note       String?
+  userId     Int?
+  user       User?       @relation(fields: [userId], references: [id])
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  items      OrderItem[]
+}
+
+model OrderItem {
+  id       Int   @id @default(autoincrement())
+  quantity Int
+  price    Float // ราคา ณ ขณะสั่งซื้อ
+  orderId  Int
+  order    Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  snakeId  Int
+  snake    Snake @relation(fields: [snakeId], references: [id])
+}
