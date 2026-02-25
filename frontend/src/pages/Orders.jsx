@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
     Search,
     Receipt,
@@ -141,13 +142,13 @@ export default function Orders() {
             {/* Filters */}
             <div className="glass-card p-3 sm:p-4 flex flex-col gap-3 sm:flex-row sm:gap-4 sm:justify-between sm:items-center">
                 <div className="relative w-full sm:w-96 group">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-hover:text-emerald-400 transition-colors" size={18} />
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-hover:text-emerald-400 transition-colors" size={18} />
                     <input
                         type="text"
                         placeholder="ค้นหาเลขที่ออเดอร์, สินค้า..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="input-field pl-10 bg-slate-900/50 border-white/10 focus:border-emerald-500/50"
+                        className="input-field pl-icon bg-slate-900/50 border-white/10 focus:border-emerald-500/50"
                     />
                 </div>
 
@@ -157,7 +158,7 @@ export default function Orders() {
                         <select
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
-                            className="input-field pl-10 w-full sm:w-48 bg-slate-900/50 border-white/10 appearance-none cursor-pointer hover:border-emerald-500/30 transition-colors"
+                            className="input-field pl-icon w-full sm:w-48 bg-slate-900/50 border-white/10 appearance-none cursor-pointer hover:border-emerald-500/30 transition-colors"
                         >
                             <option value="">ทุกสถานะ</option>
                             <option value="completed">สำเร็จ</option>
@@ -326,7 +327,7 @@ export default function Orders() {
             </div>
 
             {/* Order Detail Modal */}
-            {selectedOrder && (
+            {selectedOrder && createPortal(
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in p-3 sm:p-4">
                     <div className="bg-black/80 rounded-xl w-full max-w-lg overflow-hidden shadow-2xl border border-white/10 scale-100 animate-slide-in max-h-[90vh] flex flex-col">
                         <div className="flex justify-between items-center p-4 sm:p-6 border-b border-white/5 bg-white/[0.02] shrink-0">
@@ -351,7 +352,7 @@ export default function Orders() {
                             {/* Summary Grid */}
                             <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
                                 <div className="p-2.5 sm:p-3 rounded-lg sm:rounded-xl bg-white/5 border border-white/5">
-                                    <span className="text-[10px] sm:text-xs text-slate-400 uppercase tracking-wide">สถานะ</span>
+                                    <span className="text-[10px] sm:text-xs text-slate-400 uppercase tracking-wide">สถานะ : </span>
                                     <div className={`mt-1 inline-flex items-center gap-1.5 text-xs sm:text-sm font-medium ${selectedOrder.status === 'completed' ? 'text-emerald-400' :
                                         selectedOrder.status === 'pending' ? 'text-amber-400' : 'text-red-400'
                                         }`}>
@@ -359,8 +360,10 @@ export default function Orders() {
                                     </div>
                                 </div>
                                 <div className="p-2.5 sm:p-3 rounded-lg sm:rounded-xl bg-white/5 border border-white/5">
-                                    <span className="text-[10px] sm:text-xs text-slate-400 uppercase tracking-wide">การชำระเงิน</span>
-                                    <div className="mt-1 text-xs sm:text-sm font-medium text-white">
+                                    <span className="text-[10px] sm:text-xs text-slate-400 uppercase tracking-wide">การชำระเงิน : </span>
+                                    <div className={`mt-1 inline-flex items-center gap-1.5 text-xs sm:text-sm font-medium ${selectedOrder.status === 'completed' ? 'text-emerald-400' :
+                                        selectedOrder.status === 'pending' ? 'text-amber-400' : 'text-red-400'
+                                        }`}>
                                         {getPaymentLabel(selectedOrder.paymentMethod)}
                                     </div>
                                 </div>
@@ -396,7 +399,8 @@ export default function Orders() {
                             </div>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );

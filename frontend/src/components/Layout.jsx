@@ -1,30 +1,55 @@
 import { useState, useEffect } from 'react';
-import { Outlet, NavLink, useLocation } from 'react-router-dom';
+import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import {
     LayoutDashboard,
     ShoppingCart,
     Package,
     Receipt,
-    Settings,
+    Users,
+    UserCheck,
+    Dna,
+    Egg,
+    FileText,
     LogOut,
     Menu,
     X,
     ChevronRight,
     Bell,
-    User
+    User,
+    Settings
 } from 'lucide-react';
 
 const navItems = [
     { path: '/', icon: LayoutDashboard, label: 'แดชบอร์ด' },
     { path: '/pos', icon: ShoppingCart, label: 'ขายสินค้า' },
-    { path: '/inventory', icon: Package, label: 'สต็อกสินค้า' },
+    { path: '/inventory', icon: Package, label: 'สินค้า' },
+    { path: '/stock', icon: Package, label: 'สต็อก' },
     { path: '/orders', icon: Receipt, label: 'ประวัติการขาย' },
+    { path: '/customers', icon: UserCheck, label: 'ลูกค้า' },
+    { path: '/breeding', icon: Dna, label: 'ผสมพันธุ์' },
+    { path: '/incubation', icon: Egg, label: 'ฟักไข่' },
+    { path: '/reports', icon: FileText, label: 'รายงาน' },
+];
+
+const adminNavItems = [
+    { path: '/users', icon: Users, label: 'พนักงาน' },
+    { path: '/settings', icon: Settings, label: 'ตั้งค่าระบบ' },
 ];
 
 export default function Layout() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
     const location = useLocation();
+    const navigate = useNavigate();
+    const { user, logout } = useAuth();
+
+    const allNavItems = user?.role === 'admin' ? [...navItems, ...adminNavItems] : navItems;
+
+    function handleLogout() {
+        logout();
+        navigate('/login');
+    }
 
     // Detect screen size
     useEffect(() => {
@@ -122,8 +147,8 @@ export default function Layout() {
                     </div>
 
                     {/* Navigation */}
-                    <nav className="flex-1 space-y-1.5">
-                        {navItems.map((item) => (
+                    <nav className="flex-1 space-y-1.5 overflow-y-auto custom-scrollbar -mx-2 px-2">
+                        {allNavItems.map((item) => (
                             <li key={item.path} className="list-none">
                                 <NavLink
                                     to={item.path}
@@ -157,19 +182,15 @@ export default function Layout() {
                                 <User size={18} className="text-white" />
                             </div>
                             <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-white truncate">Admin</p>
-                                <p className="text-xs text-slate-400 truncate">admin@snakepos.com</p>
+                                <p className="text-sm font-medium text-white truncate">{user?.name || 'ผู้ใช้'}</p>
+                                <p className="text-xs text-slate-400 truncate">{user?.role === 'admin' ? '👑 Admin' : '👤 Staff'}</p>
                             </div>
                         </div>
                     </div>
 
                     {/* Bottom Actions */}
                     <div className="pt-4 border-t border-white/5 space-y-1.5">
-                        <button className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 w-full transition-all group duration-300">
-                            <Settings size={20} className="group-hover:rotate-90 transition-transform duration-500 shrink-0" />
-                            <span className="font-medium text-sm">ตั้งค่า</span>
-                        </button>
-                        <button className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-red-400 hover:bg-red-500/10 w-full transition-all group duration-300">
+                        <button onClick={handleLogout} className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-red-400 hover:bg-red-500/10 w-full transition-all group duration-300">
                             <LogOut size={20} className="group-hover:-translate-x-1 transition-transform shrink-0" />
                             <span className="font-medium text-sm">ออกจากระบบ</span>
                         </button>
@@ -184,14 +205,14 @@ export default function Layout() {
                 </div>
 
                 {/* Mobile Bottom Navigation */}
-                <nav className="lg:hidden flex items-center justify-around p-2 pb-safe bg-slate-900/95 backdrop-blur-xl border-t border-white/10 sticky bottom-0">
-                    {navItems.map((item) => (
+                <nav className="lg:hidden flex items-center overflow-x-auto hide-scrollbar p-1.5 pb-safe bg-slate-900/95 backdrop-blur-xl border-t border-white/10 sticky bottom-0 gap-0.5">
+                    {allNavItems.slice(0, 5).map((item) => (
                         <NavLink
                             key={item.path}
                             to={item.path}
                             end={item.path === '/'}
                             className={({ isActive }) =>
-                                `flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all ${isActive
+                                `flex flex-col items-center gap-0.5 min-w-[56px] px-2 py-1.5 rounded-xl transition-all flex-shrink-0 ${isActive
                                     ? 'text-emerald-400'
                                     : 'text-slate-500'
                                 }`
@@ -199,14 +220,22 @@ export default function Layout() {
                         >
                             {({ isActive }) => (
                                 <>
-                                    <div className={`p-1.5 rounded-lg transition-colors ${isActive ? 'bg-emerald-500/20' : ''}`}>
-                                        <item.icon size={22} />
+                                    <div className={`p-1 rounded-lg transition-colors ${isActive ? 'bg-emerald-500/20' : ''}`}>
+                                        <item.icon size={20} />
                                     </div>
-                                    <span className="text-[10px] font-medium">{item.label}</span>
+                                    <span className="text-[9px] font-medium leading-none">{item.label}</span>
                                 </>
                             )}
                         </NavLink>
                     ))}
+                    <NavLink
+                        to="#"
+                        onClick={(e) => { e.preventDefault(); toggleSidebar(); }}
+                        className="flex flex-col items-center gap-0.5 min-w-[56px] px-2 py-1.5 rounded-xl text-slate-500 flex-shrink-0"
+                    >
+                        <div className="p-1"><Menu size={20} /></div>
+                        <span className="text-[9px] font-medium leading-none">เพิ่มเติม</span>
+                    </NavLink>
                 </nav>
             </main>
         </div>

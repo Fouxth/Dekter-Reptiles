@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import {
     Search,
     ShoppingCart,
@@ -10,10 +11,17 @@ import {
     QrCode,
     X,
     Check,
-    ChevronDown
+    Tag,
+    User
 } from 'lucide-react';
+import Receipt from '../components/Receipt';
+import { useAuth } from '../context/AuthContext';
+import { toast } from 'react-hot-toast';
+
+const API = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 export default function POS() {
+    const { getToken, user } = useAuth();
     const [snakes, setSnakes] = useState([]);
     const [categories, setCategories] = useState([]);
     const [cart, setCart] = useState([]);
@@ -25,6 +33,15 @@ export default function POS() {
     const [paymentMethod, setPaymentMethod] = useState('cash');
     const [processing, setProcessing] = useState(false);
     const [orderSuccess, setOrderSuccess] = useState(null);
+    const [showReceipt, setShowReceipt] = useState(false);
+    // Discount
+    const [discount, setDiscount] = useState(0);
+    const [discountType, setDiscountType] = useState('amount'); // 'amount' | 'percent'
+    // Customer
+    const [customerSearch, setCustomerSearch] = useState('');
+    const [customerResults, setCustomerResults] = useState([]);
+    const [selectedCustomer, setSelectedCustomer] = useState(null);
+    const [showCustomerDrop, setShowCustomerDrop] = useState(false);
 
     useEffect(() => {
         fetchData();
@@ -33,10 +50,9 @@ export default function POS() {
     const fetchData = async () => {
         try {
             const [snakesRes, categoriesRes] = await Promise.all([
-                fetch('/api/snakes'),
-                fetch('/api/categories')
+                fetch(`${API}/snakes`),
+                fetch(`${API}/categories`)
             ]);
-
             if (snakesRes.ok && categoriesRes.ok) {
                 setSnakes(await snakesRes.json());
                 setCategories(await categoriesRes.json());
@@ -47,6 +63,28 @@ export default function POS() {
             setLoading(false);
         }
     };
+
+    // Customer search
+    useEffect(() => {
+        if (!customerSearch.trim()) { setCustomerResults([]); return; }
+        const t = setTimeout(async () => {
+            const res = await fetch(`${API}/customers?search=${encodeURIComponent(customerSearch)}`, {
+                headers: { Authorization: `Bearer ${getToken()}` }
+            });
+            if (res.ok) setCustomerResults(await res.json());
+        }, 300);
+        return () => clearTimeout(t);
+    }, [customerSearch]);
+
+    // Keyboard shortcut: Enter = checkout confirm (when modal open)
+    useEffect(() => {
+        const handler = (e) => {
+            if (e.key === 'F1') { e.preventDefault(); setShowCheckout(true); }
+            if (e.key === 'Escape') { setShowCheckout(false); setShowMobileCart(false); }
+        };
+        window.addEventListener('keydown', handler);
+        return () => window.removeEventListener('keydown', handler);
+    }, []);
 
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('th-TH', {
@@ -63,17 +101,36 @@ export default function POS() {
     });
 
     const addToCart = (snake) => {
+        if (snake.stock <= 0) {
+            toast.error(`"${snake.name}" หมดสต็อกแล้ว`);
+            return;
+        }
+
         const existing = cart.find(item => item.id === snake.id);
         if (existing) {
             if (existing.quantity < snake.stock) {
+                const newQty = existing.quantity + 1;
                 setCart(cart.map(item =>
                     item.id === snake.id
-                        ? { ...item, quantity: item.quantity + 1 }
+                        ? { ...item, quantity: newQty }
                         : item
                 ));
+
+                if (newQty === snake.stock) {
+                    toast(`คุณเพิ่ม "${snake.name}" ครบตามจำนวนสต็อกแล้ว (${snake.stock})`, {
+                        icon: '⚠️',
+                    });
+                }
+            } else {
+                toast.error(`ขออภัย! "${snake.name}" มีในสต็อกเพียง ${snake.stock} ชิ้นเท่านั้น`);
             }
         } else {
             setCart([...cart, { ...snake, quantity: 1 }]);
+            if (snake.stock === 1) {
+                toast(`เพิ่ม "${snake.name}" (สินค้าในสต็อกเหลือเพียง 1 ชิ้น!)`, {
+                    icon: '📢',
+                });
+            }
         }
     };
 
@@ -82,7 +139,18 @@ export default function POS() {
             if (item.id === id) {
                 const newQty = item.quantity + delta;
                 const snake = snakes.find(s => s.id === id);
-                if (newQty > 0 && newQty <= snake.stock) {
+
+                if (delta > 0 && newQty > snake.stock) {
+                    toast.error(`ไม่สามารถเพิ่มได้เกิน ${snake.stock} ชิ้น`);
+                    return item;
+                }
+
+                if (newQty > 0) {
+                    if (delta > 0 && newQty === snake.stock) {
+                        toast(`คุณเพิ่ม "${item.name}" จนถึงจำนวนจำกัดที่มีแล้ว`, {
+                            icon: '⚠️',
+                        });
+                    }
                     return { ...item, quantity: newQty };
                 }
             }
@@ -98,39 +166,37 @@ export default function POS() {
         setCart([]);
     };
 
-    const cartTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const cartSubtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const discountAmount = discountType === 'percent' ? Math.round(cartSubtotal * (discount / 100)) : Number(discount);
+    const cartTotal = Math.max(0, cartSubtotal - discountAmount);
     const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
     const handleCheckout = async () => {
         if (cart.length === 0) return;
-
         setProcessing(true);
         try {
-            const response = await fetch('/api/orders', {
+            const response = await fetch(`${API}/orders`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
                 body: JSON.stringify({
-                    items: cart.map(item => ({
-                        snakeId: item.id,
-                        quantity: item.quantity
-                    })),
-                    paymentMethod
+                    items: cart.map(item => ({ snakeId: item.id, quantity: item.quantity })),
+                    paymentMethod,
+                    discount: discountAmount,
+                    userId: user?.id,
+                    customerId: selectedCustomer?.id || undefined,
                 })
             });
-
             if (response.ok) {
                 const order = await response.json();
                 setOrderSuccess(order);
                 setCart([]);
-                fetchData(); // Refresh stock
-                setTimeout(() => {
-                    setOrderSuccess(null);
-                    setShowCheckout(false);
-                    setShowMobileCart(false);
-                }, 3000);
+                setDiscount(0);
+                setSelectedCustomer(null);
+                setCustomerSearch('');
+                fetchData();
             } else {
-                const error = await response.json();
-                alert(error.error || 'เกิดข้อผิดพลาด');
+                const err = await response.json();
+                alert(err.error || 'เกิดข้อผิดพลาด');
             }
         } catch (error) {
             console.error('Checkout failed:', error);
@@ -246,10 +312,19 @@ export default function POS() {
             {/* Cart Footer */}
             <div className="p-4 border-t border-white/5 bg-slate-900/80 backdrop-blur-xl space-y-3">
                 <div className="flex justify-between text-base items-end">
-                    <span className="text-slate-400 text-sm">ยอดรวมทั้งสิ้น</span>
+                    <span className="text-slate-400 text-sm">ยอดรวม</span>
+                    <span className="text-white font-semibold">{formatCurrency(cartSubtotal)}</span>
+                </div>
+                {discountAmount > 0 && (
+                    <div className="flex justify-between text-sm">
+                        <span className="text-red-400">ส่วนลด</span>
+                        <span className="text-red-400">-{formatCurrency(discountAmount)}</span>
+                    </div>
+                )}
+                <div className="flex justify-between text-base items-end">
+                    <span className="text-slate-400 text-sm">ยอดสุทธิ</span>
                     <div className="text-right">
                         <span className="font-bold text-white text-xl sm:text-2xl tracking-tight text-gradient">{formatCurrency(cartTotal)}</span>
-                        <p className="text-[10px] text-slate-500">รวมภาษีมูลค่าเพิ่มแล้ว</p>
                     </div>
                 </div>
 
@@ -260,7 +335,7 @@ export default function POS() {
                 >
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
                     <CreditCard size={20} />
-                    ชำระเงิน
+                    ชำระเงิน <span className="text-xs opacity-70">(F1)</span>
                 </button>
             </div>
         </>
@@ -275,13 +350,14 @@ export default function POS() {
                     <div className="flex gap-3 items-center">
                         {/* Search */}
                         <div className="flex-1 relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                             <input
                                 type="text"
                                 placeholder="ค้นหาสินค้า..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="input-field pl-10"
+                                className="input-field"
+                                style={{ paddingLeft: '45px' }}
                             />
                         </div>
                     </div>
@@ -420,7 +496,7 @@ export default function POS() {
             )}
 
             {/* Mobile Cart Modal */}
-            {showMobileCart && (
+            {showMobileCart && createPortal(
                 <div className="lg:hidden fixed inset-0 z-40 flex flex-col justify-end animate-fade-in">
                     <div
                         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
@@ -433,11 +509,12 @@ export default function POS() {
                         </div>
                         <CartContent isMobile={true} />
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
 
             {/* Checkout Modal */}
-            {showCheckout && (
+            {showCheckout && createPortal(
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in p-4">
                     <div className="glass-card w-full max-w-md p-0 overflow-hidden shadow-2xl scale-100 animate-fade-in border border-white/10 max-h-[90vh] flex flex-col">
                         {orderSuccess ? (
@@ -453,6 +530,10 @@ export default function POS() {
                                     <div className="h-px bg-white/10 mb-4" />
                                     <p className="text-xs text-slate-500 uppercase tracking-widest mb-1">Total</p>
                                     <p className="text-2xl sm:text-3xl font-bold text-emerald-400">{formatCurrency(orderSuccess.total)}</p>
+                                </div>
+                                <div className="flex gap-3 justify-center">
+                                    <button className="btn-secondary px-6 py-3" onClick={() => { setOrderSuccess(null); setShowCheckout(false); }}>ปิด</button>
+                                    <button className="btn-primary px-6 py-3" onClick={() => { setShowCheckout(false); setShowReceipt(true); }}>🧾 พิมพ์ใบเสร็จ</button>
                                 </div>
                             </div>
                         ) : (
@@ -484,9 +565,74 @@ export default function POS() {
                                         ))}
                                     </div>
 
-                                    <div className="bg-emerald-500/5 rounded-xl p-4 mb-6 sm:mb-8 border border-emerald-500/10 flex justify-between items-center">
-                                        <span className="text-slate-300">ยอดชำระทั้งหมด</span>
-                                        <span className="font-bold text-xl sm:text-2xl text-emerald-400">{formatCurrency(cartTotal)}</span>
+                                    {/* Discount & Customer */}
+                                    <div className="space-y-3 mb-5">
+                                        {/* Customer picker */}
+                                        <div className="relative">
+                                            <p className="text-slate-400 text-xs uppercase tracking-widest font-bold mb-2 ml-1">ลูกค้า (ถ้ามี)</p>
+                                            {selectedCustomer ? (
+                                                <div className="flex items-center gap-2 bg-white/5 rounded-xl p-3 border border-white/10">
+                                                    <User size={16} className="text-emerald-400" />
+                                                    <span className="text-white flex-1 text-sm">{selectedCustomer.name}</span>
+                                                    <button onClick={() => { setSelectedCustomer(null); setCustomerSearch(''); }} className="text-slate-500 hover:text-red-400"><X size={14} /></button>
+                                                </div>
+                                            ) : (
+                                                <div className="relative">
+                                                    <input
+                                                        value={customerSearch}
+                                                        onChange={e => { setCustomerSearch(e.target.value); setShowCustomerDrop(true); }}
+                                                        placeholder="ค้นหาชื่อหรือเบอร์โทร..."
+                                                        className="input-field pr-4 text-sm"
+                                                        onFocus={() => setShowCustomerDrop(true)}
+                                                    />
+                                                    {showCustomerDrop && customerResults.length > 0 && (
+                                                        <div className="absolute top-full left-0 right-0 mt-1 bg-slate-800 border border-white/10 rounded-xl overflow-hidden z-10 shadow-xl">
+                                                            {customerResults.slice(0, 5).map(c => (
+                                                                <button key={c.id} className="w-full text-left px-4 py-2.5 hover:bg-white/5 text-sm text-white border-b border-white/5 last:border-0"
+                                                                    onClick={() => { setSelectedCustomer(c); setCustomerSearch(''); setShowCustomerDrop(false); }}>
+                                                                    <div>{c.name}</div>
+                                                                    {c.phone && <div className="text-xs text-slate-400">{c.phone}</div>}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Discount */}
+                                        <div>
+                                            <p className="text-slate-400 text-xs uppercase tracking-widest font-bold mb-2 ml-1 flex items-center gap-1"><Tag size={11} /> ส่วนลด</p>
+                                            <div className="flex gap-2">
+                                                <div className="flex bg-white/5 rounded-xl border border-white/10 overflow-hidden">
+                                                    <button onClick={() => setDiscountType('amount')} className={`px-3 py-2 text-xs font-bold transition-colors ${discountType === 'amount' ? 'bg-emerald-500 text-white' : 'text-slate-400'}`}>฿</button>
+                                                    <button onClick={() => setDiscountType('percent')} className={`px-3 py-2 text-xs font-bold transition-colors ${discountType === 'percent' ? 'bg-emerald-500 text-white' : 'text-slate-400'}`}>%</button>
+                                                </div>
+                                                <input type="number" min="0" value={discount} onChange={e => setDiscount(e.target.value)}
+                                                    placeholder={discountType === 'percent' ? '0–100' : '0'}
+                                                    className="input-field flex-1 text-sm" />
+                                            </div>
+                                            {discountAmount > 0 && (
+                                                <p className="text-xs text-red-400 mt-1 ml-1">ลด ฿{discountAmount.toLocaleString('th-TH')}</p>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-emerald-500/5 rounded-xl p-4 mb-5 border border-emerald-500/10">
+                                        <div className="flex justify-between mb-1">
+                                            <span className="text-slate-400 text-sm">ยอดรวม</span>
+                                            <span className="text-slate-300">{formatCurrency(cartSubtotal)}</span>
+                                        </div>
+                                        {discountAmount > 0 && (
+                                            <div className="flex justify-between mb-1">
+                                                <span className="text-red-400 text-sm">ส่วนลด</span>
+                                                <span className="text-red-400">-{formatCurrency(discountAmount)}</span>
+                                            </div>
+                                        )}
+                                        <div className="flex justify-between items-center border-t border-white/10 pt-2 mt-1">
+                                            <span className="text-slate-300 font-semibold">ยอดสุทธิ</span>
+                                            <span className="font-bold text-xl sm:text-2xl text-emerald-400">{formatCurrency(cartTotal)}</span>
+                                        </div>
                                     </div>
 
                                     {/* Payment Methods */}
@@ -534,7 +680,13 @@ export default function POS() {
                             </>
                         )}
                     </div>
-                </div>
+                </div>,
+                document.body
+            )}
+
+            {/* Receipt Modal */}
+            {showReceipt && orderSuccess && (
+                <Receipt order={orderSuccess} onClose={() => { setShowReceipt(false); setOrderSuccess(null); setShowCheckout(false); setShowMobileCart(false); }} />
             )}
         </div>
     );

@@ -68,7 +68,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 router.post('/', async (req: Request, res: Response) => {
     try {
         const prisma: PrismaClient = (req as any).prisma;
-        const { items, paymentMethod, note, userId } = req.body;
+        const { items, paymentMethod, note, userId, discount, customerId } = req.body;
 
         // items: [{ snakeId: number, quantity: number }]
         if (!items || !items.length) {
@@ -97,24 +97,32 @@ router.post('/', async (req: Request, res: Response) => {
                 snakeId: snake.id,
                 quantity: item.quantity,
                 price: snake.price,
+                cost: snake.cost ?? 0,
             });
         }
 
+        const discountAmount = Number(discount) || 0;
         // Create order and update stock in transaction
         const order = await prisma.$transaction(async (tx) => {
             // Create order
             const newOrder = await tx.order.create({
                 data: {
-                    total,
+                    subtotal: total,
+                    discount: discountAmount,
+                    tax: 0,
+                    total: total - discountAmount,
                     paymentMethod: paymentMethod || 'cash',
                     note,
-                    userId: userId || null,
+                    ...(userId ? { user: { connect: { id: Number(userId) } } } : {}),
+                    ...(customerId ? { customer: { connect: { id: Number(customerId) } } } : {}),
                     items: {
                         create: orderItems,
                     },
                 },
                 include: {
                     items: { include: { snake: true } },
+                    customer: true,
+                    user: { select: { id: true, name: true } },
                 },
             });
 

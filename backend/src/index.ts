@@ -8,12 +8,21 @@ import snakeRoutes from './routes/snakes';
 import categoryRoutes from './routes/categories';
 import orderRoutes from './routes/orders';
 import dashboardRoutes from './routes/dashboard';
+import authRoutes from './routes/auth';
+import userRoutes from './routes/users';
+import customerRoutes from './routes/customers';
+import stockLogRoutes from './routes/stock-logs';
+import healthRecordRoutes from './routes/health-records';
+import breedingRecordRoutes from './routes/breeding-records';
+import settingRoutes from './routes/settings';
+import feedingLogRoutes from './routes/feeding-logs';
+import incubationRecordRoutes from './routes/incubation-records';
 
 dotenv.config();
 
 const app = express();
 const prisma = new PrismaClient();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors());
@@ -25,11 +34,22 @@ app.use((req, res, next) => {
     next();
 });
 
-// Routes
+// Public routes
+app.use('/api/auth', authRoutes);
+
+// Protected routes (auth applied per-route or globally)
 app.use('/api/snakes', snakeRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/customers', customerRoutes);
+app.use('/api/stock-logs', stockLogRoutes);
+app.use('/api/health-records', healthRecordRoutes);
+app.use('/api/breeding-records', breedingRecordRoutes);
+app.use('/api/settings', settingRoutes);
+app.use('/api/feeding-logs', feedingLogRoutes);
+app.use('/api/incubation-records', incubationRecordRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
