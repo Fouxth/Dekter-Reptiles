@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { FileText, Download, Calendar, Clock } from 'lucide-react';
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API = import.meta.env.VITE_API_URL || 'http://103.142.150.196:5000/api';
 
 function formatCurrency(n) { return (n || 0).toLocaleString('th-TH', { minimumFractionDigits: 0 }); }
 function formatDate(d) { return d ? new Date(d).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'; }

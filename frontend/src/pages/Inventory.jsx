@@ -14,7 +14,7 @@ import {
     ExternalLink
 } from 'lucide-react';
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API = import.meta.env.VITE_API_URL || 'http://103.142.150.196:5000/api';
 
 const capitalize = (str) => {
     if (!str) return str;
