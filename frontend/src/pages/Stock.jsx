@@ -13,6 +13,11 @@ import { createPortal } from 'react-dom';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
+const capitalize = (str) => {
+    if (!str) return str;
+    return str.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+};
+
 export default function Stock() {
     const [snakes, setSnakes] = useState([]);
     const [logs, setLogs] = useState([]);
@@ -138,10 +143,10 @@ export default function Stock() {
                                 <div key={snake.id} className="glass-card p-4 border border-white/5">
                                     <div className="flex justify-between items-start mb-2">
                                         <div>
-                                            <h4 className="text-white font-medium text-sm">{snake.name}</h4>
+                                            <h4 className="text-white font-medium text-sm">{capitalize(snake.name)}</h4>
                                             <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                                                 {snake.code && <span className="text-[10px] text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded border border-blue-500/20">{snake.code}</span>}
-                                                <span className="text-xs text-slate-500">{snake.category?.name || 'ไม่มีหมวดหมู่'}</span>
+                                                <span className="text-xs text-slate-500">{capitalize(snake.category?.name) || 'ไม่มีหมวดหมู่'}</span>
                                             </div>
                                         </div>
                                         <span className={`inline-flex px-2 py-0.5 text-[10px] font-semibold rounded-full border ${status.class}`}>
@@ -208,8 +213,8 @@ export default function Stock() {
                                                     {snake.code ? <span className="text-blue-400 text-sm font-medium">{snake.code}</span> : <span className="text-slate-600 text-sm">-</span>}
                                                 </td>
                                                 <td className="py-3 px-4">
-                                                    <span className="text-white text-sm font-medium">{snake.name}</span>
-                                                    <span className="block text-xs text-slate-500 mt-0.5">{snake.category?.name || 'ไม่มีหมวดหมู่'}</span>
+                                                    <span className="text-white text-sm font-medium">{capitalize(snake.name)}</span>
+                                                    <span className="block text-xs text-slate-500 mt-0.5">{capitalize(snake.category?.name) || 'ไม่มีหมวดหมู่'}</span>
                                                 </td>
                                                 <td className="py-3 px-4 text-right text-red-400 text-sm font-medium">{snake.cost ? formatCurrency(snake.cost) : '-'}</td>
                                                 <td className="py-3 px-4 text-right text-emerald-400 text-sm font-medium">{formatCurrency(snake.price)}</td>
@@ -252,7 +257,7 @@ export default function Stock() {
                             return (
                                 <div key={log.id} className="glass-card p-4 border border-white/5">
                                     <div className="flex justify-between items-start mb-2">
-                                        <h4 className="text-white font-medium text-sm">{log.snake?.name || 'ลบแล้ว'}</h4>
+                                        <h4 className="text-white font-medium text-sm">{capitalize(log.snake?.name) || 'ลบแล้ว'}</h4>
                                         <span className={`text-sm font-bold ${isAdd ? 'text-emerald-400' : 'text-red-400'}`}>
                                             {isAdd ? '+' : ''}{log.change}
                                         </span>
@@ -290,7 +295,7 @@ export default function Stock() {
                                         return (
                                             <tr key={log.id} className="hover:bg-white/[0.02] transition-colors">
                                                 <td className="py-4 px-6 text-sm text-slate-400 whitespace-nowrap"><Clock size={14} className="inline mr-2 opacity-50" />{formatDate(log.createdAt)}</td>
-                                                <td className="py-4 px-6 text-white text-sm font-medium">{log.snake?.name || 'ลบแล้ว'}</td>
+                                                <td className="py-4 px-6 text-white text-sm font-medium">{capitalize(log.snake?.name) || 'ลบแล้ว'}</td>
                                                 <td className="py-4 px-6 text-center">
                                                     <span className={`inline-flex px-2 py-0.5 text-[10px] font-medium rounded-full border ${isAdd ? 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10' : 'text-red-400 border-red-500/30 bg-red-500/10'}`}>
                                                         {isAdd ? 'รับเข้า' : 'จ่ายออก'}

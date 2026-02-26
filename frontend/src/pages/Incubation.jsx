@@ -11,6 +11,11 @@ function fmtDate(d) {
     return new Date(d).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+const capitalize = (str) => {
+    if (!str) return str;
+    return str.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+};
+
 const EMPTY_FORM = {
     femaleId: '', maleId: '', breedingId: '',
     incubationStart: '', pippingDate: '', hatchDate: '',
@@ -107,7 +112,7 @@ export default function Incubation() {
                     )}
 
                     {/* Desktop Table */}
-                    <div className="data-table-wrapper">
+                    <div className="hidden md:block data-table-wrapper">
                         <table className="data-table" style={{ width: '100%' }}>
                             <thead>
                                 <tr>
@@ -130,12 +135,12 @@ export default function Incubation() {
                                         <td>{i + 1}</td>
                                         <td>
                                             <button onClick={() => navigate(`/snakes/${r.femaleId}`)} style={{ color: '#fca5a5', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.85rem', textDecoration: 'underline' }}>
-                                                {r.female?.name} {r.female?.code && <span style={{ opacity: 0.5 }}>({r.female.code})</span>}
+                                                {capitalize(r.female?.name)} {r.female?.code && <span style={{ opacity: 0.5 }}>({r.female.code})</span>}
                                             </button>
                                         </td>
                                         <td>
                                             <button onClick={() => navigate(`/snakes/${r.maleId}`)} style={{ color: '#93c5fd', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.85rem', textDecoration: 'underline' }}>
-                                                {r.male?.name} {r.male?.code && <span style={{ opacity: 0.5 }}>({r.male.code})</span>}
+                                                {capitalize(r.male?.name)} {r.male?.code && <span style={{ opacity: 0.5 }}>({r.male.code})</span>}
                                             </button>
                                         </td>
                                         <td>{fmtDate(r.incubationStart)}</td>
@@ -158,17 +163,17 @@ export default function Incubation() {
                     </div>
 
                     {/* Mobile Card View */}
-                    <div className="mobile-card-list">
+                    <div className="md:hidden mobile-card-list">
                         {records.map((r, i) => (
                             <div key={r.id} className="card" style={{ padding: '1rem' }}>
                                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
                                     <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 600 }}>#{i + 1}</span>
                                     <button onClick={() => navigate(`/snakes/${r.femaleId}`)} style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 6, padding: '0.2rem 0.5rem', color: '#fca5a5', cursor: 'pointer', fontSize: '0.75rem' }}>
-                                        ♀ {r.female?.name}
+                                        ♀ {capitalize(r.female?.name)}
                                     </button>
                                     <span style={{ color: '#64748b' }}>×</span>
                                     <button onClick={() => navigate(`/snakes/${r.maleId}`)} style={{ background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 6, padding: '0.2rem 0.5rem', color: '#93c5fd', cursor: 'pointer', fontSize: '0.75rem' }}>
-                                        ♂ {r.male?.name}
+                                        ♂ {capitalize(r.male?.name)}
                                     </button>
                                 </div>
 

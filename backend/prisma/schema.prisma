@@ -62,14 +62,18 @@ model Snake {
 }
 
 model Customer {
-  id        Int      @id @default(autoincrement())
-  name      String
-  phone     String?  @unique
-  lineId    String?
-  note      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  orders    Order[]
+  id           Int      @id @default(autoincrement())
+  email        String?  @unique
+  passwordHash String?
+  name         String
+  phone        String?  @unique
+  address      String?
+  lineId       String?
+  note         String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  orders       Order[]
 }
 
 model Order {
@@ -79,8 +83,11 @@ model Order {
   discount      Float       @default(0)
   tax           Float       @default(0)
   total         Float
-  status        String      @default("completed") // pending, completed, cancelled
+  status        String      @default("pending_payment") // pending_payment, awaiting_verification, processing, shipping, completed, cancelled, rejected
   paymentMethod String      @default("cash")      // cash, transfer, card
+  paymentSlip   String?     // URL to uploaded slip image
+  trackingNo    String?
+  shippingAddress String?
   note          String?
   userId        Int?
   user          User?       @relation(fields: [userId], references: [id])

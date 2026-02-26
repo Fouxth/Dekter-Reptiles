@@ -49,6 +49,28 @@ async function main() {
     ]);
     console.log(`✅ Created ${snakes.length} snakes`);
 
+    // Seed system settings
+    const settings = [
+        { key: 'payment_enabled', value: 'true', description: 'เปิด/ปิดช่องทางการชำระเงิน' },
+        { key: 'bank_account_name', value: 'Snake Paradise', description: 'ชื่อบัญชีธนาคาร' },
+        { key: 'bank_account_number', value: '123-456-7890', description: 'เลขบัญชีธนาคาร' },
+        { key: 'promptpay_enabled', value: 'true', description: 'เปิด/ปิด PromptPay' },
+        { key: 'promptpay_id', value: '0812345678', description: 'PromptPay ID' },
+        { key: 'contact_phone', value: '08X-XXX-XXXX', description: 'เบอร์โทรร้าน' },
+        { key: 'contact_email', value: 'shop@example.com', description: 'อีเมลร้าน' },
+        { key: 'contact_line', value: '@snakeparadise', description: 'Line ร้าน' },
+        { key: 'contact_address', value: '123 Python Road, Silicon Forest', description: 'ที่อยู่ร้าน' },
+        { key: 'opening_hours', value: '10:00 - 20:00', description: 'เวลาทำการ' },
+    ];
+    for (const s of settings) {
+        await prisma.systemSetting.upsert({
+            where: { key: s.key },
+            update: { value: s.value, description: s.description },
+            create: { key: s.key, value: s.value, description: s.description },
+        });
+    }
+    console.log('✅ Seeded system settings');
+
     // Sample customers
     await prisma.customer.createMany({
         data: [

@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
 import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
 
@@ -17,6 +18,7 @@ import breedingRecordRoutes from './routes/breeding-records';
 import settingRoutes from './routes/settings';
 import feedingLogRoutes from './routes/feeding-logs';
 import incubationRecordRoutes from './routes/incubation-records';
+import customerAuthRoutes from './routes/customer-auth';
 
 dotenv.config();
 
@@ -27,6 +29,7 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // Make prisma available in request
 app.use((req, res, next) => {
@@ -36,6 +39,7 @@ app.use((req, res, next) => {
 
 // Public routes
 app.use('/api/auth', authRoutes);
+app.use('/api/customer-auth', customerAuthRoutes);
 
 // Protected routes (auth applied per-route or globally)
 app.use('/api/snakes', snakeRoutes);

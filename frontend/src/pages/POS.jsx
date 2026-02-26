@@ -20,6 +20,11 @@ import { toast } from 'react-hot-toast';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
+const capitalize = (str) => {
+    if (!str) return str;
+    return str.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+};
+
 export default function POS() {
     const { getToken, user } = useAuth();
     const [snakes, setSnakes] = useState([]);
@@ -450,7 +455,7 @@ export default function POS() {
                                         {/* Info Section */}
                                         <div className="p-2.5 sm:p-3 flex-1 flex flex-col justify-between bg-gradient-to-b from-white/[0.02] to-transparent">
                                             <div>
-                                                <p className="text-[9px] sm:text-[10px] uppercase tracking-wider text-slate-500 font-bold mb-0.5 sm:mb-1">{snake.category?.name}</p>
+                                                <p className="text-[9px] sm:text-[10px] uppercase tracking-wider text-slate-500 font-bold mb-0.5 sm:mb-1">{capitalize(snake.category?.name)}</p>
                                                 <h3 className="font-medium text-white text-xs sm:text-sm leading-snug line-clamp-2 mb-1.5 sm:mb-2 group-hover:text-emerald-400 transition-colors">{snake.name}</h3>
                                             </div>
 

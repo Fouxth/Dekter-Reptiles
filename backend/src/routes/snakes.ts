@@ -7,11 +7,12 @@ const router = Router();
 router.get('/', async (req: Request, res: Response) => {
     try {
         const prisma: PrismaClient = (req as any).prisma;
-        const { categoryId, search } = req.query;
+        const { categoryId, search, forSale } = req.query;
 
         const snakes = await prisma.snake.findMany({
             where: {
                 ...(categoryId && { categoryId: Number(categoryId) }),
+                ...(forSale !== undefined && { forSale: forSale === 'true' }),
                 ...(search && {
                     OR: [
                         { name: { contains: String(search), mode: 'insensitive' } },

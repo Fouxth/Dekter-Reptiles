@@ -10,6 +10,11 @@ function fmtDate(d) {
     return new Date(d).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+const capitalize = (str) => {
+    if (!str) return str;
+    return str.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+};
+
 const EMPTY_FORM = {
     femaleId: '', maleId: '',
     pairedDate: new Date().toISOString().slice(0, 10),
@@ -120,11 +125,11 @@ export default function Breeding() {
                                 {/* Pairing header */}
                                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap' }}>
                                     <button onClick={() => navigate(`/snakes/${r.femaleId}`)} style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, padding: '0.3rem 0.75rem', color: '#fca5a5', cursor: 'pointer', fontSize: '0.8rem' }}>
-                                        ♀ {r.female?.name} {r.female?.code && <span style={{ opacity: 0.6 }}>({r.female.code})</span>}
+                                        ♀ {capitalize(r.female?.name)} {r.female?.code && <span style={{ opacity: 0.6 }}>({r.female.code})</span>}
                                     </button>
                                     <span style={{ color: '#64748b', fontSize: '1.1rem' }}>×</span>
                                     <button onClick={() => navigate(`/snakes/${r.maleId}`)} style={{ background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 8, padding: '0.3rem 0.75rem', color: '#93c5fd', cursor: 'pointer', fontSize: '0.8rem' }}>
-                                        ♂ {r.male?.name} {r.male?.code && <span style={{ opacity: 0.6 }}>({r.male.code})</span>}
+                                        ♂ {capitalize(r.male?.name)} {r.male?.code && <span style={{ opacity: 0.6 }}>({r.male.code})</span>}
                                     </button>
                                 </div>
 
@@ -157,7 +162,7 @@ export default function Breeding() {
 
                                 {(r.female?.genetics || r.male?.genetics) && (
                                     <div style={{ background: 'rgba(139,92,246,0.08)', borderRadius: 8, padding: '0.5rem 0.75rem', marginBottom: '0.5rem', fontSize: '0.75rem', color: '#c4b5fd' }}>
-                                        🧬 {[r.female?.genetics, r.male?.genetics].filter(Boolean).join(' × ')}
+                                        🧬 {[capitalize(r.female?.genetics), capitalize(r.male?.genetics)].filter(Boolean).join(' × ')}
                                     </div>
                                 )}
 

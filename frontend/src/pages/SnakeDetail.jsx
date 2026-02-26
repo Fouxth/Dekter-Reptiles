@@ -21,6 +21,11 @@ function formatDate(d) {
     return new Date(d).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+const capitalize = (str) => {
+    if (!str) return str;
+    return str.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+};
+
 export default function SnakeDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -91,12 +96,12 @@ export default function SnakeDetail() {
                     )}
                 </div>
                 <div style={{ flex: 1, minWidth: 200 }}>
-                    <div style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>{snake.category?.name}</div>
+                    <div style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'capitalize', letterSpacing: '0.05em', marginBottom: 4 }}>{capitalize(snake.category?.name)}</div>
                     <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#f8fafc', margin: '0 0 0.5rem' }}>{snake.name}</h1>
                     <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
                         {snake.gender && <span className={`badge ${snake.gender === 'female' ? 'badge-danger' : 'badge-primary'}`}>{snake.gender === 'female' ? '♀ ตัวเมีย' : '♂ ตัวผู้'}</span>}
-                        {snake.genetics && <span className="badge badge-gray">🧬 {snake.genetics}</span>}
-                        {snake.color && <span className="badge badge-gray">🎨 {snake.color}</span>}
+                        {snake.genetics && <span className="badge badge-gray">🧬 {capitalize(snake.genetics)}</span>}
+                        {snake.color && <span className="badge badge-gray">🎨 {capitalize(snake.color)}</span>}
                         <span className={`badge ${snake.stock > 2 ? 'badge-success' : snake.stock > 0 ? 'badge-gray' : 'badge-danger'}`}>
                             📦 Stock: {snake.stock}
                         </span>

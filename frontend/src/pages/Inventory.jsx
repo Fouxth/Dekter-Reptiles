@@ -16,6 +16,11 @@ import {
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
+const capitalize = (str) => {
+    if (!str) return str;
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+};
+
 export default function Inventory() {
     const navigate = useNavigate();
     const [snakes, setSnakes] = useState([]);
@@ -283,8 +288,8 @@ export default function Inventory() {
                                     </div>
 
                                     <div className="flex items-center gap-2 mt-1 flex-wrap">
-                                        <span className="text-xs text-slate-500 bg-slate-700/50 px-2 py-0.5 rounded">{snake.category?.name}</span>
-                                        {snake.morph && <span className="text-xs text-purple-400 bg-purple-500/10 px-1.5 py-0.5 rounded">{snake.morph}</span>}
+                                        <span className="text-xs text-slate-500 bg-slate-700/50 px-2 py-0.5 rounded">{capitalize(snake.category?.name)}</span>
+                                        {snake.morph && <span className="text-xs text-purple-400 bg-purple-500/10 px-1.5 py-0.5 rounded">{capitalize(snake.morph)}</span>}
                                         <span className={`w-2 h-2 rounded-full ${snake.gender === 'male' ? 'bg-blue-400' : 'bg-pink-400'}`}></span>
                                         <span className="text-xs text-slate-500">{snake.gender === 'male' ? 'ผู้' : 'เมีย'}</span>
                                     </div>
@@ -375,7 +380,7 @@ export default function Inventory() {
                                                     >
                                                         {snake.name} <ExternalLink size={11} className="opacity-30 group-hover:opacity-100" />
                                                     </button>
-                                                    {snake.morph && <span className="inline-flex text-[10px] text-purple-300 bg-purple-500/10 px-1.5 py-0.5 rounded mt-0.5">{snake.morph}</span>}
+                                                    {snake.morph && <span className="inline-flex text-[10px] text-purple-300 bg-purple-500/10 px-1.5 py-0.5 rounded mt-0.5">{capitalize(snake.morph)}</span>}
                                                     <p className="text-xs text-slate-400 line-clamp-1 mt-0.5 hidden lg:block">{snake.description || '-'}</p>
                                                     {/* Mobile category badge */}
                                                     <span className="lg:hidden inline-flex items-center mt-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-700/50 text-slate-300 border border-white/5">
@@ -410,8 +415,8 @@ export default function Inventory() {
                                                     <span className={`w-2 h-2 rounded-full ${snake.gender === 'male' ? 'bg-blue-400' : 'bg-pink-400'}`}></span>
                                                     {snake.gender === 'male' ? 'ตัวผู้' : 'ตัวเมีย'}
                                                 </div>
-                                                {snake.color && <span className="text-xs text-slate-500">{snake.color}</span>}
-                                                {snake.genetics && <span className="text-xs text-purple-400">🧬 {snake.genetics}</span>}
+                                                {snake.color && <span className="text-xs text-slate-500">{capitalize(snake.color)}</span>}
+                                                {snake.genetics && <span className="text-xs text-purple-400">🧬 {capitalize(snake.genetics)}</span>}
                                             </div>
                                         </td>
                                         <td className="py-4 px-4 lg:px-6 text-right">

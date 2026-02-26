@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { PrismaClient, Prisma } from '@prisma/client';
+import { slipUpload } from '../middleware/slipUpload';
 
 const router = Router();
 
@@ -30,6 +31,7 @@ router.get('/', async (req: Request, res: Response) => {
                     include: { snake: true },
                 },
                 user: { select: { id: true, name: true } },
+                customer: true,
             },
             orderBy: { createdAt: 'desc' },
         });
@@ -50,6 +52,7 @@ router.get('/:id', async (req: Request, res: Response) => {
             include: {
                 items: { include: { snake: true } },
                 user: { select: { id: true, name: true } },
+                customer: true,
             },
         });
 
@@ -68,7 +71,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 router.post('/', async (req: Request, res: Response) => {
     try {
         const prisma: PrismaClient = (req as any).prisma;
-        const { items, paymentMethod, note, userId, discount, customerId } = req.body;
+        const { items, paymentMethod, note, userId, discount, customerId, shippingAddress } = req.body;
 
         // items: [{ snakeId: number, quantity: number }]
         if (!items || !items.length) {
@@ -112,7 +115,9 @@ router.post('/', async (req: Request, res: Response) => {
                     tax: 0,
                     total: total - discountAmount,
                     paymentMethod: paymentMethod || 'cash',
+                    status: paymentMethod === 'transfer' ? 'pending_payment' : 'completed',
                     note,
+                    shippingAddress,
                     ...(userId ? { user: { connect: { id: Number(userId) } } } : {}),
                     ...(customerId ? { customer: { connect: { id: Number(customerId) } } } : {}),
                     items: {
@@ -141,6 +146,54 @@ router.post('/', async (req: Request, res: Response) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Failed to create order' });
+    }
+});
+
+// Upload payment slip
+router.post('/:id/slip', slipUpload.single('slip'), async (req: Request, res: Response) => {
+    try {
+        const prisma: PrismaClient = (req as any).prisma;
+        const orderId = Number(req.params.id);
+
+        if (!req.file) {
+            return res.status(400).json({ error: 'Please upload a slip image' });
+        }
+
+        const slipUrl = `/uploads/slips/${req.file.filename}`;
+
+        const order = await prisma.order.update({
+            where: { id: orderId },
+            data: {
+                paymentSlip: slipUrl,
+                status: 'awaiting_verification'
+            }
+        });
+
+        res.json(order);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to upload slip' });
+    }
+});
+
+// Update tracking number
+router.patch('/:id/tracking', async (req: Request, res: Response) => {
+    try {
+        const prisma: PrismaClient = (req as any).prisma;
+        const { trackingNo } = req.body;
+
+        const order = await prisma.order.update({
+            where: { id: Number(req.params.id) },
+            data: {
+                trackingNo,
+                status: 'shipping'
+            }
+        });
+
+        res.json(order);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to update tracking number' });
     }
 });
 

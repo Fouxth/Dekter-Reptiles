@@ -1,0 +1,335 @@
+import React, { useState, useEffect } from 'react';
+import { ShoppingCart, Trash2, CheckCircle2, Loader2, User, Phone, FileText, ArrowRight, MapPin } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { useCustomerAuth } from '../contexts/CustomerAuthContext';
+import SEO from '../components/SEO';
+import { createOrder } from '../services/api';
+
+const formatPrice = (price) => {
+    return new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', minimumFractionDigits: 0 }).format(price);
+};
+
+const Cart = ({ cart, setCart, updateQuantity, removeFromCart, cartTotal, cartItemCount }) => {
+    const navigate = useNavigate();
+    const { customer } = useCustomerAuth();
+    const [formData, setFormData] = useState({
+        name: customer?.name || '',
+        phone: customer?.phone || '',
+        lineId: customer?.lineId || '',
+        address: customer?.address || '',
+        note: ''
+    });
+    const [paymentMethod, setPaymentMethod] = useState('transfer'); // default to transfer
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState(null);
+
+    // Update form if customer logs in while on cart page
+    React.useEffect(() => {
+        if (customer) {
+            setFormData(prev => ({
+                ...prev,
+                name: prev.name || customer.name || '',
+                phone: prev.phone || customer.phone || '',
+                lineId: prev.lineId || customer.lineId || '',
+                address: prev.address || customer.address || ''
+            }));
+        }
+    }, [customer]);
+
+    const handleCheckout = async () => {
+        if (!formData.name.trim() || !formData.phone.trim() || !formData.address.trim()) {
+            setError('กรุณากรอกชื่อ เบอร์โทรศัพท์ และที่อยู่สำหรับจัดส่ง');
+            return;
+        }
+
+        setIsSubmitting(true);
+        setError(null);
+
+        try {
+            const orderData = {
+                items: cart.map(item => ({ snakeId: Number(item.id), quantity: item.quantity })),
+                paymentMethod: paymentMethod, // use state value
+                customerId: customer?.id || undefined,
+                shippingAddress: formData.address,
+                note: `[สั่งซื้อจากหน้าเว็บ] ${customer ? '(สมาชิก)' : '(Guest)'}\nชื่อ: ${formData.name}\nเบอร์โทร: ${formData.phone}\nLine: ${formData.lineId}\n${formData.note ? `เพิ่มเติม: ${formData.note}` : ''}`
+            };
+
+            const result = await createOrder(orderData);
+            setCart([]);
+            navigate('/checkout-success', { state: { orderNo: result.orderNo, total: result.total, orderId: result.id, paymentMethod } });
+        } catch (err) {
+            console.error("Checkout failed:", err);
+            setError("เกิดข้อผิดพลาดในการสั่งซื้อ ลองใหม่อีกครั้งหรือติดต่อแอดมิน");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in min-h-[70vh]">
+            <SEO title="ตะกร้าสินค้า" description="ตรวจสอบรายการสั่งซื้องูและสัตว์เลื้อยคลานของคุณ" />
+
+            <div className="flex items-center gap-3 mb-6">
+                <div className="w-9 h-9 rounded-xl bg-sky-500/10 flex items-center justify-center border border-sky-500/20">
+                    <ShoppingCart className="text-sky-400" size={18} />
+                </div>
+                <div>
+                    <div className="text-sky-500 font-bold tracking-[0.2em] uppercase text-[0.5rem] opacity-80">Shopping</div>
+                    <h1 className="text-xl font-light text-stone-100">ตะกร้า<span className="font-bold text-sky-400">สินค้า</span></h1>
+                </div>
+            </div>
+
+            {cart.length === 0 ? (
+                <div className="glass-premium rounded-2xl p-14 text-center relative overflow-hidden">
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-sky-500/10 via-transparent to-transparent opacity-50"></div>
+                    <div className="relative z-10">
+                        <div className="w-20 h-20 bg-stone-900 rounded-full flex items-center justify-center mx-auto mb-6 border border-white/5 shadow-2xl">
+                            <ShoppingCart className="text-stone-600" size={32} />
+                        </div>
+                        <h2 className="text-xl font-light text-stone-200 mb-3">ยังไม่มีสินค้าใน<span className="font-bold text-sky-400">ตะกร้า</span></h2>
+                        <p className="text-stone-500 mb-8 font-light max-w-sm mx-auto leading-relaxed text-sm">เริ่มต้นค้นหาสัตว์เลื้อยคลานตัวโปรดของคุณ</p>
+                        <button
+                            onClick={() => navigate('/shop')}
+                            className="bg-sky-500 hover:bg-sky-400 text-stone-950 font-bold uppercase tracking-widest text-[10px] py-3 px-8 rounded-xl transition-all shadow-lg hover:shadow-sky-500/30 transform hover:-translate-y-0.5"
+                        >
+                            เริ่มช้อปปิ้งเลย
+                        </button>
+                    </div>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    {/* Cart Items */}
+                    <div className="lg:col-span-7 space-y-4">
+                        {cart.map(item => (
+                            <div key={item.id} className="glass-premium rounded-2xl p-3 flex flex-col sm:flex-row gap-4 items-center group transition-all duration-300 hover:border-sky-500/30">
+                                <div className="relative w-full sm:w-24 h-24 rounded-lg overflow-hidden bg-stone-950 flex-shrink-0 shadow-inner">
+                                    {item.image ? (
+                                        <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center text-stone-700"><ShoppingCart size={22} /></div>
+                                    )}
+                                </div>
+                                <div className="flex-1 text-center sm:text-left min-w-0">
+                                    <span className="inline-block px-2 py-px bg-sky-500/10 border border-sky-500/20 rounded-full text-[8px] text-sky-400 uppercase tracking-wider font-bold mb-1">{item.species}</span>
+                                    <h3 className="font-semibold text-stone-100 text-sm group-hover:text-sky-400 transition-colors truncate">{item.name}</h3>
+                                    <p className="text-stone-500 text-[11px] font-light truncate">{item.morph || 'Common Morph'}</p>
+                                    <div className="text-base font-bold tracking-tight text-white mt-1">{formatPrice(item.price)}</div>
+                                </div>
+                                <div className="flex flex-row sm:flex-col items-center gap-3 sm:gap-2">
+                                    <div className="flex items-center glass rounded-lg bg-black/30 border border-white/5">
+                                        <button onClick={() => updateQuantity(item.id, -1)} className="w-7 h-7 flex items-center justify-center text-stone-500 hover:text-sky-400 transition-colors text-sm">-</button>
+                                        <span className="w-7 text-center font-bold text-stone-200 text-sm tabular-nums">{item.quantity}</span>
+                                        <button onClick={() => updateQuantity(item.id, 1)} className="w-7 h-7 flex items-center justify-center text-stone-500 hover:text-sky-400 transition-colors text-sm">+</button>
+                                    </div>
+                                    <button onClick={() => removeFromCart(item.id)} className="text-stone-700 hover:text-red-500 p-1 transition-colors" title="ลบสินค้า">
+                                        <Trash2 size={16} />
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Order Summary */}
+                    <div className="lg:col-span-5">
+                        <div className="glass-premium p-6 rounded-2xl border border-white/10 sticky top-24 shadow-xl overflow-hidden">
+                            <div className="absolute top-0 right-0 w-24 h-24 bg-sky-500/5 rounded-full blur-[50px] -mr-12 -mt-12"></div>
+
+                            <div className="relative z-10">
+                                <div className="text-sky-500 font-bold tracking-[0.15em] uppercase text-[0.5rem] mb-1 opacity-80">Order Overview</div>
+                                <h3 className="font-light text-xl text-stone-100 mb-5">สรุป<span className="font-bold text-sky-400">คำสั่งซื้อ</span></h3>
+
+                                <div className="space-y-3 mb-6 pb-5 border-b border-white/5">
+                                    <div className="flex justify-between text-stone-400 text-sm">
+                                        <span>ยอดรวมสินค้า ({cartItemCount} รายการ)</span>
+                                        <span className="text-stone-100 font-medium">{formatPrice(cartTotal)}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-stone-400 text-sm">
+                                        <span>ค่าจัดส่ง</span>
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="text-[8px] uppercase font-bold tracking-wider text-emerald-400/80 border border-emerald-500/30 px-1.5 py-px rounded">Free</span>
+                                            <span className="text-emerald-400 font-semibold text-sm">ส่งฟรี</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Customer Info */}
+                                <div className="space-y-4 mb-6">
+                                    <h4 className="flex items-center gap-2 text-stone-400 font-semibold uppercase tracking-wider text-[0.6rem]">
+                                        <span className="w-4 h-px bg-white/10"></span>
+                                        ข้อมูลผู้สั่งซื้อ
+                                        <span className="w-4 h-px bg-white/10"></span>
+                                    </h4>
+
+                                    {error && (
+                                        <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-2.5 rounded-lg text-xs animate-shake">
+                                            {error}
+                                        </div>
+                                    )}
+
+                                    <div className="space-y-2.5">
+                                        <div className="relative group/input">
+                                            <User className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-600 group-focus-within/input:text-sky-400 transition-colors" size={14} />
+                                            <input
+                                                type="text"
+                                                placeholder="ชื่อ - นามสกุล ผู้รับ *"
+                                                value={formData.name}
+                                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                                className="w-full bg-stone-950/40 border border-white/5 focus:border-sky-500/40 rounded-lg py-2.5 pl-9 pr-3 text-stone-200 placeholder-stone-600 outline-none transition-all text-sm"
+                                            />
+                                        </div>
+
+                                        <div className="relative group/input">
+                                            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-600 group-focus-within/input:text-sky-400 transition-colors" size={14} />
+                                            <input
+                                                type="tel"
+                                                placeholder="เบอร์โทรศัพท์ติดต่อ *"
+                                                value={formData.phone}
+                                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                                className="w-full bg-stone-950/40 border border-white/5 focus:border-sky-500/40 rounded-lg py-2.5 pl-9 pr-3 text-stone-200 placeholder-stone-600 outline-none transition-all text-sm"
+                                            />
+                                        </div>
+
+                                        <div className="relative group/input">
+                                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[8px] font-bold text-stone-600 group-focus-within/input:text-sky-400 transition-colors uppercase">Line</div>
+                                            <input
+                                                type="text"
+                                                placeholder="Line ID"
+                                                value={formData.lineId}
+                                                onChange={(e) => setFormData({ ...formData, lineId: e.target.value })}
+                                                className="w-full bg-stone-950/40 border border-white/5 focus:border-sky-500/40 rounded-lg py-2.5 pl-9 pr-3 text-stone-200 placeholder-stone-600 outline-none transition-all text-sm"
+                                            />
+                                        </div>
+
+                                        <div className="relative group/input">
+                                            <MapPin className="absolute top-3 left-3 text-stone-600 group-focus-within/input:text-sky-400 transition-colors" size={14} />
+                                            <textarea
+                                                placeholder="ที่อยู่สำหรับจัดส่ง *"
+                                                value={formData.address}
+                                                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                                                rows={2}
+                                                className="w-full bg-stone-950/40 border border-white/5 focus:border-sky-500/40 rounded-lg py-2.5 pl-9 pr-3 text-stone-200 placeholder-stone-600 outline-none transition-all resize-none text-sm"
+                                            ></textarea>
+                                        </div>
+
+                                        <div className="relative group/input">
+                                            <FileText className="absolute top-3 left-3 text-stone-600 group-focus-within/input:text-sky-400 transition-colors" size={14} />
+                                            <textarea
+                                                placeholder="หมายเหตุ (ที่อยู่จัดส่ง, ช่องทางติดต่อ)"
+                                                value={formData.note}
+                                                onChange={(e) => setFormData({ ...formData, note: e.target.value })}
+                                                rows={2}
+                                                className="w-full bg-stone-950/40 border border-white/5 focus:border-sky-500/40 rounded-lg py-2.5 pl-9 pr-3 text-stone-200 placeholder-stone-600 outline-none transition-all resize-none text-sm"
+                                            ></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {!customer && (
+                                    <div className="mb-5 p-3 rounded-xl bg-sky-500/5 border border-sky-500/10 text-center">
+                                        <p className="text-[0.5rem] text-stone-500 mb-1 uppercase tracking-widest font-medium">Member Only</p>
+                                        <Link to="/login" className="text-[10px] font-bold text-sky-400 hover:text-sky-300 uppercase tracking-wider inline-flex items-center gap-1">
+                                            เข้าสู่ระบบเพื่อรับส่วนลด <ArrowRight size={10} />
+                                        </Link>
+                                    </div>
+                                )}
+
+                                <div>
+                                    <span className="block text-[9px] text-stone-500 uppercase tracking-widest font-bold mb-3">ช่องทางการชำระเงิน</span>
+                                    <div className="grid grid-cols-3 gap-2 mb-4">
+                                        <button
+                                            type="button"
+                                            onClick={() => setPaymentMethod('transfer')}
+                                            className={`p-2.5 rounded-xl border transition-all flex flex-col items-center gap-1.5 ${paymentMethod === 'transfer' ? 'bg-sky-500/10 border-sky-500 text-sky-400' : 'bg-stone-950/40 border-white/5 text-stone-500 hover:border-white/10'}`}
+                                        >
+                                            <div className={`p-1.5 rounded-lg ${paymentMethod === 'transfer' ? 'bg-sky-500/20' : 'bg-white/5'}`}>
+                                                <FileText size={14} />
+                                            </div>
+                                            <span className="text-[9px] font-bold uppercase tracking-wider">โอนเงิน</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setPaymentMethod('qr')}
+                                            className={`p-2.5 rounded-xl border transition-all flex flex-col items-center gap-1.5 ${paymentMethod === 'qr' ? 'bg-cyan-500/10 border-cyan-500 text-cyan-400' : 'bg-stone-950/40 border-white/5 text-stone-500 hover:border-white/10'}`}
+                                        >
+                                            <div className={`p-1.5 rounded-lg ${paymentMethod === 'qr' ? 'bg-cyan-500/20' : 'bg-white/5'}`}>
+                                                <CheckCircle2 size={14} />
+                                            </div>
+                                            <span className="text-[9px] font-bold uppercase tracking-wider">QR Code</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setPaymentMethod('cash')}
+                                            className={`p-2.5 rounded-xl border transition-all flex flex-col items-center gap-1.5 ${paymentMethod === 'cash' ? 'bg-amber-500/10 border-amber-500 text-amber-400' : 'bg-stone-950/40 border-white/5 text-stone-500 hover:border-white/10'}`}
+                                        >
+                                            <div className={`p-1.5 rounded-lg ${paymentMethod === 'cash' ? 'bg-amber-500/20' : 'bg-white/5'}`}>
+                                                <User size={14} />
+                                            </div>
+                                            <span className="text-[9px] font-bold uppercase tracking-wider">ปลายทาง</span>
+                                        </button>
+                                    </div>
+
+                                    {paymentMethod === 'transfer' && (
+                                        <div className="mb-5 p-4 rounded-xl bg-white/5 border border-white/10 animate-fade-in">
+                                            <div className="text-[10px] font-bold text-sky-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse"></div>
+                                                ข้อมูลบัญชีธนาคาร
+                                            </div>
+                                            <div className="space-y-2">
+                                                <div className="flex justify-between items-center text-xs">
+                                                    <span className="text-stone-500">ธนาคาร</span>
+                                                    <span className="text-stone-200 font-bold">กสิกรไทย (K-Bank)</span>
+                                                </div>
+                                                <div className="flex justify-between items-center text-xs">
+                                                    <span className="text-stone-500">เลขบัญชี</span>
+                                                    <span className="text-sky-400 font-mono font-bold tracking-wider">123-4-56789-0</span>
+                                                </div>
+                                                <div className="flex justify-between items-center text-xs">
+                                                    <span className="text-stone-500">ชื่อบัญชี</span>
+                                                    <span className="text-stone-200 font-bold">นายสมชาย ใจดี</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {paymentMethod === 'qr' && (
+                                        <div className="mb-5 p-4 rounded-xl bg-white/5 border border-white/10 animate-fade-in text-center">
+                                            <div className="text-[10px] font-bold text-cyan-400 uppercase tracking-widest mb-3 flex items-center justify-center gap-2">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse"></div>
+                                                PROMPTPAY QR CODE
+                                            </div>
+                                            <div className="bg-white p-2 rounded-lg inline-block mb-3 shadow-xl">
+                                                <img src="/qr-payment.png" alt="QR Payment" className="w-32 h-32 object-contain" />
+                                            </div>
+                                            <p className="text-[10px] text-stone-500 uppercase tracking-widest font-medium">สแกนเพื่อชำระเงินจำนวน {formatPrice(cartTotal)}</p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="flex justify-between items-end mb-5">
+                                    <div>
+                                        <span className="block text-[9px] text-stone-500 uppercase tracking-widest font-bold">Total</span>
+                                        <span className="text-stone-400 font-light text-xs">รวมภาษีแล้ว</span>
+                                    </div>
+                                    <div className="text-2xl font-bold text-sky-400 tracking-tighter">{formatPrice(cartTotal)}</div>
+                                </div>
+
+                                <button
+                                    onClick={handleCheckout}
+                                    disabled={isSubmitting}
+                                    className={`w-full font-bold uppercase tracking-wider text-[11px] py-3 rounded-xl flex justify-center items-center gap-2 transition-all transform hover:-translate-y-0.5 active:scale-[0.98] ${isSubmitting ? 'bg-stone-800 text-stone-600 cursor-not-allowed border border-white/5' : 'bg-sky-500 hover:bg-sky-400 text-stone-950 shadow-lg hover:shadow-sky-500/30'}`}
+                                >
+                                    {isSubmitting ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
+                                    {isSubmitting ? 'กำลังส่งคำสั่งซื้อ...' : 'ยืนยันสั่งซื้อสินค้า'}
+                                </button>
+
+                                <p className="text-center text-stone-600 text-[9px] mt-4 uppercase tracking-wider font-medium">* กดสั่งซื้อ = ยอมรับข้อกำหนด</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </main>
+    );
+};
+
+export default Cart;

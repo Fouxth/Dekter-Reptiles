@@ -11,6 +11,11 @@ function formatCurrency(n) {
     }) ?? '0.00';
 }
 
+const capitalize = (str) => {
+    if (!str) return str;
+    return str.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+};
+
 export default function Receipt({ order, onClose }) {
     const receiptRef = useRef(null);
     const [settings, setSettings] = useState({});
@@ -82,7 +87,7 @@ export default function Receipt({ order, onClose }) {
                     <div class="line"></div>
                     ${order.items.map(item => `
                         <div class="row">
-                            <span style="flex: 1;">${item.snake?.name || 'สินค้า'}</span>
+                            <span style="flex: 1;">${capitalize(item.snake?.name) || 'สินค้า'}</span>
                             <span style="width: 50px; text-align: right;">${formatCurrency(item.price * item.quantity)}</span>
                         </div>
                         <div style="font-size: 10px; color: #666;">${item.quantity} x ${formatCurrency(item.price)}</div>
@@ -182,7 +187,7 @@ export default function Receipt({ order, onClose }) {
                             {order.items.map((item, idx) => (
                                 <div key={idx}>
                                     <div className="flex justify-between items-baseline mb-1">
-                                        <span className="text-white font-bold text-sm">{item.snake?.name || 'สินค้า'}</span>
+                                        <span className="text-white font-bold text-sm">{capitalize(item.snake?.name) || 'สินค้า'}</span>
                                         <span className="text-white font-bold text-sm">฿{formatCurrency(item.price * item.quantity)}</span>
                                     </div>
                                     <div className="text-[10px] text-slate-500 flex gap-2">

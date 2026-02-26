@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import {
     Save, Building, Phone, Monitor, CreditCard, Bell, Database,
     CheckCircle2, AlertCircle, Clock, Banknote, ArrowLeftRight,
-    MessageSquare, Store, Settings as SettingsIcon
+    MessageSquare, Store, Settings as SettingsIcon, Youtube
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
@@ -61,6 +62,7 @@ const TABS = [
     { key: 'pos', label: 'POS', icon: Monitor },
     { key: 'payment', label: 'การชำระเงิน', icon: CreditCard },
     { key: 'notification', label: 'แจ้งเตือน', icon: Bell },
+    { key: 'tiktok', label: 'โซเชียล/TikTok', icon: MessageSquare },
     { key: 'data', label: 'จัดการข้อมูล', icon: Database },
 ];
 
@@ -77,20 +79,42 @@ export default function Settings() {
         show_cost_price: true, auto_print_receipt: true,
         // Payment
         accept_cash: true, accept_transfer: true,
+        payment_enabled: true,
+        bank_account_name: '',
+        bank_account_number: '',
+        promptpay_enabled: true,
+        promptpay_id: '',
+        // Contact
+        contact_phone: '',
+        contact_email: '',
+        contact_line: '',
+        contact_address: '',
+        opening_hours: '',
         // Notifications
         notify_low_stock: true, notify_sales_target: true,
         daily_target: 10000, notify_sound: false,
         // Data
         currency_symbol: '฿',
+        // TikTok
+        tiktok_urls: '[]',
+        // Social Links
+        social_fb: '[]',
+        social_ig: '[]',
+        social_yt: '[]',
     });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [status, setStatus] = useState(null);
 
+    const { getToken } = useAuth();
+
     async function loadSettings() {
         setLoading(true);
         try {
-            const res = await fetch(`${API}/settings`);
+            const token = getToken();
+            const res = await fetch(`${API}/settings`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
             if (res.ok) {
                 const data = await res.json();
                 // Backend stores all values as strings — parse them back to correct types
@@ -117,13 +141,20 @@ export default function Settings() {
         e?.preventDefault();
         setSaving(true); setStatus(null);
         try {
+            const token = getToken();
             const res = await fetch(`${API}/settings`, {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify(settings)
             });
             if (res.ok) { setStatus({ type: 'success', message: 'บันทึกการตั้งค่าเรียบร้อยแล้ว' }); setTimeout(() => setStatus(null), 3000); }
-            else throw new Error('บันทึกไม่สำเร็จ');
+            else {
+                const data = await res.json();
+                throw new Error(data.error || 'บันทึกไม่สำเร็จ');
+            }
         } catch (e) {
             setStatus({ type: 'error', message: e.message || 'เกิดข้อผิดพลาดในการบันทึก' });
         } finally { setSaving(false); }
@@ -170,15 +201,23 @@ export default function Settings() {
                                     </div>
                                     <div className="form-group">
                                         <label>เบอร์โทรศัพท์</label>
-                                        <input value={settings.store_phone} onChange={e => set('store_phone', e.target.value)} placeholder="08X-XXX-XXXX" />
+                                        <input value={settings.contact_phone} onChange={e => set('contact_phone', e.target.value)} placeholder="08X-XXX-XXXX" />
                                     </div>
                                     <div className="form-group">
                                         <label>อีเมล</label>
-                                        <input type="email" value={settings.store_email} onChange={e => set('store_email', e.target.value)} placeholder="shop@example.com" />
+                                        <input type="email" value={settings.contact_email} onChange={e => set('contact_email', e.target.value)} placeholder="shop@example.com" />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Line</label>
+                                        <input value={settings.contact_line} onChange={e => set('contact_line', e.target.value)} placeholder="@snakeparadise" />
                                     </div>
                                     <div className="form-group" style={{ gridColumn: 'span 2' }}>
                                         <label>ที่อยู่</label>
-                                        <textarea rows={3} value={settings.store_address} onChange={e => set('store_address', e.target.value)} placeholder="ที่อยู่ที่แสดงบนใบเสร็จ" style={{ resize: 'none' }} />
+                                        <textarea rows={3} value={settings.contact_address} onChange={e => set('contact_address', e.target.value)} placeholder="ที่อยู่ที่แสดงบนใบเสร็จ" style={{ resize: 'none' }} />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>เวลาทำการ</label>
+                                        <input value={settings.opening_hours} onChange={e => set('opening_hours', e.target.value)} placeholder="10:00 - 20:00" />
                                     </div>
                                 </div>
                             </Section>
@@ -245,12 +284,32 @@ export default function Settings() {
 
                     {/* ─── PAYMENT TAB ─── */}
                     {activeTab === 'payment' && (
+                        <>
                         <Section title="ช่องทางการชำระเงิน" subtitle="จัดการช่องทางการรับชำระเงิน">
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                <ToggleRow icon={CreditCard} iconColor="#10b981" title="เปิดช่องทางการชำระเงิน" desc="เปิด/ปิดการรับชำระเงินทั้งหมด" checked={settings.payment_enabled} onChange={v => set('payment_enabled', v)} />
                                 <ToggleRow icon={Banknote} iconColor="#10b981" title="เงินสด" desc="รับชำระด้วยเงินสด" checked={settings.accept_cash} onChange={v => set('accept_cash', v)} />
                                 <ToggleRow icon={ArrowLeftRight} iconColor="#3b82f6" title="โอนเงิน" desc="รับโอนเงินผ่านธนาคาร" checked={settings.accept_transfer} onChange={v => set('accept_transfer', v)} />
+                                <ToggleRow icon={CreditCard} iconColor="#6366f1" title="PromptPay QR" desc="รับชำระผ่าน PromptPay QR" checked={settings.promptpay_enabled} onChange={v => set('promptpay_enabled', v)} />
                             </div>
                         </Section>
+                        <Section title="ข้อมูลบัญชีธนาคาร">
+                            <div className="form-group">
+                                <label>ชื่อบัญชีธนาคาร</label>
+                                <input value={settings.bank_account_name} onChange={e => set('bank_account_name', e.target.value)} placeholder="ชื่อบัญชี" />
+                            </div>
+                            <div className="form-group">
+                                <label>เลขบัญชีธนาคาร</label>
+                                <input value={settings.bank_account_number} onChange={e => set('bank_account_number', e.target.value)} placeholder="เลขบัญชี" />
+                            </div>
+                        </Section>
+                        <Section title="PromptPay QR">
+                            <div className="form-group">
+                                <label>PromptPay ID (เบอร์/เลขบัตรประชาชน)</label>
+                                <input value={settings.promptpay_id} onChange={e => set('promptpay_id', e.target.value)} placeholder="0812345678 หรือ 1234567890123" />
+                            </div>
+                        </Section>
+                        </>
                     )}
 
                     {/* ─── NOTIFICATION TAB ─── */}
@@ -290,6 +349,156 @@ export default function Settings() {
                                     <button type="button" className="btn btn-danger btn-sm" onClick={() => alert('ฟังก์ชันนี้ยังไม่เปิดใช้งาน')}>
                                         รีเซ็ตข้อมูลทั้งหมด
                                     </button>
+                                </div>
+                            </div>
+                        </Section>
+                    )}
+
+                    {/* ─── TIKTOK TAB ─── */}
+                    {activeTab === 'tiktok' && (
+                        <Section title="จัดการ TikTok" subtitle="แนบลิงก์วิดีโอเพื่อแสดงผลในหน้าแรก">
+                            <div className="space-y-4">
+                                <div className="p-4 bg-sky-500/5 border border-sky-500/10 rounded-xl mb-4">
+                                    <p className="text-[10px] uppercase font-bold text-sky-400 tracking-widest mb-1 italic">วิธีใช้งาน</p>
+                                    <p className="text-xs text-stone-400">คัดลอกลิงก์วิดีโอ TikTok (เช่น https://www.tiktok.com/@user/video/123) มาวางในช่องด้านล่าง ระบบจะดึงคลิปไปแสดงผลที่หน้าแรกอัตโนมัติครับ</p>
+                                </div>
+
+                                <div className="space-y-3">
+                                    {(() => {
+                                        let urls = [];
+                                        try {
+                                            urls = typeof settings.tiktok_urls === 'string' ? JSON.parse(settings.tiktok_urls) : (settings.tiktok_urls || []);
+                                        } catch (e) { urls = []; }
+
+                                        if (!Array.isArray(urls)) urls = [];
+
+                                        const handleUrlChange = (index, value) => {
+                                            const newUrls = [...urls];
+                                            newUrls[index] = value;
+                                            set('tiktok_urls', JSON.stringify(newUrls.filter(u => u !== '')));
+                                        };
+
+                                        const addUrlField = () => {
+                                            const newUrls = [...urls, ''];
+                                            set('tiktok_urls', JSON.stringify(newUrls));
+                                        };
+
+                                        const removeUrlField = (index) => {
+                                            const newUrls = urls.filter((_, i) => i !== index);
+                                            set('tiktok_urls', JSON.stringify(newUrls));
+                                        };
+
+                                        return (
+                                            <>
+                                                {urls.map((url, index) => (
+                                                    <div key={index} className="flex gap-2">
+                                                        <input
+                                                            value={url}
+                                                            onChange={e => handleUrlChange(index, e.target.value)}
+                                                            placeholder="https://www.tiktok.com/@username/video/..."
+                                                            className="flex-1"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => removeUrlField(index)}
+                                                            className="px-3 rounded-lg bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-colors"
+                                                        >
+                                                            ลบ
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                                <button
+                                                    type="button"
+                                                    onClick={addUrlField}
+                                                    className="w-full py-2.5 rounded-xl border border-dashed border-white/10 text-stone-400 text-xs font-bold hover:border-sky-500/30 hover:text-sky-400 transition-all flex items-center justify-center gap-2"
+                                                >
+                                                    + เพิ่มลิงก์วิดีโอ
+                                                </button>
+                                            </>
+                                        );
+                                    })()}
+                                </div>
+
+                                <div className="mt-8 pt-8 border-t border-white/5 space-y-6">
+                                    <h4 className="text-sm font-bold text-white mb-4">ช่องทางโซเชียลอื่นๆ (เพิ่มได้หลายลิงก์)</h4>
+
+                                    {/* Facebook List */}
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-2 text-blue-400">
+                                            <Building size={16} />
+                                            <span className="text-xs font-bold uppercase tracking-wider">Facebook URLs</span>
+                                        </div>
+                                        {(() => {
+                                            const key = 'social_fb';
+                                            let urls = [];
+                                            try { urls = typeof settings[key] === 'string' ? JSON.parse(settings[key]) : (settings[key] || []); } catch (e) { urls = []; }
+                                            if (!Array.isArray(urls)) urls = [];
+                                            const update = (newUrls) => set(key, JSON.stringify(newUrls.filter(u => u !== '' || urls.length === 0)));
+                                            return (
+                                                <div className="space-y-2">
+                                                    {urls.map((url, i) => (
+                                                        <div key={i} className="flex gap-2">
+                                                            <input value={url} onChange={e => { const n = [...urls]; n[i] = e.target.value; update(n); }} placeholder="https://facebook.com/..." className="flex-1" />
+                                                            <button type="button" onClick={() => update(urls.filter((_, idx) => idx !== i))} className="px-3 rounded-lg bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-colors">ลบ</button>
+                                                        </div>
+                                                    ))}
+                                                    <button type="button" onClick={() => update([...urls, ''])} className="w-full py-2 rounded-lg border border-dashed border-white/10 text-stone-500 text-[10px] font-bold hover:border-blue-500/30 hover:text-blue-400 transition-all">+ เพิ่ม Facebook</button>
+                                                </div>
+                                            );
+                                        })()}
+                                    </div>
+
+                                    {/* Instagram List */}
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-2 text-pink-400">
+                                            <Store size={16} />
+                                            <span className="text-xs font-bold uppercase tracking-wider">Instagram URLs</span>
+                                        </div>
+                                        {(() => {
+                                            const key = 'social_ig';
+                                            let urls = [];
+                                            try { urls = typeof settings[key] === 'string' ? JSON.parse(settings[key]) : (settings[key] || []); } catch (e) { urls = []; }
+                                            if (!Array.isArray(urls)) urls = [];
+                                            const update = (newUrls) => set(key, JSON.stringify(newUrls.filter(u => u !== '' || urls.length === 0)));
+                                            return (
+                                                <div className="space-y-2">
+                                                    {urls.map((url, i) => (
+                                                        <div key={i} className="flex gap-2">
+                                                            <input value={url} onChange={e => { const n = [...urls]; n[i] = e.target.value; update(n); }} placeholder="https://instagram.com/..." className="flex-1" />
+                                                            <button type="button" onClick={() => update(urls.filter((_, idx) => idx !== i))} className="px-3 rounded-lg bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-colors">ลบ</button>
+                                                        </div>
+                                                    ))}
+                                                    <button type="button" onClick={() => update([...urls, ''])} className="w-full py-2 rounded-lg border border-dashed border-white/10 text-stone-500 text-[10px] font-bold hover:border-pink-500/30 hover:text-pink-400 transition-all">+ เพิ่ม Instagram</button>
+                                                </div>
+                                            );
+                                        })()}
+                                    </div>
+
+                                    {/* YouTube List */}
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-2 text-red-500">
+                                            <Youtube size={16} />
+                                            <span className="text-xs font-bold uppercase tracking-wider">YouTube URLs</span>
+                                        </div>
+                                        {(() => {
+                                            const key = 'social_yt';
+                                            let urls = [];
+                                            try { urls = typeof settings[key] === 'string' ? JSON.parse(settings[key]) : (settings[key] || []); } catch (e) { urls = []; }
+                                            if (!Array.isArray(urls)) urls = [];
+                                            const update = (newUrls) => set(key, JSON.stringify(newUrls.filter(u => u !== '' || urls.length === 0)));
+                                            return (
+                                                <div className="space-y-2">
+                                                    {urls.map((url, i) => (
+                                                        <div key={i} className="flex gap-2">
+                                                            <input value={url} onChange={e => { const n = [...urls]; n[i] = e.target.value; update(n); }} placeholder="https://youtube.com/..." className="flex-1" />
+                                                            <button type="button" onClick={() => update(urls.filter((_, idx) => idx !== i))} className="px-3 rounded-lg bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-colors">ลบ</button>
+                                                        </div>
+                                                    ))}
+                                                    <button type="button" onClick={() => update([...urls, ''])} className="w-full py-2 rounded-lg border border-dashed border-white/10 text-stone-500 text-[10px] font-bold hover:border-red-500/30 hover:text-red-400 transition-all">+ เพิ่ม YouTube</button>
+                                                </div>
+                                            );
+                                        })()}
+                                    </div>
                                 </div>
                             </div>
                         </Section>
