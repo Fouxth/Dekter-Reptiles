@@ -60,13 +60,31 @@ const Contact = () => {
                         <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-sky-500/5 blur-[80px] rounded-full pointer-events-none"></div>
                         <h2 className="text-3xl font-light text-stone-200 mb-10 text-center relative z-10">ข้อมูลการ<span className="font-bold text-sky-500">ติดต่อ</span></h2>
                         <div className="space-y-8 relative z-10">
-                            <div className="flex items-start gap-5 group">
-                                <div className="w-12 h-12 glass-dark rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 group-hover:border-sky-500/50 transition-all shadow-lg">
-                                    <MapPin size={22} className="text-sky-500" />
-                                </div>
-                                <div>
-                                    <h3 className="font-bold text-stone-200 uppercase tracking-widest text-sm mb-1">หน้าร้าน</h3>
-                                    <p className="text-stone-400 text-sm leading-relaxed font-light">{contactInfo.address}</p>
+                            <div className="flex flex-col gap-4 w-full">
+                                <div className="flex items-start gap-5 group">
+                                    <div className="w-12 h-12 glass-dark rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 group-hover:border-sky-500/50 transition-all shadow-lg">
+                                        <MapPin size={22} className="text-sky-500" />
+                                    </div>
+                                    <div className="flex-1">
+                                        <h3 className="font-bold text-stone-200 uppercase tracking-widest text-sm mb-1">หน้าร้าน</h3>
+                                        <p className="text-stone-400 text-sm leading-relaxed font-light mb-4">{contactInfo.address}</p>
+
+                                        {/* Embedded Google Map */}
+                                        <div className="w-full h-64 rounded-xl overflow-hidden border border-white/10 relative group shadow-lg">
+                                            <div className="absolute inset-0 bg-sky-500/10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10"></div>
+                                            <iframe
+                                                src="https://maps.google.com/maps?q=DEXTER+Reptiles,+%E0%B8%8B.+%E0%B8%A7%E0%B8%B1%E0%B8%94%E0%B8%AB%E0%B8%99%E0%B8%AD%E0%B8%87%E0%B8%9B%E0%B8%A3%E0%B8%87+Tambon+Bang+Dua,+Amphoe+Mueang+Pathum+Thani,+Pathum+Thani+12000&t=&z=15&ie=UTF8&iwloc=&output=embed"
+                                                width="100%"
+                                                height="100%"
+                                                style={{ border: 0 }}
+                                                allowFullScreen=""
+                                                loading="lazy"
+                                                referrerPolicy="no-referrer-when-downgrade"
+                                                title="Dexter Reptiles Location"
+                                                className="grayscale-[30%] contrast-[1.1] invert-[90%] hue-rotate-180"
+                                            ></iframe>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
