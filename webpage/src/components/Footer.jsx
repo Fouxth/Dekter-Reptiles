@@ -1,7 +1,52 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { getSystemSettings } from '../services/api';
 
 const Footer = () => {
+    const [settings, setSettings] = useState({
+        phone: '080-123-4567',
+        line: '@siamreptiles',
+        facebookText: 'Siam Reptiles',
+        facebookUrl: '#',
+        hours: '10:00 - 20:00 น.'
+    });
+
+    useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                const data = await getSystemSettings();
+                const getText = (key, fallback) => {
+                    const s = data.find(item => item.key === key);
+                    return s ? s.value : fallback;
+                };
+
+                let fbText = 'Dexter Reptiles';
+                let fbUrl = '#';
+                try {
+                    const fbData = JSON.parse(getText('social_fb', '[]'));
+                    if (Array.isArray(fbData) && fbData.length > 0) {
+                        fbText = fbData[0].label || 'Dexter Reptiles';
+                        fbUrl = fbData[0].url || '#';
+                    }
+                } catch (e) {
+                    fbText = 'Dexter Reptiles';
+                }
+
+                setSettings({
+                    phone: getText('contact_phone', '080-123-4567'),
+                    line: getText('contact_line', '@dexterreptiles'),
+                    facebookText: fbText,
+                    facebookUrl: fbUrl,
+                    hours: getText('opening_hours', '10:00 - 20:00 น.')
+                });
+            } catch (error) {
+                console.error("Failed to fetch footer settings:", error);
+            }
+        };
+
+        fetchSettings();
+    }, []);
+
     return (
         <footer className="bg-stone-950 text-stone-400 py-12 border-t border-white/5 mt-auto relative z-10">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-8">
@@ -45,10 +90,10 @@ const Footer = () => {
                 <div>
                     <h4 className="text-white font-bold mb-4">ติดต่อเรา</h4>
                     <ul className="space-y-2">
-                        <li>โทร: 080-123-4567</li>
-                        <li>Line: @dexterreptiles</li>
-                        <li>Facebook: Dexter Reptiles</li>
-                        <li>เปิดบริการ: 10:00 - 20:00 น.</li>
+                        <li>โทร: {settings.phone}</li>
+                        <li>Line: {settings.line}</li>
+                        <li>Facebook: <a href={settings.facebookUrl} target="_blank" rel="noopener noreferrer" className="hover:text-sky-400 transition-colors">{settings.facebookText}</a></li>
+                        <li className="whitespace-pre-line">เปิดบริการ: {settings.hours}</li>
                     </ul>
                 </div>
             </div>

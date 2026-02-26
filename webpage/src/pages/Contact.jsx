@@ -1,9 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MapPin, Phone, Mail, Clock, Send, CheckCircle2 } from 'lucide-react';
 import SEO from '../components/SEO';
+import { getSystemSettings } from '../services/api';
 
 const Contact = () => {
     const [isSubmitted, setIsSubmitted] = useState(false);
+    const [contactInfo, setContactInfo] = useState({
+        address: '123 ถนนสุขุมวิท แขวงคลองเตย เขตคลองเตย กรุงเทพมหานคร 10110',
+        phone: '080-123-4567',
+        email: 'hello@siamreptiles.com',
+        line: '@siamreptiles',
+        hours: 'เปิดให้บริการทุกวัน 10:00 - 20:00 น.'
+    });
+
+    useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                const settings = await getSystemSettings();
+                const getSet = (key, fallback) => settings.find(s => s.key === key)?.value || fallback;
+
+                setContactInfo({
+                    address: getSet('contact_address', '123 ถนนสุขุมวิท แขวงคลองเตย กรุงเทพมหานคร 10110'),
+                    phone: getSet('contact_phone', '080-123-4567'),
+                    email: getSet('contact_email', 'hello@siamreptiles.com'),
+                    line: getSet('contact_line', '@siamreptiles'),
+                    hours: getSet('opening_hours', '10:00 - 20:00')
+                });
+            } catch (error) {
+                console.error("Failed to fetch contact settings:", error);
+            }
+        };
+
+        fetchSettings();
+    }, []);
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -40,7 +69,7 @@ const Contact = () => {
                                     </div>
                                     <div>
                                         <h3 className="font-bold text-stone-200 uppercase tracking-widest text-sm mb-1">หน้าร้าน</h3>
-                                        <p className="text-stone-400 text-sm leading-relaxed font-light">123 ถนนสุขุมวิท แขวงคลองเตย<br />เขตคลองเตย กรุงเทพมหานคร 10110</p>
+                                        <p className="text-stone-400 text-sm leading-relaxed font-light">{contactInfo.address}</p>
                                     </div>
                                 </div>
 
@@ -50,7 +79,7 @@ const Contact = () => {
                                     </div>
                                     <div>
                                         <h3 className="font-bold text-stone-200 uppercase tracking-widest text-sm mb-1">เบอร์โทรศัพท์</h3>
-                                        <p className="text-stone-400 text-sm font-light">080-123-4567</p>
+                                        <p className="text-stone-400 text-sm font-light">{contactInfo.phone}</p>
                                     </div>
                                 </div>
 
@@ -60,8 +89,8 @@ const Contact = () => {
                                     </div>
                                     <div>
                                         <h3 className="font-bold text-stone-200 uppercase tracking-widest text-sm mb-1">อีเมล & Social</h3>
-                                        <p className="text-stone-400 text-sm font-light mb-1">hello@siamreptiles.com</p>
-                                        <p className="text-stone-400 text-sm font-light">Line: <span className="text-cyan-400 font-bold">@siamreptiles</span></p>
+                                        {contactInfo.email && <p className="text-stone-400 text-sm font-light mb-1">{contactInfo.email}</p>}
+                                        {contactInfo.line && <p className="text-stone-400 text-sm font-light">Line: <span className="text-cyan-400 font-bold">{contactInfo.line}</span></p>}
                                     </div>
                                 </div>
 
@@ -71,7 +100,7 @@ const Contact = () => {
                                     </div>
                                     <div>
                                         <h3 className="font-bold text-stone-200 uppercase tracking-widest text-sm mb-1">เวลาทำการ</h3>
-                                        <p className="text-stone-400 text-sm font-light">เปิดให้บริการทุกวัน<br /> 10:00 - 20:00 น.</p>
+                                        <p className="text-stone-400 text-sm font-light whitespace-pre-line">{contactInfo.hours}</p>
                                     </div>
                                 </div>
                             </div>

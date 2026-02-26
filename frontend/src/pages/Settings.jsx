@@ -82,6 +82,7 @@ export default function Settings() {
         payment_enabled: true,
         bank_account_name: '',
         bank_account_number: '',
+        bank_name: '',
         promptpay_enabled: true,
         promptpay_id: '',
         // Contact
@@ -285,30 +286,34 @@ export default function Settings() {
                     {/* ─── PAYMENT TAB ─── */}
                     {activeTab === 'payment' && (
                         <>
-                        <Section title="ช่องทางการชำระเงิน" subtitle="จัดการช่องทางการรับชำระเงิน">
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                                <ToggleRow icon={CreditCard} iconColor="#10b981" title="เปิดช่องทางการชำระเงิน" desc="เปิด/ปิดการรับชำระเงินทั้งหมด" checked={settings.payment_enabled} onChange={v => set('payment_enabled', v)} />
-                                <ToggleRow icon={Banknote} iconColor="#10b981" title="เงินสด" desc="รับชำระด้วยเงินสด" checked={settings.accept_cash} onChange={v => set('accept_cash', v)} />
-                                <ToggleRow icon={ArrowLeftRight} iconColor="#3b82f6" title="โอนเงิน" desc="รับโอนเงินผ่านธนาคาร" checked={settings.accept_transfer} onChange={v => set('accept_transfer', v)} />
-                                <ToggleRow icon={CreditCard} iconColor="#6366f1" title="PromptPay QR" desc="รับชำระผ่าน PromptPay QR" checked={settings.promptpay_enabled} onChange={v => set('promptpay_enabled', v)} />
-                            </div>
-                        </Section>
-                        <Section title="ข้อมูลบัญชีธนาคาร">
-                            <div className="form-group">
-                                <label>ชื่อบัญชีธนาคาร</label>
-                                <input value={settings.bank_account_name} onChange={e => set('bank_account_name', e.target.value)} placeholder="ชื่อบัญชี" />
-                            </div>
-                            <div className="form-group">
-                                <label>เลขบัญชีธนาคาร</label>
-                                <input value={settings.bank_account_number} onChange={e => set('bank_account_number', e.target.value)} placeholder="เลขบัญชี" />
-                            </div>
-                        </Section>
-                        <Section title="PromptPay QR">
-                            <div className="form-group">
-                                <label>PromptPay ID (เบอร์/เลขบัตรประชาชน)</label>
-                                <input value={settings.promptpay_id} onChange={e => set('promptpay_id', e.target.value)} placeholder="0812345678 หรือ 1234567890123" />
-                            </div>
-                        </Section>
+                            <Section title="ช่องทางการชำระเงิน" subtitle="จัดการช่องทางการรับชำระเงิน">
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                    <ToggleRow icon={CreditCard} iconColor="#10b981" title="เปิดช่องทางการชำระเงิน" desc="เปิด/ปิดการรับชำระเงินทั้งหมด" checked={settings.payment_enabled} onChange={v => set('payment_enabled', v)} />
+                                    <ToggleRow icon={Banknote} iconColor="#10b981" title="เงินสด" desc="รับชำระด้วยเงินสด" checked={settings.accept_cash} onChange={v => set('accept_cash', v)} />
+                                    <ToggleRow icon={ArrowLeftRight} iconColor="#3b82f6" title="โอนเงิน" desc="รับโอนเงินผ่านธนาคาร" checked={settings.accept_transfer} onChange={v => set('accept_transfer', v)} />
+                                    <ToggleRow icon={CreditCard} iconColor="#6366f1" title="PromptPay QR" desc="รับชำระผ่าน PromptPay QR" checked={settings.promptpay_enabled} onChange={v => set('promptpay_enabled', v)} />
+                                </div>
+                            </Section>
+                            <Section title="ข้อมูลบัญชีธนาคาร">
+                                <div className="form-group">
+                                    <label>ธนาคารทื่ใช้รับเงิน</label>
+                                    <input value={settings.bank_name} onChange={e => set('bank_name', e.target.value)} placeholder="เช่น กสิกรไทย (K-Bank)" />
+                                </div>
+                                <div className="form-group">
+                                    <label>ชื่อบัญชีธนาคาร</label>
+                                    <input value={settings.bank_account_name} onChange={e => set('bank_account_name', e.target.value)} placeholder="ชื่อบัญชี" />
+                                </div>
+                                <div className="form-group">
+                                    <label>เลขบัญชีธนาคาร</label>
+                                    <input value={settings.bank_account_number} onChange={e => set('bank_account_number', e.target.value)} placeholder="เลขบัญชี" />
+                                </div>
+                            </Section>
+                            <Section title="PromptPay QR">
+                                <div className="form-group">
+                                    <label>PromptPay ID (เบอร์/เลขบัตรประชาชน)</label>
+                                    <input value={settings.promptpay_id} onChange={e => set('promptpay_id', e.target.value)} placeholder="0812345678 หรือ 1234567890123" />
+                                </div>
+                            </Section>
                         </>
                     )}
 

@@ -548,6 +548,18 @@ export default function Orders() {
                                         <p className="text-slate-500 text-xs italic">ไม่มีข้อมูลที่อยู่จัดส่ง</p>
                                     )}
 
+                                    {/* Order Note */}
+                                    {selectedOrder.note && (
+                                        <div className="pt-4 border-t border-white/5">
+                                            <div className="flex items-center gap-2 text-slate-400 text-[10px] uppercase font-bold mb-1">
+                                                <FileText size={12} /> หมายเหตุเพิ่มเติมจากลูกค้า
+                                            </div>
+                                            <p className="text-amber-400/90 text-sm whitespace-pre-wrap leading-relaxed bg-amber-500/5 p-3 rounded-lg border border-amber-500/10 italic">
+                                                {selectedOrder.note}
+                                            </p>
+                                        </div>
+                                    )}
+
                                     {/* Tracking Number Input */}
                                     <div className="pt-4 border-t border-white/5">
                                         <div className="flex items-center gap-2 text-slate-400 text-[10px] uppercase font-bold mb-2">

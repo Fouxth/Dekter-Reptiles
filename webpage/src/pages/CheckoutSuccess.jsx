@@ -3,6 +3,9 @@ import { CheckCircle2, ChevronRight, MapPin, Receipt, ShoppingBag, ArrowRight, U
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useCustomerAuth } from '../contexts/CustomerAuthContext';
 import SEO from '../components/SEO';
+import { getSystemSettings } from '../services/api';
+import generatePayload from 'promptpay-qr';
+import { QRCodeSVG } from 'qrcode.react';
 
 const formatPrice = (price) => {
     return new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', minimumFractionDigits: 0 }).format(price);
@@ -24,6 +27,33 @@ const CheckoutSuccess = () => {
     const [uploading, setUploading] = useState(false);
     const [uploaded, setUploaded] = useState(false);
     const [error, setError] = useState('');
+    const [settings, setSettings] = useState({
+        bank_name: '',
+        bank_account_name: '',
+        bank_account_number: '',
+        promptpay_id: ''
+    });
+
+    useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                const data = await getSystemSettings();
+                const getText = (key, fallback) => {
+                    const s = data.find(item => item.key === key);
+                    return s ? s.value : fallback;
+                };
+                setSettings({
+                    bank_name: getText('bank_name', 'กสิกรไทย (K-Bank)'),
+                    bank_account_name: getText('bank_account_name', ''),
+                    bank_account_number: getText('bank_account_number', ''),
+                    promptpay_id: getText('promptpay_id', '')
+                });
+            } catch (err) {
+                console.error("Failed to fetch settings:", err);
+            }
+        };
+        fetchSettings();
+    }, []);
 
     if (!location.state || !location.state.orderNo) return null;
     const { orderNo, total, orderId, paymentMethod } = location.state;
@@ -118,19 +148,24 @@ const CheckoutSuccess = () => {
                         {paymentMethod === 'transfer' ? (
                             <div className="space-y-3 mb-6">
                                 <div className="flex justify-between items-center text-xs">
-                                    <span className="text-stone-500">ธนาคารกสิกรไทย (K-Bank)</span>
+                                    <span className="text-stone-500">{settings.bank_name || '-'}</span>
                                 </div>
                                 <div className="flex justify-between items-center bg-black/20 p-3 rounded-lg border border-white/5">
-                                    <span className="text-sky-400 font-mono text-sm font-bold tracking-wider">123-4-56789-0</span>
-                                    <span className="text-[10px] text-stone-500 uppercase font-bold">นายสมชาย ใจดี</span>
+                                    <span className="text-sky-400 font-mono text-sm font-bold tracking-wider">{settings.bank_account_number || '-'}</span>
+                                    <span className="text-[10px] text-stone-500 uppercase font-bold">{settings.bank_account_name || '-'}</span>
                                 </div>
                             </div>
                         ) : (
                             <div className="text-center mb-6">
-                                <div className="bg-white p-2 rounded-lg inline-block mb-3 shadow-xl">
-                                    <img src="/qr-payment.png" alt="QR Payment" className="w-32 h-32 object-contain" />
+                                <div className="bg-white p-3 rounded-lg inline-block mb-3 shadow-xl">
+                                    {settings.promptpay_id ? (
+                                        <QRCodeSVG value={generatePayload(settings.promptpay_id, { amount: total })} size={140} />
+                                    ) : (
+                                        <div className="w-[140px] h-[140px] bg-gray-100 flex items-center justify-center text-gray-400 text-xs">ระบุ PromptPay ID ในตั้งค่า</div>
+                                    )}
                                 </div>
-                                <p className="text-[10px] text-stone-500 uppercase tracking-widest font-medium">สแกนเพื่อชำระเงินจำนวน {formatPrice(total)}</p>
+                                <p className="text-[10px] text-stone-500 uppercase tracking-widest font-medium mb-1">สแกนเพื่อชำระเงินจำนวน {formatPrice(total)}</p>
+                                <p className="text-xs text-stone-400">{settings.bank_account_name}</p>
                             </div>
                         )}
 

@@ -3,7 +3,9 @@ import { ShoppingCart, Trash2, CheckCircle2, Loader2, User, Phone, FileText, Arr
 import { useNavigate, Link } from 'react-router-dom';
 import { useCustomerAuth } from '../contexts/CustomerAuthContext';
 import SEO from '../components/SEO';
-import { createOrder } from '../services/api';
+import { getSystemSettings, createOrder } from '../services/api';
+import generatePayload from 'promptpay-qr';
+import { QRCodeSVG } from 'qrcode.react';
 
 const formatPrice = (price) => {
     return new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', minimumFractionDigits: 0 }).format(price);
@@ -22,6 +24,54 @@ const Cart = ({ cart, setCart, updateQuantity, removeFromCart, cartTotal, cartIt
     const [paymentMethod, setPaymentMethod] = useState('transfer'); // default to transfer
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState(null);
+    const [settings, setSettings] = useState({
+        payment_enabled: true,
+        accept_cash: true,
+        accept_transfer: true,
+        promptpay_enabled: true,
+        bank_name: '',
+        bank_account_name: '',
+        bank_account_number: '',
+        promptpay_id: ''
+    });
+
+    useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                const data = await getSystemSettings();
+                const getBool = (key, fallback) => {
+                    const s = data.find(item => item.key === key);
+                    return s ? s.value === 'true' : fallback;
+                };
+                const getText = (key, fallback) => {
+                    const s = data.find(item => item.key === key);
+                    return s ? s.value : fallback;
+                };
+
+                const s = {
+                    payment_enabled: getBool('payment_enabled', true),
+                    accept_cash: getBool('accept_cash', true),
+                    accept_transfer: getBool('accept_transfer', true),
+                    promptpay_enabled: getBool('promptpay_enabled', true),
+                    bank_name: getText('bank_name', 'กสิกรไทย (K-Bank)'),
+                    bank_account_name: getText('bank_account_name', ''),
+                    bank_account_number: getText('bank_account_number', ''),
+                    promptpay_id: getText('promptpay_id', '')
+                };
+
+                setSettings(s);
+
+                // Default payment method if transfer is disabled
+                if (!s.accept_transfer && paymentMethod === 'transfer') {
+                    if (s.promptpay_enabled) setPaymentMethod('qr');
+                    else if (s.accept_cash) setPaymentMethod('cash');
+                }
+            } catch (err) {
+                console.error("Failed to fetch settings:", err);
+            }
+        };
+        fetchSettings();
+    }, []);
 
     // Update form if customer logs in while on cart page
     React.useEffect(() => {
@@ -235,73 +285,94 @@ const Cart = ({ cart, setCart, updateQuantity, removeFromCart, cartTotal, cartIt
 
                                 <div>
                                     <span className="block text-[9px] text-stone-500 uppercase tracking-widest font-bold mb-3">ช่องทางการชำระเงิน</span>
-                                    <div className="grid grid-cols-3 gap-2 mb-4">
-                                        <button
-                                            type="button"
-                                            onClick={() => setPaymentMethod('transfer')}
-                                            className={`p-2.5 rounded-xl border transition-all flex flex-col items-center gap-1.5 ${paymentMethod === 'transfer' ? 'bg-sky-500/10 border-sky-500 text-sky-400' : 'bg-stone-950/40 border-white/5 text-stone-500 hover:border-white/10'}`}
-                                        >
-                                            <div className={`p-1.5 rounded-lg ${paymentMethod === 'transfer' ? 'bg-sky-500/20' : 'bg-white/5'}`}>
-                                                <FileText size={14} />
-                                            </div>
-                                            <span className="text-[9px] font-bold uppercase tracking-wider">โอนเงิน</span>
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setPaymentMethod('qr')}
-                                            className={`p-2.5 rounded-xl border transition-all flex flex-col items-center gap-1.5 ${paymentMethod === 'qr' ? 'bg-cyan-500/10 border-cyan-500 text-cyan-400' : 'bg-stone-950/40 border-white/5 text-stone-500 hover:border-white/10'}`}
-                                        >
-                                            <div className={`p-1.5 rounded-lg ${paymentMethod === 'qr' ? 'bg-cyan-500/20' : 'bg-white/5'}`}>
-                                                <CheckCircle2 size={14} />
-                                            </div>
-                                            <span className="text-[9px] font-bold uppercase tracking-wider">QR Code</span>
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setPaymentMethod('cash')}
-                                            className={`p-2.5 rounded-xl border transition-all flex flex-col items-center gap-1.5 ${paymentMethod === 'cash' ? 'bg-amber-500/10 border-amber-500 text-amber-400' : 'bg-stone-950/40 border-white/5 text-stone-500 hover:border-white/10'}`}
-                                        >
-                                            <div className={`p-1.5 rounded-lg ${paymentMethod === 'cash' ? 'bg-amber-500/20' : 'bg-white/5'}`}>
-                                                <User size={14} />
-                                            </div>
-                                            <span className="text-[9px] font-bold uppercase tracking-wider">ปลายทาง</span>
-                                        </button>
-                                    </div>
 
-                                    {paymentMethod === 'transfer' && (
-                                        <div className="mb-5 p-4 rounded-xl bg-white/5 border border-white/10 animate-fade-in">
-                                            <div className="text-[10px] font-bold text-sky-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse"></div>
-                                                ข้อมูลบัญชีธนาคาร
-                                            </div>
-                                            <div className="space-y-2">
-                                                <div className="flex justify-between items-center text-xs">
-                                                    <span className="text-stone-500">ธนาคาร</span>
-                                                    <span className="text-stone-200 font-bold">กสิกรไทย (K-Bank)</span>
-                                                </div>
-                                                <div className="flex justify-between items-center text-xs">
-                                                    <span className="text-stone-500">เลขบัญชี</span>
-                                                    <span className="text-sky-400 font-mono font-bold tracking-wider">123-4-56789-0</span>
-                                                </div>
-                                                <div className="flex justify-between items-center text-xs">
-                                                    <span className="text-stone-500">ชื่อบัญชี</span>
-                                                    <span className="text-stone-200 font-bold">นายสมชาย ใจดี</span>
-                                                </div>
-                                            </div>
+                                    {!settings.payment_enabled ? (
+                                        <div className="mb-4 p-3 rounded-xl bg-red-500/5 border border-red-500/10 text-center">
+                                            <p className="text-xs text-red-500 font-medium">ระบบชำระเงินปิดปรับปรุงชั่วคราว</p>
+                                            <p className="text-[10px] text-stone-500 mt-1">กรุณาติดต่อแอดมินก่อนทำการสั่งซื้อ</p>
                                         </div>
-                                    )}
+                                    ) : (
+                                        <>
+                                            <div className="grid grid-cols-3 gap-2 mb-4">
+                                                {settings.accept_transfer && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setPaymentMethod('transfer')}
+                                                        className={`p-2.5 rounded-xl border transition-all flex flex-col items-center gap-1.5 ${paymentMethod === 'transfer' ? 'bg-sky-500/10 border-sky-500 text-sky-400' : 'bg-stone-950/40 border-white/5 text-stone-500 hover:border-white/10'}`}
+                                                    >
+                                                        <div className={`p-1.5 rounded-lg ${paymentMethod === 'transfer' ? 'bg-sky-500/20' : 'bg-white/5'}`}>
+                                                            <FileText size={14} />
+                                                        </div>
+                                                        <span className="text-[9px] font-bold uppercase tracking-wider">โอนเงิน</span>
+                                                    </button>
+                                                )}
+                                                {settings.promptpay_enabled && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setPaymentMethod('qr')}
+                                                        className={`p-2.5 rounded-xl border transition-all flex flex-col items-center gap-1.5 ${paymentMethod === 'qr' ? 'bg-cyan-500/10 border-cyan-500 text-cyan-400' : 'bg-stone-950/40 border-white/5 text-stone-500 hover:border-white/10'}`}
+                                                    >
+                                                        <div className={`p-1.5 rounded-lg ${paymentMethod === 'qr' ? 'bg-cyan-500/20' : 'bg-white/5'}`}>
+                                                            <CheckCircle2 size={14} />
+                                                        </div>
+                                                        <span className="text-[9px] font-bold uppercase tracking-wider">QR Code</span>
+                                                    </button>
+                                                )}
+                                                {settings.accept_cash && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setPaymentMethod('cash')}
+                                                        className={`p-2.5 rounded-xl border transition-all flex flex-col items-center gap-1.5 ${paymentMethod === 'cash' ? 'bg-amber-500/10 border-amber-500 text-amber-400' : 'bg-stone-950/40 border-white/5 text-stone-500 hover:border-white/10'}`}
+                                                    >
+                                                        <div className={`p-1.5 rounded-lg ${paymentMethod === 'cash' ? 'bg-amber-500/20' : 'bg-white/5'}`}>
+                                                            <User size={14} />
+                                                        </div>
+                                                        <span className="text-[9px] font-bold uppercase tracking-wider">ปลายทาง</span>
+                                                    </button>
+                                                )}
+                                            </div>
 
-                                    {paymentMethod === 'qr' && (
-                                        <div className="mb-5 p-4 rounded-xl bg-white/5 border border-white/10 animate-fade-in text-center">
-                                            <div className="text-[10px] font-bold text-cyan-400 uppercase tracking-widest mb-3 flex items-center justify-center gap-2">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse"></div>
-                                                PROMPTPAY QR CODE
-                                            </div>
-                                            <div className="bg-white p-2 rounded-lg inline-block mb-3 shadow-xl">
-                                                <img src="/qr-payment.png" alt="QR Payment" className="w-32 h-32 object-contain" />
-                                            </div>
-                                            <p className="text-[10px] text-stone-500 uppercase tracking-widest font-medium">สแกนเพื่อชำระเงินจำนวน {formatPrice(cartTotal)}</p>
-                                        </div>
+                                            {paymentMethod === 'transfer' && settings.accept_transfer && (
+                                                <div className="mb-5 p-4 rounded-xl bg-white/5 border border-white/10 animate-fade-in">
+                                                    <div className="text-[10px] font-bold text-sky-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                                        <div className="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse"></div>
+                                                        ข้อมูลบัญชีธนาคาร
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <div className="flex justify-between items-center text-xs">
+                                                            <span className="text-stone-500">ธนาคาร</span>
+                                                            <span className="text-stone-200 font-bold">{settings.bank_name || '-'}</span>
+                                                        </div>
+                                                        <div className="flex justify-between items-center text-xs">
+                                                            <span className="text-stone-500">เลขบัญชี</span>
+                                                            <span className="text-sky-400 font-mono font-bold tracking-wider">{settings.bank_account_number || '-'}</span>
+                                                        </div>
+                                                        <div className="flex justify-between items-center text-xs">
+                                                            <span className="text-stone-500">ชื่อบัญชี</span>
+                                                            <span className="text-stone-200 font-bold">{settings.bank_account_name || '-'}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {paymentMethod === 'qr' && settings.promptpay_enabled && (
+                                                <div className="mb-5 p-4 rounded-xl bg-white/5 border border-white/10 animate-fade-in text-center">
+                                                    <div className="text-[10px] font-bold text-cyan-400 uppercase tracking-widest mb-3 flex items-center justify-center gap-2">
+                                                        <div className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse"></div>
+                                                        PROMPTPAY QR CODE
+                                                    </div>
+                                                    <div className="bg-white p-3 rounded-lg inline-block mb-3 shadow-xl">
+                                                        {settings.promptpay_id ? (
+                                                            <QRCodeSVG value={generatePayload(settings.promptpay_id, { amount: cartTotal })} size={140} />
+                                                        ) : (
+                                                            <div className="w-[140px] h-[140px] bg-gray-100 flex items-center justify-center text-gray-400 text-xs">ระบุ PromptPay ID ในตั้งค่า</div>
+                                                        )}
+                                                    </div>
+                                                    <p className="text-[10px] text-stone-500 uppercase tracking-widest font-medium">สแกนเพื่อชำระเงินจำนวน {formatPrice(cartTotal)}</p>
+                                                    <p className="text-xs text-stone-400 mt-2">{settings.bank_account_name}</p>
+                                                </div>
+                                            )}
+                                        </>
                                     )}
                                 </div>
 

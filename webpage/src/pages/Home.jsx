@@ -4,28 +4,36 @@ import { useNavigate } from 'react-router-dom';
 import SEO from '../components/SEO';
 import ProductCard from '../components/ProductCard';
 import TikTokSection from '../components/TikTokSection';
-import { getSnakes } from '../services/api';
+import { getSnakes, getSystemSettings } from '../services/api';
 import { MOCK_ARTICLES } from '../data/mockData';
 
 const Home = ({ addToCart }) => {
     const navigate = useNavigate();
     const [featuredSnakes, setFeaturedSnakes] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [contactPhone, setContactPhone] = useState('080-123-4567');
 
     useEffect(() => {
-        const fetchFeatuedSnakes = async () => {
+        const fetchData = async () => {
             try {
                 // Fetch the newest 4 snakes marked as forSale
                 const data = await getSnakes({ forSale: true, limit: 4, sortBy: 'createdAt', order: 'desc' });
                 setFeaturedSnakes(data);
+
+                // Fetch system settings for contact phone
+                const settingsInfo = await getSystemSettings();
+                const phoneSetting = settingsInfo.find(s => s.key === 'contact_phone');
+                if (phoneSetting && phoneSetting.value) {
+                    setContactPhone(phoneSetting.value);
+                }
             } catch (error) {
-                console.error("Failed to load featured snakes:", error);
+                console.error("Failed to load home data:", error);
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchFeatuedSnakes();
+        fetchData();
     }, []);
 
     return (
@@ -227,8 +235,8 @@ const Home = ({ addToCart }) => {
                         >
                             <Mail size={20} /> ติดต่อสอบถามเรา
                         </button>
-                        <a href="tel:0801234567" className="glass hover:bg-white/10 text-stone-200 font-bold tracking-widest uppercase py-4 px-10 rounded-full transition-all flex items-center justify-center gap-3 border border-white/20">
-                            <Phone size={20} /> 080-123-4567
+                        <a href={`tel:${contactPhone.replace(/[^0-9+]/g, '')}`} className="glass hover:bg-white/10 text-stone-200 font-bold tracking-widest uppercase py-4 px-10 rounded-full transition-all flex items-center justify-center gap-3 border border-white/20">
+                            <Phone size={20} /> {contactPhone}
                         </a>
                     </div>
                 </div>
