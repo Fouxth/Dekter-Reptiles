@@ -105,15 +105,56 @@ router.post('/', async (req: Request, res: Response) => {
         }
 
         const discountAmount = Number(discount) || 0;
+
+        // Fetch settings for orderNo prefix and VAT
+        const settings = await prisma.systemSetting.findMany({
+            where: {
+                key: { in: ['receipt_prefix', 'enable_vat', 'tax_rate'] }
+            }
+        });
+        const getSetting = (k: string, fb: string) => settings.find(s => s.key === k)?.value || fb;
+
+        const prefix = getSetting('receipt_prefix', 'POS');
+        const enableVat = getSetting('enable_vat', 'false') === 'true';
+        const taxRate = parseFloat(getSetting('tax_rate', '7')) || 7;
+
+        // Generate Order No (e.g., POS-20231025-00001)
+        const today = new Date();
+        const yyyymmdd = today.toISOString().slice(0, 10).replace(/-/g, '');
+
+        // Find latest order for today to increment running number
+        const latestOrder = await prisma.order.findFirst({
+            where: {
+                orderNo: { startsWith: `${prefix}-${yyyymmdd}-` }
+            },
+            orderBy: { orderNo: 'desc' },
+            select: { orderNo: true }
+        });
+
+        let nextNum = 1;
+        if (latestOrder) {
+            const lastPart = latestOrder.orderNo.split('-').pop();
+            if (lastPart && !isNaN(Number(lastPart))) {
+                nextNum = parseInt(lastPart, 10) + 1;
+            }
+        }
+
+        const orderNo = `${prefix}-${yyyymmdd}-${String(nextNum).padStart(5, '0')}`;
+
+        // Calculate tax
+        const currentTotal = total - discountAmount;
+        const tax = enableVat ? (currentTotal * taxRate) / (100 + taxRate) : 0; // Assuming inclusive VAT based on original receipt logic
+
         // Create order and update stock in transaction
         const order = await prisma.$transaction(async (tx) => {
             // Create order
             const newOrder = await tx.order.create({
                 data: {
+                    orderNo,
                     subtotal: total,
                     discount: discountAmount,
-                    tax: 0,
-                    total: total - discountAmount,
+                    tax: tax,
+                    total: currentTotal,
                     paymentMethod: paymentMethod || 'cash',
                     status: paymentMethod === 'transfer' ? 'pending_payment' : 'completed',
                     note,

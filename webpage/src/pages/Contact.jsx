@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Phone, Mail, Clock, Send, CheckCircle2 } from 'lucide-react';
+import { MapPin, Phone, Mail, Clock } from 'lucide-react';
 import SEO from '../components/SEO';
 import { getSystemSettings } from '../services/api';
 
 const Contact = () => {
-    const [isSubmitted, setIsSubmitted] = useState(false);
     const [contactInfo, setContactInfo] = useState({
         address: '123 ถนนสุขุมวิท แขวงคลองเตย เขตคลองเตย กรุงเทพมหานคร 10110',
         phone: '080-123-4567',
         email: 'hello@siamreptiles.com',
         line: '@siamreptiles',
+        facebook: '',
         hours: 'เปิดให้บริการทุกวัน 10:00 - 20:00 น.'
     });
 
@@ -19,11 +19,14 @@ const Contact = () => {
                 const settings = await getSystemSettings();
                 const getSet = (key, fallback) => settings.find(s => s.key === key)?.value || fallback;
 
+                let facebook = getSet('contact_facebook', '');
+
                 setContactInfo({
                     address: getSet('contact_address', '123 ถนนสุขุมวิท แขวงคลองเตย กรุงเทพมหานคร 10110'),
                     phone: getSet('contact_phone', '080-123-4567'),
                     email: getSet('contact_email', 'hello@siamreptiles.com'),
                     line: getSet('contact_line', '@siamreptiles'),
+                    facebook,
                     hours: getSet('opening_hours', '10:00 - 20:00')
                 });
             } catch (error) {
@@ -33,11 +36,6 @@ const Contact = () => {
 
         fetchSettings();
     }, []);
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        setIsSubmitted(true);
-    };
 
     return (
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 animate-fade-in relative min-h-[80vh]">
@@ -57,98 +55,58 @@ const Contact = () => {
                     <p className="text-stone-400 font-light text-lg">เรายินดีให้คำปรึกษาและตอบทุกข้อสงสัยของคุณ</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-8 lg:gap-12">
-                    {/* Contact Info */}
-                    <div className="md:col-span-2 space-y-8">
-                        <div>
-                            <h2 className="text-2xl font-light text-stone-200 mb-8">ข้อมูลการ<span className="font-bold text-sky-500">ติดต่อ</span></h2>
-                            <div className="space-y-8">
-                                <div className="flex items-start gap-5 group">
-                                    <div className="w-12 h-12 glass-dark rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 group-hover:border-sky-500/50 transition-all shadow-lg">
-                                        <MapPin size={22} className="text-sky-500" />
-                                    </div>
-                                    <div>
-                                        <h3 className="font-bold text-stone-200 uppercase tracking-widest text-sm mb-1">หน้าร้าน</h3>
-                                        <p className="text-stone-400 text-sm leading-relaxed font-light">{contactInfo.address}</p>
-                                    </div>
+                <div className="max-w-2xl mx-auto">
+                    <div className="glass-card p-10 md:p-14 rounded-[2.5rem] relative overflow-hidden shadow-2xl border border-white/5">
+                        <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-sky-500/5 blur-[80px] rounded-full pointer-events-none"></div>
+                        <h2 className="text-3xl font-light text-stone-200 mb-10 text-center relative z-10">ข้อมูลการ<span className="font-bold text-sky-500">ติดต่อ</span></h2>
+                        <div className="space-y-8 relative z-10">
+                            <div className="flex items-start gap-5 group">
+                                <div className="w-12 h-12 glass-dark rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 group-hover:border-sky-500/50 transition-all shadow-lg">
+                                    <MapPin size={22} className="text-sky-500" />
                                 </div>
-
-                                <div className="flex items-start gap-5 group">
-                                    <div className="w-12 h-12 glass-dark rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 group-hover:border-sky-500/50 transition-all shadow-lg">
-                                        <Phone size={22} className="text-sky-500" />
-                                    </div>
-                                    <div>
-                                        <h3 className="font-bold text-stone-200 uppercase tracking-widest text-sm mb-1">เบอร์โทรศัพท์</h3>
-                                        <p className="text-stone-400 text-sm font-light">{contactInfo.phone}</p>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-start gap-5 group">
-                                    <div className="w-12 h-12 glass-dark rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 group-hover:border-sky-500/50 transition-all shadow-lg">
-                                        <Mail size={22} className="text-sky-500" />
-                                    </div>
-                                    <div>
-                                        <h3 className="font-bold text-stone-200 uppercase tracking-widest text-sm mb-1">อีเมล & Social</h3>
-                                        {contactInfo.email && <p className="text-stone-400 text-sm font-light mb-1">{contactInfo.email}</p>}
-                                        {contactInfo.line && <p className="text-stone-400 text-sm font-light">Line: <span className="text-cyan-400 font-bold">{contactInfo.line}</span></p>}
-                                    </div>
-                                </div>
-
-                                <div className="flex items-start gap-5 group">
-                                    <div className="w-12 h-12 glass-dark rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 group-hover:border-sky-500/50 transition-all shadow-lg">
-                                        <Clock size={22} className="text-sky-500" />
-                                    </div>
-                                    <div>
-                                        <h3 className="font-bold text-stone-200 uppercase tracking-widest text-sm mb-1">เวลาทำการ</h3>
-                                        <p className="text-stone-400 text-sm font-light whitespace-pre-line">{contactInfo.hours}</p>
-                                    </div>
+                                <div>
+                                    <h3 className="font-bold text-stone-200 uppercase tracking-widest text-sm mb-1">หน้าร้าน</h3>
+                                    <p className="text-stone-400 text-sm leading-relaxed font-light">{contactInfo.address}</p>
                                 </div>
                             </div>
-                        </div>
-                    </div>
 
-                    {/* Contact Form */}
-                    <div className="md:col-span-3">
-                        <div className="glass-card p-8 md:p-12 rounded-[2.5rem] flex flex-col justify-center min-h-[500px] h-full relative overflow-hidden">
-                            {/* Decorative form bg element */}
-                            <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-sky-500/5 blur-[80px] rounded-full"></div>
+                            <div className="flex items-start gap-5 group">
+                                <div className="w-12 h-12 glass-dark rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 group-hover:border-sky-500/50 transition-all shadow-lg">
+                                    <Phone size={22} className="text-sky-500" />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-stone-200 uppercase tracking-widest text-sm mb-1">เบอร์โทรศัพท์</h3>
+                                    <p className="text-stone-400 text-sm font-light">{contactInfo.phone}</p>
+                                </div>
+                            </div>
 
-                            {isSubmitted ? (
-                                <div className="text-center py-8 animate-fade-in relative z-10">
-                                    <div className="w-20 h-20 bg-sky-500/10 border border-sky-500/30 text-sky-400 rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_30px_rgba(14,165,233,0.2)]">
-                                        <CheckCircle2 size={40} />
-                                    </div>
-                                    <h3 className="text-3xl font-light text-stone-100 mb-4">ส่งข้อความ<span className="font-bold">สำเร็จ</span></h3>
-                                    <p className="text-stone-400 mb-10 font-light text-lg">ทีมงาน Dexter Reptilesได้รับข้อความของคุณแล้ว และจะติดต่อกลับโดยเร็วที่สุดครับ</p>
-                                    <button
-                                        onClick={() => setIsSubmitted(false)}
-                                        className="text-sky-500 font-bold uppercase tracking-widest text-sm hover:text-sky-400 border-b border-sky-500/30 hover:border-sky-400 pb-1 transition-all"
-                                    >
-                                        ส่งข้อความใหม่
-                                    </button>
+                            <div className="flex items-start gap-5 group">
+                                <div className="w-12 h-12 glass-dark rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 group-hover:border-sky-500/50 transition-all shadow-lg">
+                                    <Mail size={22} className="text-sky-500" />
                                 </div>
-                            ) : (
-                                <div className="relative z-10">
-                                    <h2 className="text-2xl font-light text-stone-200 mb-8">ส่งข้อความ<span className="font-bold">หาเรา</span></h2>
-                                    <form className="space-y-6" onSubmit={handleSubmit}>
-                                        <div className="space-y-1.5">
-                                            <label className="block text-xs font-bold uppercase tracking-widest text-stone-500">ชื่อ-นามสกุล</label>
-                                            <input type="text" required className="w-full px-5 py-4 rounded-xl border border-white/10 glass bg-stone-900/50 text-stone-200 focus:outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/50 transition-all font-light placeholder-stone-600" placeholder="ชื่อของคุณ" />
-                                        </div>
-                                        <div className="space-y-1.5">
-                                            <label className="block text-xs font-bold uppercase tracking-widest text-stone-500">อีเมล หรือ เบอร์โทรศัพท์</label>
-                                            <input type="text" required className="w-full px-5 py-4 rounded-xl border border-white/10 glass bg-stone-900/50 text-stone-200 focus:outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/50 transition-all font-light placeholder-stone-600" placeholder="สำหรับติดต่อกลับ" />
-                                        </div>
-                                        <div className="space-y-1.5">
-                                            <label className="block text-xs font-bold uppercase tracking-widest text-stone-500">ข้อความ</label>
-                                            <textarea required rows="4" className="w-full px-5 py-4 rounded-xl border border-white/10 glass bg-stone-900/50 text-stone-200 focus:outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/50 transition-all font-light placeholder-stone-600 resize-none" placeholder="พิมพ์ข้อความของคุณที่นี่..."></textarea>
-                                        </div>
-                                        <button type="submit" className="w-full bg-stone-100 hover:bg-white text-stone-900 font-bold uppercase tracking-widest text-sm py-4 px-6 rounded-xl transition-all flex justify-center items-center gap-3 mt-4 shadow-lg hover:shadow-xl">
-                                            ส่งข้อความ <Send size={16} />
-                                        </button>
-                                    </form>
+                                <div>
+                                    <h3 className="font-bold text-stone-200 uppercase tracking-widest text-sm mb-1">อีเมล & Social</h3>
+                                    {contactInfo.email && <p className="text-stone-400 text-sm font-light mb-1">{contactInfo.email}</p>}
+                                    {contactInfo.line && <p className="text-stone-400 text-sm font-light mb-1">Line: <span className="text-cyan-400 font-bold">{contactInfo.line}</span></p>}
+                                    {contactInfo.facebook && (
+                                        <p className="text-stone-400 text-sm font-light">
+                                            Facebook: <a href={contactInfo.facebook} target="_blank" rel="noopener noreferrer" className="text-blue-400 font-bold hover:underline">
+                                                {contactInfo.facebook.replace(/https?:\/\/(www\.)?facebook\.com\//, '').split('/')[0].split('?')[0] || 'Facebook Page'}
+                                            </a>
+                                        </p>
+                                    )}
                                 </div>
-                            )}
+                            </div>
+
+                            <div className="flex items-start gap-5 group">
+                                <div className="w-12 h-12 glass-dark rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 group-hover:border-sky-500/50 transition-all shadow-lg">
+                                    <Clock size={22} className="text-sky-500" />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-stone-200 uppercase tracking-widest text-sm mb-1">เวลาทำการ</h3>
+                                    <p className="text-stone-400 text-sm font-light whitespace-pre-line">{contactInfo.hours}</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

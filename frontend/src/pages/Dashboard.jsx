@@ -9,8 +9,11 @@ import {
 
 const API = import.meta.env.VITE_API_URL || 'http://103.142.150.196:5000/api';
 
-function formatCurrency(n) {
-    return new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 0 }).format(n || 0);
+function formatCurrency(n, currencySymbol = '฿') {
+    return `${currencySymbol}${new Intl.NumberFormat('th-TH', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+    }).format(n || 0)}`;
 }
 
 // Pure SVG line/area chart
@@ -67,7 +70,7 @@ function SalesChart({ data, chartDays, onChangeDays }) {
                 ))}
                 {pts.map((p, i) => (
                     <circle key={i} cx={p.x} cy={p.y} r="3" fill="#10b981" stroke="#0f172a" strokeWidth="1.5">
-                        <title>{p.day}: {formatCurrency(p.sales)} ({p.orders} orders)</title>
+                        <title>{p.day}: {formatCurrency(p.sales, data.currencySymbol)} ({p.orders} orders)</title>
                     </circle>
                 ))}
             </svg>
@@ -127,6 +130,7 @@ export default function Dashboard() {
     const [chartData, setChartData] = useState([]);
     const [chartDays, setChartDays] = useState(7);
     const [loading, setLoading] = useState(true);
+    const [settings, setSettings] = useState({});
 
     async function loadChart(days) {
         const res = await fetch(`${API}/dashboard/sales-chart?days=${days}`);
@@ -136,14 +140,16 @@ export default function Dashboard() {
     async function fetchDashboardData() {
         setLoading(true);
         try {
-            const [statsRes, ordersRes, topRes] = await Promise.all([
+            const [statsRes, ordersRes, topRes, settingsRes] = await Promise.all([
                 fetch(`${API}/dashboard/stats`),
                 fetch(`${API}/dashboard/recent-orders`),
                 fetch(`${API}/dashboard/top-selling`),
+                fetch(`${API}/settings`),
             ]);
             if (statsRes.ok) setStats(await statsRes.json());
             if (ordersRes.ok) setRecentOrders(await ordersRes.json());
             if (topRes.ok) setTopSelling(await topRes.json());
+            if (settingsRes.ok) setSettings(await settingsRes.json());
             await loadChart(7);
         } catch (e) {
             console.error(e);
@@ -159,6 +165,14 @@ export default function Dashboard() {
         await loadChart(d);
     }
 
+    // Pass settings to chart for symbols
+    chartData.currencySymbol = settings.currency_symbol;
+
+    // Daily Sales Target calculation
+    const isTargetEnabled = settings.notify_sales_target === 'true';
+    const rawTarget = Number(settings.daily_target) || 0;
+    const progressPercent = Math.min(((stats?.todaySales || 0) / (rawTarget || 1)) * 100, 100);
+
     const statCards = [
         {
             title: 'ยอดขายวันนี้',
@@ -167,7 +181,10 @@ export default function Dashboard() {
             icon: DollarSign,
             color: 'emerald',
             sub: `${stats?.todayOrderCount || 0} ออเดอร์`,
-            growth: stats?.growth != null ? stats.growth : 0
+            growth: stats?.growth != null ? stats.growth : 0,
+            hasTarget: isTargetEnabled,
+            targetDisplay: `${formatCurrency(stats?.todaySales, settings.currency_symbol)} / ${formatCurrency(rawTarget, settings.currency_symbol)}`,
+            progress: progressPercent
         },
         {
             title: 'กำไรวันนี้',
@@ -175,7 +192,7 @@ export default function Dashboard() {
             format: 'currency',
             icon: TrendingUp,
             color: 'blue',
-            sub: `ยอดขายเดือนนี้ ${formatCurrency(stats?.monthSales)}`
+            sub: `ยอดขายเดือนนี้ ${formatCurrency(stats?.monthSales, settings.currency_symbol)}`
         },
         {
             title: 'งูในสต็อก',
@@ -276,9 +293,20 @@ export default function Dashboard() {
                             )}
                         </div>
                         <p style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '0.2rem' }}>{card.title}</p>
-                        <p style={{ fontSize: '1.3rem', fontWeight: 700, color: '#f8fafc', margin: 0 }}>
-                            {card.format === 'currency' ? formatCurrency(card.value) : card.value.toLocaleString()}{card.suffix || ''}
-                        </p>
+
+                        {card.hasTarget ? (
+                            <div style={{ marginBottom: '0.2rem' }}>
+                                <p style={{ fontSize: '1rem', fontWeight: 700, color: '#f8fafc', margin: 0, marginBottom: '0.2rem' }}>{card.targetDisplay}</p>
+                                <div style={{ background: 'rgba(255,255,255,0.1)', height: '4px', borderRadius: '4px', overflow: 'hidden', marginBottom: '0.25rem' }}>
+                                    <div style={{ width: `${card.progress}%`, height: '100%', background: iconColors[card.color] }} />
+                                </div>
+                            </div>
+                        ) : (
+                            <p style={{ fontSize: '1.3rem', fontWeight: 700, color: '#f8fafc', margin: 0 }}>
+                                {card.format === 'currency' ? formatCurrency(card.value, settings.currency_symbol) : card.value.toLocaleString()}{card.suffix || ''}
+                            </p>
+                        )}
+
                         <p style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '0.25rem' }}>{card.sub}</p>
                     </div>
                 ))}
@@ -358,7 +386,7 @@ export default function Dashboard() {
                                                             {o.items?.map(i => i.snake?.name).join(', ') || '-'}
                                                         </div>
                                                     </td>
-                                                    <td style={{ fontWeight: 700, fontSize: '0.8rem' }}>{formatCurrency(o.total)}</td>
+                                                    <td style={{ fontWeight: 700, fontSize: '0.8rem' }}>{formatCurrency(o.total, settings.currency_symbol)}</td>
                                                     <td>
                                                         <span className={`badge ${o.status === 'completed' ? 'badge-success' : 'badge-gray'}`} style={{ fontSize: '0.65rem', padding: '1px 6px' }}>
                                                             {o.status === 'completed' ? 'สำเร็จ' : 'รอ'}

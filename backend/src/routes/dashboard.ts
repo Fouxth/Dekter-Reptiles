@@ -7,11 +7,28 @@ const router = Router();
 router.get('/stats', async (req: Request, res: Response) => {
     try {
         const prisma: PrismaClient = (req as any).prisma;
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        const settings = await prisma.systemSetting.findUnique({
+            where: { key: 'reset_time' }
+        });
+        const resetTime = settings?.value || '00:00';
+        const [resetHour, resetMin] = resetTime.split(':').map(Number);
+
+        const now = new Date();
+        const today = new Date(now);
+
+        // If current time is before the reset time, we are still "yesterday" operationally
+        if (now.getHours() < resetHour || (now.getHours() === resetHour && now.getMinutes() < resetMin)) {
+            today.setDate(today.getDate() - 1);
+        }
+        today.setHours(resetHour, resetMin, 0, 0);
+
+        // Also adjust startOfMonth and startOfWeek based on the reset time rules
         const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        startOfMonth.setHours(resetHour, resetMin, 0, 0);
+
         const startOfWeek = new Date(today);
         startOfWeek.setDate(today.getDate() - today.getDay());
+        startOfWeek.setHours(resetHour, resetMin, 0, 0);
 
         const [totalSnakes, stockResult, lowStock, totalCategories, totalCustomers,
             todayOrders, weekOrders, monthOrders, totalOrdersCount, revenueResult,
@@ -227,14 +244,30 @@ router.get('/top-selling', async (req: Request, res: Response) => {
 router.get('/sales-chart', async (req: Request, res: Response) => {
     try {
         const prisma: PrismaClient = (req as any).prisma;
+        // Fetch reset time
+        const settings = await prisma.systemSetting.findUnique({
+            where: { key: 'reset_time' }
+        });
+        const resetTime = settings?.value || '00:00';
+        const [resetHour, resetMin] = resetTime.split(':').map(Number);
+
         const days = Math.min(Number(req.query.days) || 7, 30);
         const result = [];
+
+        // Use current operational today as the anchor
+        const now = new Date();
+        const currentOpDay = new Date(now);
+        if (now.getHours() < resetHour || (now.getHours() === resetHour && now.getMinutes() < resetMin)) {
+            currentOpDay.setDate(currentOpDay.getDate() - 1);
+        }
+        currentOpDay.setHours(resetHour, resetMin, 0, 0);
+
         for (let i = days - 1; i >= 0; i--) {
-            const date = new Date();
-            date.setHours(0, 0, 0, 0);
+            const date = new Date(currentOpDay);
             date.setDate(date.getDate() - i);
             const nextDate = new Date(date);
             nextDate.setDate(nextDate.getDate() + 1);
+
             const orders = await prisma.order.findMany({
                 where: { createdAt: { gte: date, lt: nextDate }, status: 'completed' },
             });

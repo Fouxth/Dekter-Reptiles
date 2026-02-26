@@ -20,6 +20,9 @@ import { toast } from 'react-hot-toast';
 
 const API = import.meta.env.VITE_API_URL || 'http://103.142.150.196:5000/api';
 
+// Sound effect for successful checkout
+const successSound = new Audio('https://cdn.pixabay.com/download/audio/2021/08/04/audio_33a7e583f7.mp3');
+
 const capitalize = (str) => {
     if (!str) return str;
     return str.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
@@ -39,6 +42,8 @@ export default function POS() {
     const [processing, setProcessing] = useState(false);
     const [orderSuccess, setOrderSuccess] = useState(null);
     const [showReceipt, setShowReceipt] = useState(false);
+    const [settings, setSettings] = useState({});
+
     // Discount
     const [discount, setDiscount] = useState(0);
     const [discountType, setDiscountType] = useState('amount'); // 'amount' | 'percent'
@@ -54,13 +59,15 @@ export default function POS() {
 
     const fetchData = async () => {
         try {
-            const [snakesRes, categoriesRes] = await Promise.all([
+            const [snakesRes, categoriesRes, settingsRes] = await Promise.all([
                 fetch(`${API}/snakes`),
-                fetch(`${API}/categories`)
+                fetch(`${API}/categories`),
+                fetch(`${API}/settings`)
             ]);
-            if (snakesRes.ok && categoriesRes.ok) {
+            if (snakesRes.ok && categoriesRes.ok && settingsRes.ok) {
                 setSnakes(await snakesRes.json());
                 setCategories(await categoriesRes.json());
+                setSettings(await settingsRes.json());
             }
         } catch (error) {
             console.error('Failed to fetch data:', error);
@@ -92,10 +99,11 @@ export default function POS() {
     }, []);
 
     const formatCurrency = (amount) => {
-        return new Intl.NumberFormat('th-TH', {
-            style: 'currency',
-            currency: 'THB'
-        }).format(amount);
+        const symbol = settings.currency_symbol || '฿';
+        return `${symbol}${new Intl.NumberFormat('th-TH', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(amount)}`;
     };
 
     const filteredSnakes = snakes.filter(snake => {
@@ -176,6 +184,11 @@ export default function POS() {
     const cartTotal = Math.max(0, cartSubtotal - discountAmount);
     const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
+    // Calculates frontend preview of tax based on settings
+    const enableVat = settings.enable_vat === 'true';
+    const taxRate = parseFloat(settings.tax_rate) || 7;
+    const taxPreview = enableVat ? (cartTotal * taxRate) / (100 + taxRate) : 0; // Inclusive tax calculation assumption based on original code
+
     const handleCheckout = async () => {
         if (cart.length === 0) return;
         setProcessing(true);
@@ -199,6 +212,30 @@ export default function POS() {
                 setSelectedCustomer(null);
                 setCustomerSearch('');
                 fetchData();
+
+                // Sound Effect Notification
+                if (settings.notify_sound === 'true') {
+                    successSound.volume = 0.5;
+                    successSound.play().catch(e => console.log('Audio play failed:', e));
+                }
+
+                // Low Stock Warning Notifications
+                if (settings.notify_low_stock === 'true') {
+                    cart.forEach(item => {
+                        const remaining = item.stock - item.quantity;
+                        if (remaining <= 2 && remaining >= 0) {
+                            toast(`⚠️ สินค้า "${item.name}" ใกล้หมดแล้ว (เหลือ ${remaining})`, {
+                                duration: 5000,
+                            });
+                        }
+                    });
+                }
+
+                // Auto Print Receipt
+                if (settings.auto_print_receipt === 'true') {
+                    setShowCheckout(false);
+                    setShowReceipt(true);
+                }
             } else {
                 const err = await response.json();
                 alert(err.error || 'เกิดข้อผิดพลาด');
@@ -459,10 +496,13 @@ export default function POS() {
                                                 <h3 className="font-medium text-white text-xs sm:text-sm leading-snug line-clamp-2 mb-1.5 sm:mb-2 group-hover:text-emerald-400 transition-colors">{snake.name}</h3>
                                             </div>
 
-                                            <div className="flex justify-between items-center mt-1 sm:mt-2 pt-2 border-t border-white/5">
+                                            <div className="flex justify-between items-end mt-1 sm:mt-2 pt-2 border-t border-white/5">
                                                 <div className="flex flex-col">
                                                     <span className="text-[9px] sm:text-[10px] text-slate-400">ราคา</span>
-                                                    <span className="text-sm sm:text-lg font-bold text-emerald-400">{formatCurrency(snake.price)}</span>
+                                                    <span className="text-sm sm:text-lg font-bold text-emerald-400 leading-none mb-0.5">{formatCurrency(snake.price)}</span>
+                                                    {(settings.show_cost_price === 'true') && (user?.role === 'admin' || user?.role === 'manager') && snake.cost && (
+                                                        <span className="text-[8px] sm:text-[9px] text-red-400 font-medium">ทุน: {formatCurrency(snake.cost)}</span>
+                                                    )}
                                                 </div>
                                                 <button className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-700/50 flex items-center justify-center text-emerald-400 group-hover:bg-emerald-500 group-hover:text-white transition-all duration-300 shadow-lg">
                                                     <Plus size={16} />
@@ -534,6 +574,9 @@ export default function POS() {
                                     <div className="h-px bg-white/10 mb-4" />
                                     <p className="text-xs text-slate-500 uppercase tracking-widest mb-1">Total</p>
                                     <p className="text-2xl sm:text-3xl font-bold text-emerald-400">{formatCurrency(orderSuccess.total)}</p>
+                                    {orderSuccess.tax > 0 && (
+                                        <p className="text-xs text-slate-500 mt-2">ประเมินภาษี (VAT {taxRate}%): {formatCurrency(orderSuccess.tax)}</p>
+                                    )}
                                 </div>
                                 <div className="flex gap-3 justify-center">
                                     <button className="btn-secondary px-6 py-3" onClick={() => { setOrderSuccess(null); setShowCheckout(false); }}>ปิด</button>
@@ -631,6 +674,12 @@ export default function POS() {
                                             <div className="flex justify-between mb-1">
                                                 <span className="text-red-400 text-sm">ส่วนลด</span>
                                                 <span className="text-red-400">-{formatCurrency(discountAmount)}</span>
+                                            </div>
+                                        )}
+                                        {enableVat && (
+                                            <div className="flex justify-between mb-1">
+                                                <span className="text-slate-400 text-sm">ภาษี (VAT {taxRate}%)</span>
+                                                <span className="text-slate-300">{formatCurrency(taxPreview)}</span>
                                             </div>
                                         )}
                                         <div className="flex justify-between items-center border-t border-white/10 pt-2 mt-1">

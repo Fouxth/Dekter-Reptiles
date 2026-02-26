@@ -113,7 +113,7 @@ const Navbar = ({ cartItemCount, isMobileMenuOpen, setIsMobileMenuOpen, searchQu
 
             {/* Mobile Menu Dropdown */}
             {isMobileMenuOpen && (
-                <div className="md:hidden glass-dark border-t border-white/5 px-4 pt-4 pb-6 space-y-3 absolute w-full shadow-2xl">
+                <div className="md:hidden bg-stone-950/95 backdrop-blur-xl border-t border-white/10 px-4 pt-4 pb-6 space-y-3 absolute w-full shadow-2xl">
                     <div className="relative mb-4">
                         <input
                             type="text"

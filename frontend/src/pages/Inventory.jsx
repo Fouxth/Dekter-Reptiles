@@ -11,10 +11,12 @@ import {
     Save,
     AlertTriangle,
     Filter,
-    ExternalLink
+    ExternalLink,
+    ListPlus
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 
-const API = import.meta.env.VITE_API_URL || 'http://103.142.150.196:5000/api';
+const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const capitalize = (str) => {
     if (!str) return str;
@@ -30,7 +32,9 @@ export default function Inventory() {
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [showBulkModal, setShowBulkModal] = useState(false);
-    const [bulkData, setBulkData] = useState('');
+    const [bulkItems, setBulkItems] = useState([
+        { name: '', amount: '1', price: '', cost: '', categoryId: '', stock: '' }
+    ]);
     const [editingSnake, setEditingSnake] = useState(null);
     const [formData, setFormData] = useState({
         name: '',
@@ -161,7 +165,66 @@ export default function Inventory() {
             }
         } catch (error) {
             console.error('Submit failed:', error);
-            alert('ไม่สามารถบันทึกได้');
+            toast.error('ไม่สามารถบันทึกได้');
+        }
+    };
+
+    const handleAddBulkRow = () => {
+        setBulkItems([...bulkItems, { name: '', amount: '1', price: '', cost: '', categoryId: categories[0]?.id || '', stock: '' }]);
+    };
+
+    const handleRemoveBulkRow = (index) => {
+        setBulkItems(bulkItems.filter((_, i) => i !== index));
+    };
+
+    const handleBulkChange = (index, field, value) => {
+        const newItems = [...bulkItems];
+        newItems[index][field] = value;
+        setBulkItems(newItems);
+    };
+
+    const handleBulkSubmit = async (e) => {
+        e.preventDefault();
+
+        // Expand the items based on the 'amount' field (if they want to add multiple of the exact same entry as separate items, mostly for unique IDs if needed)
+        // Wait, the prompt says "เพิ่มสินค้าทีละหลายตัว" - Usually in an inventory system, if they add 5 Pinky Mice, they just set stock=5 on one product row.
+        // But for generic products like "Pinky", "Fuzzy", "Hopper" added all at once, each row represents an item.
+
+        const validItems = bulkItems.filter(item => item.name && item.price && item.categoryId && item.stock);
+
+        if (validItems.length === 0) {
+            toast.error('กรุณากรอกข้อมูลให้ครบถ้วนอย่างน้อย 1 รายการ');
+            return;
+        }
+
+        const payloadSnakes = validItems.map(item => ({
+            name: item.name,
+            price: parseFloat(item.price),
+            cost: item.cost ? parseFloat(item.cost) : undefined,
+            stock: parseInt(item.stock, 10),
+            categoryId: parseInt(item.categoryId, 10),
+            forSale: true
+        }));
+
+        try {
+            const response = await fetch(`${API}/snakes/bulk`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ snakes: payloadSnakes })
+            });
+
+            if (response.ok) {
+                toast.success(`เพิ่มสินค้าทั้งหมด ${payloadSnakes.length} รายการแล้ว!`);
+                fetchData();
+                setShowBulkModal(false);
+                setBulkItems([{ name: '', amount: '1', price: '', cost: '', categoryId: categories[0]?.id || '', stock: '' }]);
+            } else {
+                const error = await response.json();
+                toast.error(error.error || 'ไม่สามารถเพิ่มสินค้ายกชุดได้');
+            }
+        } catch (error) {
+            console.error('Bulk submit failed:', error);
+            toast.error('เกิดข้อผิดพลาดในการเชื่อมต่อ');
         }
     };
 
@@ -189,7 +252,10 @@ export default function Inventory() {
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                     <button
-                        onClick={() => setShowBulkModal(true)}
+                        onClick={() => {
+                            setBulkItems([{ name: '', amount: '1', price: '', cost: '', categoryId: categories[0]?.id || '', stock: '' }]);
+                            setShowBulkModal(true);
+                        }}
                         className="btn-secondary flex items-center justify-center gap-2 w-full sm:w-auto"
                     >
                         <Package size={18} className="text-blue-400" />
@@ -713,6 +779,144 @@ export default function Inventory() {
                 </div>,
                 document.body
             )}
+
+            {/* Bulk Add Modal */}
+            {
+                showBulkModal && createPortal(
+                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in p-3 sm:p-4">
+                        <div className="glass-card w-full max-w-5xl overflow-hidden shadow-2xl border border-white/10 scale-100 animate-slide-in max-h-[90vh] flex flex-col">
+                            <div className="flex justify-between items-center p-4 sm:p-6 border-b border-white/5 bg-white/[0.02] shrink-0">
+                                <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2 sm:gap-3">
+                                    <div className="p-1.5 sm:p-2 bg-blue-500/10 rounded-lg">
+                                        <ListPlus size={18} className="text-blue-400" />
+                                    </div>
+                                    เพิ่มสินค้าหลายรายการ
+                                </h2>
+                                <button
+                                    onClick={() => setShowBulkModal(false)}
+                                    className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-all"
+                                >
+                                    <X size={18} />
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleBulkSubmit} className="flex flex-col flex-1 overflow-hidden">
+                                <div className="p-4 sm:p-6 overflow-y-auto bg-slate-900/40 custom-scrollbar flex-1">
+                                    <div className="space-y-4">
+                                        {bulkItems.map((item, index) => (
+                                            <div key={index} className="flex flex-col lg:flex-row gap-3 items-start lg:items-center bg-white/5 p-4 rounded-xl border border-white/5 relative group">
+                                                {/* Delete row button */}
+                                                {bulkItems.length > 1 && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleRemoveBulkRow(index)}
+                                                        className="absolute -top-2 -right-2 lg:static lg:top-auto lg:right-auto w-6 h-6 lg:w-8 lg:h-8 rounded-full bg-red-500/20 lg:bg-white/5 flex items-center justify-center text-red-400 hover:bg-red-500 hover:text-white transition-all shadow-md lg:shadow-none z-10"
+                                                        title="ลบแถวนี้"
+                                                    >
+                                                        <X size={14} />
+                                                    </button>
+                                                )}
+
+                                                <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 w-full">
+                                                    <div className="lg:col-span-2">
+                                                        <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">ชื่อสินค้า *</label>
+                                                        <input
+                                                            type="text"
+                                                            value={item.name}
+                                                            onChange={(e) => handleBulkChange(index, 'name', e.target.value)}
+                                                            className="input-field text-sm py-2"
+                                                            placeholder="เช่น หนูแช่แข็ง (Pinky)"
+                                                            required
+                                                        />
+                                                    </div>
+
+                                                    <div>
+                                                        <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">หมวดหมู่ *</label>
+                                                        <select
+                                                            value={item.categoryId}
+                                                            onChange={(e) => handleBulkChange(index, 'categoryId', e.target.value)}
+                                                            className="input-field appearance-none text-sm py-2"
+                                                            required
+                                                        >
+                                                            <option value="">เลือก</option>
+                                                            {categories.map(cat => (
+                                                                <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+
+                                                    <div>
+                                                        <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">ราคาขาย *</label>
+                                                        <input
+                                                            type="number"
+                                                            value={item.price}
+                                                            onChange={(e) => handleBulkChange(index, 'price', e.target.value)}
+                                                            className="input-field text-sm py-2"
+                                                            min="0" step="0.01"
+                                                            placeholder="฿"
+                                                            required
+                                                        />
+                                                    </div>
+
+                                                    <div>
+                                                        <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">ราคาทุน</label>
+                                                        <input
+                                                            type="number"
+                                                            value={item.cost}
+                                                            onChange={(e) => handleBulkChange(index, 'cost', e.target.value)}
+                                                            className="input-field text-sm py-2"
+                                                            min="0" step="0.01"
+                                                            placeholder="฿"
+                                                        />
+                                                    </div>
+
+                                                    <div>
+                                                        <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">จำนวน *</label>
+                                                        <input
+                                                            type="number"
+                                                            value={item.stock}
+                                                            onChange={(e) => handleBulkChange(index, 'stock', e.target.value)}
+                                                            className="input-field text-sm py-2"
+                                                            min="1"
+                                                            placeholder="จำนวนสต็อก"
+                                                            required
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <div className="mt-4 flex justify-center">
+                                        <button
+                                            type="button"
+                                            onClick={handleAddBulkRow}
+                                            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 border border-blue-500/20 border-dashed transition-colors text-sm font-medium w-full lg:w-auto justify-center"
+                                        >
+                                            <Plus size={16} />
+                                            เพิ่มแถวสินค้า
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="p-4 sm:p-6 border-t border-white/5 flex flex-col-reverse sm:flex-row gap-3 bg-white/[0.02] shrink-0">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowBulkModal(false)}
+                                        className="btn-secondary flex-1 py-3"
+                                    >
+                                        ยกเลิก
+                                    </button>
+                                    <button type="submit" className="btn-primary flex-1 flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-400 hover:to-blue-500 ring-blue-500/50">
+                                        <Save size={18} />
+                                        บันทึกสินค้าทั้งหมด ({bulkItems.length} รายการ)
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>,
+                    document.body
+                )}
         </div>
     );
 }

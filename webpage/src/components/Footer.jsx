@@ -20,16 +20,11 @@ const Footer = () => {
                     return s ? s.value : fallback;
                 };
 
+                let fbUrl = getText('contact_facebook', '#');
                 let fbText = 'Dexter Reptiles';
-                let fbUrl = '#';
-                try {
-                    const fbData = JSON.parse(getText('social_fb', '[]'));
-                    if (Array.isArray(fbData) && fbData.length > 0) {
-                        fbText = fbData[0].label || 'Dexter Reptiles';
-                        fbUrl = fbData[0].url || '#';
-                    }
-                } catch (e) {
-                    fbText = 'Dexter Reptiles';
+
+                if (fbUrl && fbUrl !== '#') {
+                    fbText = fbUrl.replace(/https?:\/\/(www\.)?facebook\.com\//, '').split('/')[0].split('?')[0] || 'Facebook Page';
                 }
 
                 setSettings({

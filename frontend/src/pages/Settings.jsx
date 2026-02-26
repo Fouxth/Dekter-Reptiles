@@ -120,7 +120,9 @@ export default function Settings() {
                 const data = await res.json();
                 // Backend stores all values as strings — parse them back to correct types
                 const parsed = {};
-                for (const [key, val] of Object.entries(data)) {
+                const iterable = Array.isArray(data) ? data.map(item => [item.key, item.value]) : Object.entries(data);
+
+                for (const [key, val] of iterable) {
                     if (val === 'true') parsed[key] = true;
                     else if (val === 'false') parsed[key] = false;
                     else if (val !== null && val !== '' && !isNaN(Number(val)) && typeof val === 'string' && val.trim() !== '') {
@@ -143,13 +145,25 @@ export default function Settings() {
         setSaving(true); setStatus(null);
         try {
             const token = getToken();
+
+            // Clean up empty URLs from arrays before saving
+            const cleanedSettings = { ...settings };
+            ['tiktok_urls', 'social_fb', 'social_ig', 'social_yt'].forEach(k => {
+                try {
+                    const arr = JSON.parse(cleanedSettings[k]);
+                    if (Array.isArray(arr)) {
+                        cleanedSettings[k] = JSON.stringify(arr.filter(u => u && u.trim() !== ''));
+                    }
+                } catch (e) { }
+            });
+
             const res = await fetch(`${API}/settings`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify(settings)
+                body: JSON.stringify(cleanedSettings)
             });
             if (res.ok) { setStatus({ type: 'success', message: 'บันทึกการตั้งค่าเรียบร้อยแล้ว' }); setTimeout(() => setStatus(null), 3000); }
             else {
@@ -212,6 +226,10 @@ export default function Settings() {
                                         <label>Line</label>
                                         <input value={settings.contact_line} onChange={e => set('contact_line', e.target.value)} placeholder="@snakeparadise" />
                                     </div>
+                                    <div className="form-group">
+                                        <label>Facebook</label>
+                                        <input value={settings.contact_facebook} onChange={e => set('contact_facebook', e.target.value)} placeholder="https://facebook.com/DexterReptiles" />
+                                    </div>
                                     <div className="form-group" style={{ gridColumn: 'span 2' }}>
                                         <label>ที่อยู่</label>
                                         <textarea rows={3} value={settings.contact_address} onChange={e => set('contact_address', e.target.value)} placeholder="ที่อยู่ที่แสดงบนใบเสร็จ" style={{ resize: 'none' }} />
@@ -252,19 +270,6 @@ export default function Settings() {
                                 </div>
                                 <div style={{ marginTop: '1rem' }}>
                                     <ToggleRow icon={CreditCard} title="คิดภาษีมูลค่าเพิ่ม (VAT 7%)" checked={settings.enable_vat} onChange={v => set('enable_vat', v)} />
-                                </div>
-                            </Section>
-
-                            <Section title="การให้ส่วนลด">
-                                <div style={{ display: 'grid', gap: '1rem' }} className="form-grid">
-                                    <div className="form-group">
-                                        <label>ส่วนลดสูงสุด (%) สำหรับ Cashier</label>
-                                        <input type="number" value={settings.max_discount_cashier} onChange={e => set('max_discount_cashier', Number(e.target.value))} min={0} max={100} />
-                                    </div>
-                                    <div className="form-group">
-                                        <label>ส่วนลดสูงสุด (%) สำหรับ Manager</label>
-                                        <input type="number" value={settings.max_discount_manager} onChange={e => set('max_discount_manager', Number(e.target.value))} min={0} max={100} />
-                                    </div>
                                 </div>
                             </Section>
 
@@ -380,7 +385,7 @@ export default function Settings() {
                                         const handleUrlChange = (index, value) => {
                                             const newUrls = [...urls];
                                             newUrls[index] = value;
-                                            set('tiktok_urls', JSON.stringify(newUrls.filter(u => u !== '')));
+                                            set('tiktok_urls', JSON.stringify(newUrls));
                                         };
 
                                         const addUrlField = () => {
@@ -438,7 +443,7 @@ export default function Settings() {
                                             let urls = [];
                                             try { urls = typeof settings[key] === 'string' ? JSON.parse(settings[key]) : (settings[key] || []); } catch (e) { urls = []; }
                                             if (!Array.isArray(urls)) urls = [];
-                                            const update = (newUrls) => set(key, JSON.stringify(newUrls.filter(u => u !== '' || urls.length === 0)));
+                                            const update = (newUrls) => set(key, JSON.stringify(newUrls));
                                             return (
                                                 <div className="space-y-2">
                                                     {urls.map((url, i) => (
@@ -464,7 +469,7 @@ export default function Settings() {
                                             let urls = [];
                                             try { urls = typeof settings[key] === 'string' ? JSON.parse(settings[key]) : (settings[key] || []); } catch (e) { urls = []; }
                                             if (!Array.isArray(urls)) urls = [];
-                                            const update = (newUrls) => set(key, JSON.stringify(newUrls.filter(u => u !== '' || urls.length === 0)));
+                                            const update = (newUrls) => set(key, JSON.stringify(newUrls));
                                             return (
                                                 <div className="space-y-2">
                                                     {urls.map((url, i) => (
@@ -490,7 +495,7 @@ export default function Settings() {
                                             let urls = [];
                                             try { urls = typeof settings[key] === 'string' ? JSON.parse(settings[key]) : (settings[key] || []); } catch (e) { urls = []; }
                                             if (!Array.isArray(urls)) urls = [];
-                                            const update = (newUrls) => set(key, JSON.stringify(newUrls.filter(u => u !== '' || urls.length === 0)));
+                                            const update = (newUrls) => set(key, JSON.stringify(newUrls));
                                             return (
                                                 <div className="space-y-2">
                                                     {urls.map((url, i) => (

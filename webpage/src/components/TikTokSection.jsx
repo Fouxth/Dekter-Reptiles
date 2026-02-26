@@ -116,7 +116,7 @@ const TikTokSection = () => {
                                         <div className="rounded-3xl overflow-hidden glass-card border-white/10 hover:border-sky-500/30 transition-all duration-500 shadow-2xl bg-black">
                                             {videoId ? (
                                                 <iframe
-                                                    src={`https://www.tiktok.com/embed/v2/${videoId}?lang=th-TH&music_info=1&description=1`}
+                                                    src={`https://www.tiktok.com/player/v1/${videoId}?&autoplay=0&loop=1`}
                                                     className="w-full aspect-[9/16] border-none"
                                                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                                                     allowFullScreen

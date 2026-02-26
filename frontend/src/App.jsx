@@ -4,6 +4,7 @@ import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import POS from './pages/POS';
 import Inventory from './pages/Inventory';
+import Categories from './pages/Categories';
 import Stock from './pages/Stock';
 import Orders from './pages/Orders';
 import Users from './pages/Users';
@@ -40,6 +41,7 @@ function AppRoutes() {
         <Route index element={<Dashboard />} />
         <Route path="pos" element={<POS />} />
         <Route path="inventory" element={<Inventory />} />
+        <Route path="categories" element={<Categories />} />
         <Route path="stock" element={<Stock />} />
         <Route path="orders" element={<Orders />} />
         <Route path="customers" element={<Customers />} />

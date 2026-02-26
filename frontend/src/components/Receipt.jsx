@@ -4,11 +4,11 @@ import { Printer, X, Check } from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL || 'http://103.142.150.196:5000/api';
 
-function formatCurrency(n) {
-    return n?.toLocaleString('th-TH', {
+function formatCurrency(n, currencySymbol = '฿') {
+    return `${currencySymbol}${n?.toLocaleString('th-TH', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
-    }) ?? '0.00';
+    }) ?? '0.00'}`;
 }
 
 const capitalize = (str) => {
@@ -79,6 +79,8 @@ export default function Receipt({ order, onClose }) {
                         <div class="bold" style="font-size: 16px;">${settings.store_name || 'Snake POS'}</div>
                         <div>${settings.store_address || ''}</div>
                         <div>โทร: ${settings.store_phone || ''}</div>
+                        ${settings.store_email ? `<div>อีเมล: ${settings.store_email}</div>` : ''}
+                        ${settings.tax_id ? `<div>เลขผู้เสียภาษี: ${settings.tax_id}</div>` : ''}
                     </div>
                     <div class="line"></div>
                     <div class="row"><span>เลขที่บิล:</span> <span>#${order.orderNo?.slice(-8)}</span></div>
@@ -88,18 +90,18 @@ export default function Receipt({ order, onClose }) {
                     ${order.items.map(item => `
                         <div class="row">
                             <span style="flex: 1;">${capitalize(item.snake?.name) || 'สินค้า'}</span>
-                            <span style="width: 50px; text-align: right;">${formatCurrency(item.price * item.quantity)}</span>
+                            <span style="width: 50px; text-align: right;">${formatCurrency(item.price * item.quantity, settings.currency_symbol)}</span>
                         </div>
-                        <div style="font-size: 10px; color: #666;">${item.quantity} x ${formatCurrency(item.price)}</div>
+                        <div style="font-size: 10px; color: #666;">${item.quantity} x ${formatCurrency(item.price, settings.currency_symbol)}</div>
                     `).join('')}
                     <div class="line"></div>
-                    <div class="row"><span>ยอดรวม:</span> <span>${formatCurrency(order.subtotal)}</span></div>
-                    ${order.discount > 0 ? `<div class="row"><span>ส่วนลด:</span> <span>-${formatCurrency(order.discount)}</span></div>` : ''}
-                    <div class="row"><span>VAT 7%:</span> <span>${formatCurrency(order.total * 7 / 107)}</span></div>
-                    <div class="row bold" style="font-size: 14px;"><span>รวมทั้งสิ้น:</span> <span>${formatCurrency(order.total)}</span></div>
+                    <div class="row"><span>ยอดรวม:</span> <span>${formatCurrency(order.subtotal, settings.currency_symbol)}</span></div>
+                    ${order.discount > 0 ? `<div class="row"><span>ส่วนลด:</span> <span>-${formatCurrency(order.discount, settings.currency_symbol)}</span></div>` : ''}
+                    ${order.tax > 0 ? `<div class="row"><span>ภาษี (VAT):</span> <span>${formatCurrency(order.tax, settings.currency_symbol)}</span></div>` : ''}
+                    <div class="row bold" style="font-size: 14px;"><span>รวมทั้งสิ้น:</span> <span>${formatCurrency(order.total, settings.currency_symbol)}</span></div>
                     <div class="line"></div>
                     <div class="row"><span>ช่องทางชำระเงิน:</span> <span>${{ cash: 'เงินสด', transfer: 'โอนเงิน', card: 'บัตรเครดิต' }[order.paymentMethod] || 'อื่นๆ'}</span></div>
-                    <div class="row"><span>จำนวนเงินที่รับ:</span> <span>${formatCurrency(order.total)}</span></div>
+                    <div class="row"><span>จำนวนเงินที่รับ:</span> <span>${formatCurrency(order.total, settings.currency_symbol)}</span></div>
                     <div class="center footer">
                         ${settings.receipt_footer || 'ขอบคุณที่ใช้บริการ'}
                         <br/>โปรดเก็บใบเสร็จไว้เป็นหลักฐาน
@@ -117,8 +119,6 @@ export default function Receipt({ order, onClose }) {
     }
 
     if (!order) return null;
-
-    const vat = order.total * 7 / 107;
 
     return createPortal(
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[100] p-4 animate-fade-in">
@@ -156,6 +156,9 @@ export default function Receipt({ order, onClose }) {
                         <div className="text-center mb-6">
                             <h3 className="text-white font-black text-xl mb-1">{settings.store_name || 'Snake POS'}</h3>
                             <p className="text-slate-400 text-xs">{settings.store_address || 'ระบบจัดการร้าน'}</p>
+                            {settings.store_phone && <p className="text-slate-400 text-xs mt-0.5">โทร: {settings.store_phone}</p>}
+                            {settings.store_email && <p className="text-slate-400 text-xs mt-0.5">อีเมล: {settings.store_email}</p>}
+                            {settings.tax_id && <p className="text-slate-400 text-xs mt-0.5">เลขผู้เสียภาษี: {settings.tax_id}</p>}
                         </div>
 
                         {/* Order Meta */}
@@ -188,10 +191,10 @@ export default function Receipt({ order, onClose }) {
                                 <div key={idx}>
                                     <div className="flex justify-between items-baseline mb-1">
                                         <span className="text-white font-bold text-sm">{capitalize(item.snake?.name) || 'สินค้า'}</span>
-                                        <span className="text-white font-bold text-sm">฿{formatCurrency(item.price * item.quantity)}</span>
+                                        <span className="text-white font-bold text-sm">{formatCurrency(item.price * item.quantity, settings.currency_symbol)}</span>
                                     </div>
                                     <div className="text-[10px] text-slate-500 flex gap-2">
-                                        <span>{item.quantity} x {formatCurrency(item.price)}</span>
+                                        <span>{item.quantity} x {formatCurrency(item.price, settings.currency_symbol)}</span>
                                     </div>
                                 </div>
                             ))}
@@ -203,21 +206,23 @@ export default function Receipt({ order, onClose }) {
                         <div className="space-y-2 mb-8">
                             <div className="flex justify-between text-xs text-slate-400">
                                 <span>ยอดรวม:</span>
-                                <span>฿{formatCurrency(order.subtotal)}</span>
+                                <span>{formatCurrency(order.subtotal, settings.currency_symbol)}</span>
                             </div>
                             {order.discount > 0 && (
                                 <div className="flex justify-between text-xs text-red-400">
                                     <span>ส่วนลด:</span>
-                                    <span>-฿{formatCurrency(order.discount)}</span>
+                                    <span>-{formatCurrency(order.discount, settings.currency_symbol)}</span>
                                 </div>
                             )}
-                            <div className="flex justify-between text-xs text-slate-400">
-                                <span>VAT 7%:</span>
-                                <span>฿{formatCurrency(vat)}</span>
-                            </div>
+                            {order.tax > 0 && (
+                                <div className="flex justify-between text-xs text-slate-400">
+                                    <span>ภาษี (VAT):</span>
+                                    <span>{formatCurrency(order.tax, settings.currency_symbol)}</span>
+                                </div>
+                            )}
                             <div className="flex justify-between items-end pt-2">
                                 <span className="text-white font-black text-lg">รวมทั้งสิ้น:</span>
-                                <span className="text-emerald-400 font-black text-xl">฿{formatCurrency(order.total)}</span>
+                                <span className="text-emerald-400 font-black text-xl">{formatCurrency(order.total, settings.currency_symbol)}</span>
                             </div>
                         </div>
 
@@ -229,7 +234,7 @@ export default function Receipt({ order, onClose }) {
                             </div>
                             <div className="flex justify-between">
                                 <span className="text-slate-500">จำนวนเงินที่รับ:</span>
-                                <span>฿{formatCurrency(order.total)}</span>
+                                <span>{formatCurrency(order.total, settings.currency_symbol)}</span>
                             </div>
                         </div>
 
