@@ -187,7 +187,7 @@ export default function Settings() {
                                 <div className="form-group" style={{ maxWidth: 300 }}>
                                     <div style={{ position: 'relative' }}>
                                         <Clock size={16} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
-                                        <input type="time" value={settings.reset_time} onChange={e => set('reset_time', e.target.value)} style={{ paddingLeft: '2.5rem' }} />
+                                        <input type="time" value={settings.reset_time} onChange={e => set('reset_time', e.target.value)} className="input-field pl-icon" />
                                     </div>
                                     <p style={{ fontSize: '0.7rem', color: '#64748b', marginTop: 4 }}>ระบบจะเริ่มวันขายใหม่ ณ เวลานี้ เหมาะสำหรับร้านเปิดข้ามวัน</p>
                                 </div>

@@ -356,8 +356,7 @@ export default function POS() {
                                 placeholder="ค้นหาสินค้า..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="input-field"
-                                style={{ paddingLeft: '45px' }}
+                                className="input-field pl-icon"
                             />
                         </div>
                     </div>
