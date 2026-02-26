@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Printer, X, Check } from 'lucide-react';
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 function formatCurrency(n) {
     return n?.toLocaleString('th-TH', {

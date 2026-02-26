@@ -7,7 +7,7 @@ import {
     Zap, Egg
 } from 'lucide-react';
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 function formatCurrency(n) {
     return new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 0 }).format(n || 0);

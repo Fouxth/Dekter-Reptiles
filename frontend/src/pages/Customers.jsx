@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { useAuth } from '../context/AuthContext';
 import { Search, UserCheck, Plus, X, Phone, MessageCircle } from 'lucide-react';
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export default function Customers() {
     const { getToken } = useAuth();
