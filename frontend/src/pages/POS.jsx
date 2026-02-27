@@ -320,8 +320,8 @@ export default function POS() {
                             <div className="flex gap-3">
                                 {/* Thumbnail */}
                                 <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg bg-slate-700 overflow-hidden flex-shrink-0 relative">
-                                    {item.image ? (
-                                        <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                                    {item.adminImage ? (
+                                        <img src={item.adminImage.startsWith('http') ? item.adminImage : `${API.replace('/api', '')}${item.adminImage}`} alt={item.name} className="w-full h-full object-cover" />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center text-lg">🐍</div>
                                     )}
@@ -405,7 +405,7 @@ export default function POS() {
     );
 
     return (
-        <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 h-full lg:h-[calc(100vh-2rem)] animate-fade-in">
+        <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 h-[calc(100vh-8rem)] lg:h-[calc(100vh-6rem)] animate-fade-in pr-2">
             {/* Products Section */}
             <div className="flex-1 flex flex-col min-w-0 min-h-0">
                 {/* Header */}
@@ -482,9 +482,9 @@ export default function POS() {
                                     >
                                         {/* Image Section */}
                                         <div className="relative aspect-[4/3] bg-slate-900 overflow-hidden">
-                                            {snake.image ? (
+                                            {snake.adminImage ? (
                                                 <img
-                                                    src={snake.image}
+                                                    src={snake.adminImage.startsWith('http') ? snake.adminImage : `${API.replace('/api', '')}${snake.adminImage}`}
                                                     alt={snake.name}
                                                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                                                 />
@@ -539,7 +539,7 @@ export default function POS() {
             </div>
 
             {/* Desktop Cart Section */}
-            <div className="hidden lg:flex w-80 xl:w-96 glass-card flex-col shrink-0 border-l border-white/5 shadow-2xl">
+            <div className="hidden lg:flex w-[280px] xl:w-[320px] glass-card flex-col shrink-0 border-l border-white/5 shadow-2xl">
                 <CartContent />
             </div>
 
@@ -712,7 +712,7 @@ export default function POS() {
                                     {/* Payment Methods */}
                                     <div className="mb-6 sm:mb-8">
                                         <p className="text-slate-400 text-xs uppercase tracking-widest font-bold mb-3 ml-1">เลือกวิธีชำระเงิน</p>
-                                        <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                                        <div className="flex gap-2 sm:gap-3">
                                             {[
                                                 { id: 'cash', icon: Banknote, label: 'เงินสด', enabled: settings.accept_cash !== 'false' },
                                                 { id: 'transfer', icon: QrCode, label: 'โอนเงิน', enabled: settings.accept_transfer !== 'false' },
@@ -721,7 +721,7 @@ export default function POS() {
                                                 <button
                                                     key={method.id}
                                                     onClick={() => setPaymentMethod(method.id)}
-                                                    className={`p-3 sm:p-4 rounded-xl flex flex-col items-center gap-2 sm:gap-3 transition-all duration-300 ${paymentMethod === method.id
+                                                    className={`flex-1 p-3 sm:p-4 rounded-xl flex flex-col items-center gap-2 sm:gap-3 transition-all duration-300 ${paymentMethod === method.id
                                                         ? 'bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 border-emerald-500 text-emerald-400 shadow-lg shadow-emerald-900/20 ring-1 ring-emerald-500/50'
                                                         : 'bg-white/5 border-transparent text-slate-400 hover:bg-white/10 hover:text-slate-200'
                                                         } border-2`}

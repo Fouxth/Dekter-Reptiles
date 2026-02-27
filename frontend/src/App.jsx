@@ -1,6 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { NotificationProvider } from './context/NotificationContext';
 import { SocketProvider } from './context/SocketContext';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
@@ -79,10 +78,8 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <NotificationProvider>
-          <SocketProvider>
-            <AppRoutes />
-          </SocketProvider>
+        <SocketProvider>
+          <AppRoutes />
           <Toaster position="top-right" toastOptions={{
             style: {
               background: '#1e293b',
@@ -91,7 +88,7 @@ function App() {
               fontFamily: 'Prompt, sans-serif'
             }
           }} />
-        </NotificationProvider>
+        </SocketProvider>
       </AuthProvider>
     </Router>
   );

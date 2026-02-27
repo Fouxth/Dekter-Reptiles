@@ -277,7 +277,7 @@ export default function Settings() {
             </div>
 
             {/* Tab Content */}
-            <form onSubmit={handleSave} style={{ maxWidth: 960 }}>
+            <form onSubmit={handleSave} className="w-full">
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
 
                     {/* ─── STORE TAB ─── */}

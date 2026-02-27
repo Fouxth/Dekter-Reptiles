@@ -264,12 +264,12 @@ export default function Dashboard() {
                 marginBottom: '1.5rem',
             }}>
                 <style>{`
-                    .stats-grid { grid-template-columns: repeat(4, 1fr); }
-                    @media (max-width: 1024px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
-                    @media (max-width: 480px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+                    .stats-grid { 
+                        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
+                    }
                     
                     .dashboard-grid { grid-template-columns: 2fr 1fr; }
-                    @media (max-width: 1024px) { .dashboard-grid { grid-template-columns: 1fr; } }
+                    @media (max-width: 1280px) { .dashboard-grid { grid-template-columns: 1fr; } }
                 `}</style>
                 {statCards.map((card, i) => (
                     <div key={i} className="card" style={{ background: gradients[card.color], border: `1px solid ${iconColors[card.color]}22`, padding: '1.1rem 1.25rem' }}>

@@ -359,12 +359,12 @@ const Cart = ({ cart, setCart, updateQuantity, removeFromCart, cartTotal, cartIt
                                         </div>
                                     ) : (
                                         <>
-                                            <div className="grid grid-cols-3 gap-2 mb-4">
+                                            <div className="flex gap-2 mb-4">
                                                 {settings.accept_transfer && (
                                                     <button
                                                         type="button"
                                                         onClick={() => setPaymentMethod('transfer')}
-                                                        className={`p-2.5 rounded-xl border transition-all flex flex-col items-center gap-1.5 ${paymentMethod === 'transfer' ? 'bg-sky-500/10 border-sky-500 text-sky-400' : 'bg-stone-950/40 border-white/5 text-stone-500 hover:border-white/10'}`}
+                                                        className={`flex-1 p-2.5 rounded-xl border transition-all flex flex-col items-center gap-1.5 ${paymentMethod === 'transfer' ? 'bg-sky-500/10 border-sky-500 text-sky-400' : 'bg-stone-950/40 border-white/5 text-stone-500 hover:border-white/10'}`}
                                                     >
                                                         <div className={`p-1.5 rounded-lg ${paymentMethod === 'transfer' ? 'bg-sky-500/20' : 'bg-white/5'}`}>
                                                             <FileText size={14} />
@@ -376,7 +376,7 @@ const Cart = ({ cart, setCart, updateQuantity, removeFromCart, cartTotal, cartIt
                                                     <button
                                                         type="button"
                                                         onClick={() => setPaymentMethod('qr')}
-                                                        className={`p-2.5 rounded-xl border transition-all flex flex-col items-center gap-1.5 ${paymentMethod === 'qr' ? 'bg-cyan-500/10 border-cyan-500 text-cyan-400' : 'bg-stone-950/40 border-white/5 text-stone-500 hover:border-white/10'}`}
+                                                        className={`flex-1 p-2.5 rounded-xl border transition-all flex flex-col items-center gap-1.5 ${paymentMethod === 'qr' ? 'bg-cyan-500/10 border-cyan-500 text-cyan-400' : 'bg-stone-950/40 border-white/5 text-stone-500 hover:border-white/10'}`}
                                                     >
                                                         <div className={`p-1.5 rounded-lg ${paymentMethod === 'qr' ? 'bg-cyan-500/20' : 'bg-white/5'}`}>
                                                             <CheckCircle2 size={14} />
@@ -388,7 +388,7 @@ const Cart = ({ cart, setCart, updateQuantity, removeFromCart, cartTotal, cartIt
                                                     <button
                                                         type="button"
                                                         onClick={() => setPaymentMethod('cash')}
-                                                        className={`p-2.5 rounded-xl border transition-all flex flex-col items-center gap-1.5 ${paymentMethod === 'cash' ? 'bg-amber-500/10 border-amber-500 text-amber-400' : 'bg-stone-950/40 border-white/5 text-stone-500 hover:border-white/10'}`}
+                                                        className={`flex-1 p-2.5 rounded-xl border transition-all flex flex-col items-center gap-1.5 ${paymentMethod === 'cash' ? 'bg-amber-500/10 border-amber-500 text-amber-400' : 'bg-stone-950/40 border-white/5 text-stone-500 hover:border-white/10'}`}
                                                     >
                                                         <div className={`p-1.5 rounded-lg ${paymentMethod === 'cash' ? 'bg-amber-500/20' : 'bg-white/5'}`}>
                                                             <User size={14} />

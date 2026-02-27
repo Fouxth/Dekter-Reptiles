@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { useNotifications } from '../context/NotificationContext';
-import NotificationPanel from './NotificationPanel';
+import { useSocket } from '../context/SocketContext';
 import {
     LayoutDashboard,
     ShoppingCart,
@@ -46,11 +45,10 @@ const adminNavItems = [
 export default function Layout() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
-    const [notifOpen, setNotifOpen] = useState(false);
     const location = useLocation();
     const navigate = useNavigate();
     const { user, logout } = useAuth();
-    const { unreadCount } = useNotifications();
+    const { unreadCount, clearUnread } = useSocket();
 
     const allNavItems = user?.role === 'admin' ? [...navItems, ...adminNavItems] : navItems;
 
@@ -108,7 +106,7 @@ export default function Layout() {
 
                     <div className="flex items-center gap-2">
                         <button
-                            onClick={() => setNotifOpen(true)}
+                            onClick={clearUnread}
                             className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors relative"
                         >
                             <Bell size={20} />
@@ -225,7 +223,7 @@ export default function Layout() {
                         </div>
                         <div className="flex items-center gap-4">
                             <button
-                                onClick={() => setNotifOpen(true)}
+                                onClick={clearUnread}
                                 className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors relative"
                             >
                                 <Bell size={20} />
@@ -277,9 +275,6 @@ export default function Layout() {
                     </nav>
                 </main>
             </div>
-
-            {/* Notification Panel */}
-            <NotificationPanel open={notifOpen} onClose={() => setNotifOpen(false)} />
         </>
     );
 }
