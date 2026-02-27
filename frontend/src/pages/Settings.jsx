@@ -3,7 +3,7 @@ import {
     Save, Building, Phone, Monitor, CreditCard, Bell, Database,
     CheckCircle2, AlertCircle, Clock, Banknote, ArrowLeftRight,
     MessageSquare, Store, Settings as SettingsIcon, Youtube,
-    ChevronDown, Check
+    ChevronDown, Check, Download, RefreshCcw
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
@@ -110,8 +110,8 @@ export default function Settings() {
         social_yt: '[]',
     });
     const [loading, setLoading] = useState(true);
-    const [saving, setSaving] = useState(false);
     const [status, setStatus] = useState(null);
+    const { user, getToken } = useAuth();
     const [isBankDropdownOpen, setIsBankDropdownOpen] = useState(false);
     const bankDropdownRef = useRef(null);
 
@@ -125,7 +125,63 @@ export default function Settings() {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    const { getToken } = useAuth();
+    const handleBackup = async () => {
+        try {
+            const token = getToken();
+            const res = await fetch(`${API}/settings/backup`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const blob = await res.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `snake_pos_backup_${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                toast.success('ดาวน์โหลดไฟล์สำรองข้อมูลเรียบร้อยแล้ว');
+            } else {
+                toast.error('ไม่สามารถสำรองข้อมูลได้');
+            }
+        } catch (error) {
+            console.error('Backup failed:', error);
+            toast.error('เกิดข้อผิดพลาดในการสำรองข้อมูล');
+        }
+    };
+
+    const handleResetData = async () => {
+        if (user?.role !== 'admin') {
+            toast.error('เฉพาะผู้ดูแลระบบเท่านั้นที่สามารถรีเซ็ตข้อมูลได้');
+            return;
+        }
+
+        const confirm1 = window.confirm('คำเตือน: คุณกำลังจะลบข้อมูลธุรกรรม สินค้า และประวัติทั้งหมดในระบบ (ยกเว้นผู้ใช้และการตั้งค่า) ต้องการดำเนินการต่อหรือไม่?');
+        if (!confirm1) return;
+
+        const confirm2 = window.confirm('กรุณายืนยันอีกครั้ง! การกระทำนี้ไม่สามารถย้อนกลับได้ ข้อมูลจะหายไปถาวร');
+        if (!confirm2) return;
+
+        setSaving(true);
+        try {
+            const token = getToken();
+            const res = await fetch(`${API}/settings/reset`, {
+                method: 'DELETE',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.ok) {
+                toast.success('รีเซ็ตข้อมูลระบบเรียบร้อยแล้ว');
+                window.location.reload();
+            } else {
+                toast.error('ไม่สามารถรีเซ็ตข้อมูลได้');
+            }
+        } catch (error) {
+            console.error('Reset failed:', error);
+            toast.error('เกิดข้อผิดพลาดในการรีเซ็ตข้อมูล');
+        } finally {
+            setSaving(false);
+        }
+    };
 
     async function loadSettings() {
         setLoading(true);
@@ -418,21 +474,51 @@ export default function Settings() {
                     {/* ─── DATA TAB ─── */}
                     {activeTab === 'data' && (
                         <Section title="จัดการข้อมูล" subtitle="สำรองและรีเซ็ตข้อมูลระบบ">
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                <div className="form-group">
-                                    <label>สัญลักษณ์สกุลเงิน</label>
-                                    <input value={settings.currency_symbol} onChange={e => set('currency_symbol', e.target.value)} style={{ maxWidth: 120 }} />
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="form-group">
+                                        <label>สัญลักษณ์สกุลเงิน</label>
+                                        <input value={settings.currency_symbol} onChange={e => set('currency_symbol', e.target.value)} />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>เลขที่ผู้เสียภาษี</label>
+                                        <input value={settings.tax_id} onChange={e => set('tax_id', e.target.value)} placeholder="1234567890123" />
+                                    </div>
                                 </div>
-                                <div className="form-group">
-                                    <label>เลขที่ผู้เสียภาษี</label>
-                                    <input value={settings.tax_id} onChange={e => set('tax_id', e.target.value)} placeholder="1234567890123" />
-                                </div>
-                                <div style={{ background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: 14, padding: '1rem' }}>
-                                    <h4 style={{ color: '#fca5a5', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>⚠️ โซนอันตราย</h4>
-                                    <p style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.75rem' }}>การรีเซ็ตข้อมูลจะลบข้อมูลทั้งหมดออกจากระบบอย่างถาวร ไม่สามารถกู้คืนได้</p>
-                                    <button type="button" className="btn btn-danger btn-sm" onClick={() => toast.error('ฟังก์ชันนี้ยังไม่เปิดใช้งาน')}>
-                                        รีเซ็ตข้อมูลทั้งหมด
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <button
+                                        type="button"
+                                        onClick={handleBackup}
+                                        className="p-6 bg-white/5 border border-white/10 rounded-2xl text-left hover:bg-white/10 transition-all group flex flex-col items-center text-center"
+                                    >
+                                        <div className="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                            <Download className="text-emerald-400" size={24} />
+                                        </div>
+                                        <h3 className="text-white font-bold mb-1">สำรองข้อมูลทั้งหมด</h3>
+                                        <p className="text-slate-400 text-xs">ดาวน์โหลดข้อมูลทุกตารางออกมาเป็นไฟล์ JSON เพื่อเก็บรักษา</p>
                                     </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={handleResetData}
+                                        disabled={user?.role !== 'admin'}
+                                        className="p-6 bg-white/5 border border-white/10 rounded-2xl text-left hover:bg-red-500/5 hover:border-red-500/20 transition-all group flex flex-col items-center text-center disabled:opacity-50"
+                                    >
+                                        <div className="w-12 h-12 bg-red-500/10 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                            <RefreshCcw className="text-red-400" size={24} />
+                                        </div>
+                                        <h3 className="text-white font-bold mb-1">ล้างข้อมูลธุรกรรม</h3>
+                                        <p className="text-slate-400 text-xs">ลบประวัติการขาย สินค้า และรายการเดินบัญชีทั้งหมด (ผู้ใช้คงเดิม)</p>
+                                    </button>
+                                </div>
+
+                                <div className="p-4 bg-amber-500/5 border border-amber-500/10 rounded-xl">
+                                    <div className="flex gap-2 text-amber-500 mb-2">
+                                        <AlertCircle size={16} />
+                                        <span className="text-xs font-bold uppercase">ข้อควรระวัง</span>
+                                    </div>
+                                    <p className="text-xs text-stone-400">การสำรองข้อมูลเป็นเพียงการดาวน์โหลดไฟล์ JSON เท่านั้น ระบบยังไม่มีความสามารถในการ Restore ข้ามไฟล์อัตโนมัติ การล้างข้อมูลจะลบเกือบทุกอย่างออกจากฐานข้อมูลทันที</p>
                                 </div>
                             </div>
                         </Section>

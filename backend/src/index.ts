@@ -2,7 +2,9 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import dotenv from 'dotenv';
+import { createServer } from 'http';
 import { PrismaClient } from '@prisma/client';
+import { initIO } from './socket';
 
 // Routes
 import snakeRoutes from './routes/snakes';
@@ -24,17 +26,22 @@ import expenseRoutes from './routes/expenses';
 dotenv.config();
 
 const app = express();
+const httpServer = createServer(app);
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 5000;
+
+// Initialize Socket.io
+const io = initIO(httpServer);
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
-// Make prisma available in request
+// Make prisma and io available in request
 app.use((req, res, next) => {
     (req as any).prisma = prisma;
+    (req as any).io = io;
     next();
 });
 
@@ -68,9 +75,10 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
     res.status(500).json({ error: 'Something went wrong!' });
 });
 
-// Start server
-app.listen(PORT, () => {
+// Start server (use httpServer, NOT app.listen)
+httpServer.listen(PORT, () => {
     console.log(`🐍 Snake POS API running on http://localhost:${PORT}`);
+    console.log(`🔔 Socket.io ready`);
 });
 
 // Graceful shutdown

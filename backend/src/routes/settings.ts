@@ -15,7 +15,7 @@ router.get('/', async (req, res) => {
     }
 });
 
-// Update or create multiple settings (Bulk Update)
+// Bulk Update multiple settings
 router.patch('/', authenticate, requireAdmin, async (req, res) => {
     const settings = req.body;
     const updates = [];
@@ -38,13 +38,75 @@ router.patch('/', authenticate, requireAdmin, async (req, res) => {
     }
 });
 
+// Backup: Export all database tables as JSON
+router.get('/backup', authenticate, requireAdmin, async (req, res) => {
+    try {
+        const [
+            users, categories, snakes, customers, orders,
+            orderItems, stockLogs, healthRecords, feedingLogs,
+            breedingRecords, incubationRecords, systemSettings, expenses
+        ] = await Promise.all([
+            prisma.user.findMany(),
+            prisma.category.findMany(),
+            prisma.snake.findMany(),
+            prisma.customer.findMany(),
+            prisma.order.findMany(),
+            prisma.orderItem.findMany(),
+            prisma.stockLog.findMany(),
+            prisma.healthRecord.findMany(),
+            prisma.feedingLog.findMany(),
+            prisma.breedingRecord.findMany(),
+            prisma.incubationRecord.findMany(),
+            prisma.systemSetting.findMany(),
+            prisma.expense.findMany(),
+        ]);
+
+        const backupData = {
+            version: "1.0",
+            timestamp: new Date().toISOString(),
+            data: {
+                users, categories, snakes, customers, orders,
+                orderItems, stockLogs, healthRecords, feedingLogs,
+                breedingRecords, incubationRecords, systemSettings, expenses
+            }
+        };
+
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Content-Disposition', `attachment; filename=snake_pos_backup_${new Date().toISOString().split('T')[0]}.json`);
+        res.json(backupData);
+    } catch (error) {
+        console.error('Backup failed:', error);
+        res.status(500).json({ error: 'Failed to generate backup' });
+    }
+});
+
+// Reset: Delete all clinical/transactional data but keep SystemSettings and Users
+router.delete('/reset', authenticate, requireAdmin, async (req, res) => {
+    try {
+        await prisma.$transaction([
+            prisma.stockLog.deleteMany(),
+            prisma.healthRecord.deleteMany(),
+            prisma.feedingLog.deleteMany(),
+            prisma.incubationRecord.deleteMany(),
+            prisma.breedingRecord.deleteMany(),
+            prisma.orderItem.deleteMany(),
+            prisma.order.deleteMany(),
+            prisma.snake.deleteMany(),
+            prisma.category.deleteMany(),
+            prisma.customer.deleteMany(),
+            prisma.expense.deleteMany(),
+        ]);
+        res.json({ message: 'Database reset successfully. Users and settings were preserved.' });
+    } catch (error) {
+        console.error('Reset failed:', error);
+        res.status(500).json({ error: 'Failed to reset database' });
+    }
+});
+
 // Update or create a single system setting
 router.post('/', authenticate, requireAdmin, async (req, res) => {
     const { key, value, description } = req.body;
-
-    if (!key) {
-        return res.status(400).json({ error: 'Key is required' });
-    }
+    if (!key) return res.status(400).json({ error: 'Key is required' });
 
     try {
         const setting = await prisma.systemSetting.upsert({

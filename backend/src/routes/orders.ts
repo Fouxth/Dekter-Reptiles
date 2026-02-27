@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { PrismaClient, Prisma } from '@prisma/client';
 import { slipUpload } from '../middleware/slipUpload';
+import { getIO } from '../socket';
 
 const router = Router();
 
@@ -104,12 +105,10 @@ router.post('/', async (req: Request, res: Response) => {
             });
         }
 
-        const discountAmount = Number(discount) || 0;
-
-        // Fetch settings for orderNo prefix and VAT
+        // Fetch settings for orderNo prefix, VAT, and Sales Target
         const settings = await prisma.systemSetting.findMany({
             where: {
-                key: { in: ['receipt_prefix', 'enable_vat', 'tax_rate'] }
+                key: { in: ['receipt_prefix', 'enable_vat', 'tax_rate', 'daily_target', 'notify_sales_target', 'reset_time'] }
             }
         });
         const getSetting = (k: string, fb: string) => settings.find(s => s.key === k)?.value || fb;
@@ -117,6 +116,9 @@ router.post('/', async (req: Request, res: Response) => {
         const prefix = getSetting('receipt_prefix', 'POS');
         const enableVat = getSetting('enable_vat', 'false') === 'true';
         const taxRate = parseFloat(getSetting('tax_rate', '7')) || 7;
+        const dailyTarget = parseFloat(getSetting('daily_target', '0')) || 0;
+        const notifySalesTargetSetting = getSetting('notify_sales_target', 'false') === 'true';
+        const resetTime = getSetting('reset_time', '00:00');
 
         // Generate Order No (e.g., POS-20231025-00001)
         const today = new Date();
@@ -141,9 +143,11 @@ router.post('/', async (req: Request, res: Response) => {
 
         const orderNo = `${prefix}-${yyyymmdd}-${String(nextNum).padStart(5, '0')}`;
 
+        const discountAmount = Number(discount) || 0;
+
         // Calculate tax
         const currentTotal = total - discountAmount;
-        const tax = enableVat ? (currentTotal * taxRate) / (100 + taxRate) : 0; // Assuming inclusive VAT based on original receipt logic
+        const tax = enableVat ? (currentTotal * taxRate) / (100 + taxRate) : 0;
 
         // Create order and update stock in transaction
         const order = await prisma.$transaction(async (tx) => {
@@ -182,6 +186,51 @@ router.post('/', async (req: Request, res: Response) => {
 
             return newOrder;
         });
+
+        // Check for sales target reach
+        if (notifySalesTargetSetting && dailyTarget > 0) {
+            try {
+                const [resetHour, resetMin] = resetTime.split(':').map(Number);
+                const now = new Date();
+                const cycleStart = new Date(now);
+                if (now.getHours() < resetHour || (now.getHours() === resetHour && now.getMinutes() < resetMin)) {
+                    cycleStart.setDate(cycleStart.getDate() - 1);
+                }
+                cycleStart.setHours(resetHour, resetMin, 0, 0);
+
+                const todaysSales = await prisma.order.aggregate({
+                    where: {
+                        createdAt: { gte: cycleStart },
+                        status: 'completed'
+                    },
+                    _sum: { total: true }
+                });
+
+                const totalSalesForToday = todaysSales._sum.total || 0;
+
+                // If this order pushed it over the limit
+                if (totalSalesForToday >= dailyTarget && (totalSalesForToday - order.total) < dailyTarget) {
+                    getIO().emit('sales_target_reached', {
+                        target: dailyTarget,
+                        total: totalSalesForToday,
+                    });
+                }
+            } catch (err) {
+                console.error('Target check failed:', err);
+            }
+        }
+
+        // Emit socket event for new order
+        try {
+            getIO().emit('new_order', {
+                orderId: order.id,
+                orderNo: order.orderNo,
+                total: order.total,
+                status: order.status,
+                itemCount: order.items.length,
+                paymentMethod: order.paymentMethod,
+            });
+        } catch (_) { }
 
         res.status(201).json(order);
     } catch (error) {
@@ -244,11 +293,27 @@ router.patch('/:id/status', async (req: Request, res: Response) => {
         const prisma: PrismaClient = (req as any).prisma;
         const { status } = req.body;
 
+        // Get current order for previousStatus
+        const currentOrder = await prisma.order.findUnique({
+            where: { id: Number(req.params.id) },
+            select: { status: true, orderNo: true },
+        });
+
         const order = await prisma.order.update({
             where: { id: Number(req.params.id) },
             data: { status },
             include: { items: { include: { snake: true } } },
         });
+
+        // Emit socket event for status change
+        try {
+            getIO().emit('order_status_changed', {
+                orderId: order.id,
+                orderNo: order.orderNo,
+                status: order.status,
+                previousStatus: currentOrder?.status,
+            });
+        } catch (_) { }
 
         res.json(order);
     } catch (error) {

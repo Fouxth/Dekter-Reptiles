@@ -693,10 +693,10 @@ export default function POS() {
                                         <p className="text-slate-400 text-xs uppercase tracking-widest font-bold mb-3 ml-1">เลือกวิธีชำระเงิน</p>
                                         <div className="grid grid-cols-3 gap-2 sm:gap-3">
                                             {[
-                                                { id: 'cash', icon: Banknote, label: 'เงินสด' },
-                                                { id: 'transfer', icon: QrCode, label: 'โอนเงิน' },
-                                                { id: 'card', icon: CreditCard, label: 'บัตรเครดิต' }
-                                            ].map(method => (
+                                                { id: 'cash', icon: Banknote, label: 'เงินสด', enabled: settings.accept_cash !== 'false' },
+                                                { id: 'transfer', icon: QrCode, label: 'โอนเงิน', enabled: settings.accept_transfer !== 'false' },
+                                                { id: 'card', icon: CreditCard, label: 'บัตรเครดิต', enabled: settings.accept_card === 'true' }
+                                            ].filter(m => m.enabled).map(method => (
                                                 <button
                                                     key={method.id}
                                                     onClick={() => setPaymentMethod(method.id)}

@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { snakeUpload } from '../middleware/snakeUpload';
+import { getIO } from '../socket';
 
 const router = Router();
 
@@ -195,6 +196,22 @@ router.put('/:id', async (req: Request, res: Response) => {
             },
             include: { category: true },
         });
+
+        // Emit low stock alert if applicable
+        if (snake.stock !== undefined && snake.stock <= 2) {
+            try {
+                const settings = await prisma.systemSetting.findUnique({
+                    where: { key: 'notify_low_stock' }
+                });
+                if (settings?.value === 'true') {
+                    getIO().emit('low_stock_alert', {
+                        snakeId: snake.id,
+                        name: snake.name,
+                        stock: snake.stock,
+                    });
+                }
+            } catch (_) { }
+        }
 
         res.json(snake);
     } catch (error) {
