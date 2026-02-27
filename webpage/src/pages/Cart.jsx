@@ -35,10 +35,9 @@ const Cart = ({ cart, setCart, updateQuantity, removeFromCart, cartTotal, cartIt
         accept_transfer: true,
         promptpay_enabled: true,
         bank_name: '',
-        bank_account_name: '',
-        bank_account_number: '',
-        promptpay_id: '',
-        qr_expiry_minutes: 15
+        qr_expiry_minutes: 15,
+        enable_vat: false,
+        tax_rate: 7
     });
 
     useEffect(() => {
@@ -63,7 +62,9 @@ const Cart = ({ cart, setCart, updateQuantity, removeFromCart, cartTotal, cartIt
                     bank_account_name: getText('bank_account_name', ''),
                     bank_account_number: getText('bank_account_number', ''),
                     promptpay_id: getText('promptpay_id', ''),
-                    qr_expiry_minutes: parseInt(getText('qr_expiry_minutes', '15'))
+                    qr_expiry_minutes: parseInt(getText('qr_expiry_minutes', '15')),
+                    enable_vat: getBool('enable_vat', false),
+                    tax_rate: parseFloat(getText('tax_rate', '7')) || 7
                 };
 
                 setSettings(s);
@@ -252,6 +253,12 @@ const Cart = ({ cart, setCart, updateQuantity, removeFromCart, cartTotal, cartIt
                                         <span>ยอดรวมสินค้า ({cartItemCount} รายการ)</span>
                                         <span className="text-stone-100 font-medium">{formatPrice(cartTotal)}</span>
                                     </div>
+                                    {settings.enable_vat && (
+                                        <div className="flex justify-between text-stone-400 text-sm">
+                                            <span>ภาษี (VAT {settings.tax_rate}%)</span>
+                                            <span className="text-stone-100 font-medium">{formatPrice(cartTotal * settings.tax_rate / 100)}</span>
+                                        </div>
+                                    )}
                                     <div className="flex justify-between items-center text-stone-400 text-sm">
                                         <span>ค่าจัดส่ง</span>
                                         <div className="flex items-center gap-1.5">
@@ -473,7 +480,9 @@ const Cart = ({ cart, setCart, updateQuantity, removeFromCart, cartTotal, cartIt
                                         <span className="block text-[9px] text-stone-500 uppercase tracking-widest font-bold">Total</span>
                                         <span className="text-stone-400 font-light text-xs">รวมภาษีแล้ว</span>
                                     </div>
-                                    <div className="text-2xl font-bold text-sky-400 tracking-tighter">{formatPrice(cartTotal)}</div>
+                                    <div className="text-2xl font-bold text-sky-400 tracking-tighter">
+                                        {formatPrice(cartTotal * (settings.enable_vat ? (1 + settings.tax_rate / 100) : 1))}
+                                    </div>
                                 </div>
 
                                 <button

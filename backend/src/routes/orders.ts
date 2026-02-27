@@ -145,9 +145,10 @@ router.post('/', async (req: Request, res: Response) => {
 
         const discountAmount = Number(discount) || 0;
 
-        // Calculate tax
+        // Calculate tax - Exclusive (add on top of subtotal)
         const currentTotal = total - discountAmount;
-        const tax = enableVat ? (currentTotal * taxRate) / (100 + taxRate) : 0;
+        const tax = enableVat ? (currentTotal * taxRate) / 100 : 0;
+        const finalTotal = currentTotal + tax;
 
         // Create order and update stock in transaction
         const order = await prisma.$transaction(async (tx) => {
@@ -158,7 +159,7 @@ router.post('/', async (req: Request, res: Response) => {
                     subtotal: total,
                     discount: discountAmount,
                     tax: tax,
-                    total: currentTotal,
+                    total: finalTotal,
                     paymentMethod: paymentMethod || 'cash',
                     status: paymentMethod === 'transfer' ? 'pending_payment' : 'completed',
                     note,

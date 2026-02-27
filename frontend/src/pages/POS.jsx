@@ -200,13 +200,14 @@ export default function POS() {
 
     const cartSubtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const discountAmount = discountType === 'percent' ? Math.round(cartSubtotal * (discount / 100)) : Number(discount);
-    const cartTotal = Math.max(0, cartSubtotal - discountAmount);
+    const cartTotalBeforeTax = Math.max(0, cartSubtotal - discountAmount);
     const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
     // Calculates frontend preview of tax based on settings
     const enableVat = settings.enable_vat === 'true';
     const taxRate = parseFloat(settings.tax_rate) || 7;
-    const taxPreview = enableVat ? (cartTotal * taxRate) / (100 + taxRate) : 0; // Inclusive tax calculation assumption based on original code
+    const taxAmount = enableVat ? (cartTotalBeforeTax * taxRate) / 100 : 0;
+    const cartTotal = cartTotalBeforeTax + taxAmount;
 
     const handleCheckout = async () => {
         if (cart.length === 0) return;
@@ -386,6 +387,7 @@ export default function POS() {
                     <span className="text-slate-400 text-sm">ยอดสุทธิ</span>
                     <div className="text-right">
                         <span className="font-bold text-white text-xl sm:text-2xl tracking-tight text-gradient">{formatCurrency(cartTotal)}</span>
+                        {enableVat && <p className="text-[10px] text-slate-500">(รวม VAT {taxRate}% แล้ว)</p>}
                     </div>
                 </div>
 
@@ -698,7 +700,7 @@ export default function POS() {
                                         {enableVat && (
                                             <div className="flex justify-between mb-1">
                                                 <span className="text-slate-400 text-sm">ภาษี (VAT {taxRate}%)</span>
-                                                <span className="text-slate-300">{formatCurrency(taxPreview)}</span>
+                                                <span className="text-slate-300">{formatCurrency(taxAmount)}</span>
                                             </div>
                                         )}
                                         <div className="flex justify-between items-center border-t border-white/10 pt-2 mt-1">
