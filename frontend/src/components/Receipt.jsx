@@ -19,7 +19,7 @@ const capitalize = (str) => {
 export default function Receipt({ order, onClose }) {
     const receiptRef = useRef(null);
     const [settings, setSettings] = useState({});
-    const [loadingSettings, setLoadingSettings] = useState(true);
+    const [, setLoadingSettings] = useState(true);
 
     useEffect(() => {
         async function fetchSettings() {
@@ -47,7 +47,7 @@ export default function Receipt({ order, onClose }) {
 
     function handlePrint() {
         const printWindow = window.open('', '_blank');
-        const content = receiptRef.current.innerHTML;
+
 
         printWindow.document.write(`
             <html>

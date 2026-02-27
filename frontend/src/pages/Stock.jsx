@@ -9,7 +9,7 @@ import {
     Minus,
     Clock
 } from 'lucide-react';
-import { createPortal } from 'react-dom';
+import { useAuth } from '../context/AuthContext';
 
 const API = import.meta.env.VITE_API_URL || 'http://103.142.150.196:5000/api';
 
@@ -19,13 +19,20 @@ const capitalize = (str) => {
 };
 
 export default function Stock() {
+    const { getToken } = useAuth();
     const [snakes, setSnakes] = useState([]);
     const [logs, setLogs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [activeTab, setActiveTab] = useState('overview');
 
+    const authHeaders = (withContentType = false) => ({
+        ...(withContentType ? { 'Content-Type': 'application/json' } : {}),
+        Authorization: `Bearer ${getToken()}`,
+    });
+
     useEffect(() => { fetchData(); }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => { if (activeTab === 'history') fetchLogs(); }, [activeTab]);
 
     const fetchData = async () => {
@@ -39,7 +46,9 @@ export default function Stock() {
 
     const fetchLogs = async () => {
         try {
-            const res = await fetch(`${API}/stock-logs`);
+            const res = await fetch(`${API}/stock-logs`, {
+                headers: authHeaders(),
+            });
             if (res.ok) setLogs(await res.json());
         } catch (error) { console.error('Failed to fetch stock logs:', error); }
     };
@@ -50,7 +59,7 @@ export default function Stock() {
         try {
             const res = await fetch(`${API}/stock-logs`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: authHeaders(true),
                 body: JSON.stringify({
                     snakeId: snake.id, change, reason: 'adjustment',
                     note: change > 0 ? 'เพิ่มสต็อกแบบด่วน' : 'ลดสต็อกแบบด่วน'
@@ -98,17 +107,20 @@ export default function Stock() {
                     { icon: AlertTriangle, value: lowStockCount, label: 'สินค้าใกล้หมด', color: 'amber' },
                     { icon: Boxes, value: outOfStockCount, label: 'สินค้าหมด', color: 'red' },
                     { icon: TrendingUp, value: formatCurrency(totalValue), label: 'มูลค่าสต็อก', color: 'blue' },
-                ].map(({ icon: Icon, value, label, color }) => (
-                    <div key={label} className={`glass-card p-3 sm:p-5 flex items-center gap-3 sm:gap-4 border border-${color}-500/10`}>
-                        <div className={`p-2 sm:p-3 bg-${color}-500/10 rounded-xl`}>
-                            <Icon size={20} className={`text-${color}-400`} />
+                ].map((item) => {
+                    const Icon = item.icon;
+                    return (
+                        <div key={item.label} className={`glass-card p-3 sm:p-5 flex items-center gap-3 sm:gap-4 border border-${item.color}-500/10`}>
+                            <div className={`p-2 sm:p-3 bg-${item.color}-500/10 rounded-xl`}>
+                                <Icon size={20} className={`text-${item.color}-400`} />
+                            </div>
+                            <div className="min-w-0">
+                                <p className={`text-lg sm:text-2xl font-bold text-${item.color === 'emerald' ? 'white' : item.color + '-400'} tracking-tight truncate`}>{item.value}</p>
+                                <p className="text-slate-400 text-[10px] sm:text-sm font-medium mt-0.5">{item.label}</p>
+                            </div>
                         </div>
-                        <div className="min-w-0">
-                            <p className={`text-lg sm:text-2xl font-bold text-${color === 'emerald' ? 'white' : color + '-400'} tracking-tight truncate`}>{value}</p>
-                            <p className="text-slate-400 text-[10px] sm:text-sm font-medium mt-0.5">{label}</p>
-                        </div>
-                    </div>
-                ))}
+                    )
+                })}
             </div>
 
             {/* Tabs & Search */}
@@ -205,7 +217,6 @@ export default function Stock() {
                                 <tbody className="divide-y divide-white/5">
                                     {filteredSnakes.map((snake, i) => {
                                         const status = getStatus(snake.stock);
-                                        const pct = Math.min((snake.stock / (maxStock > 0 ? maxStock : 100)) * 100, 100);
                                         return (
                                             <tr key={snake.id} className="hover:bg-white/[0.02] transition-colors">
                                                 <td className="py-3 px-4 text-slate-500 text-sm">{i + 1}</td>

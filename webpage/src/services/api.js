@@ -40,7 +40,10 @@ export const getCategories = async () => {
 
 export const createOrder = async (orderData) => {
     try {
-        const response = await api.post('/orders', orderData);
+        const token = localStorage.getItem('customerToken');
+        const response = await api.post('/orders', orderData, {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
         return response.data;
     } catch (error) {
         console.error("Error creating order:", error);

@@ -73,7 +73,7 @@ const Profile = () => {
 
     return (
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 animate-fade-in">
-            <SEO title="โปรไฟล์ของฉัน" description="จัดการข้อมูลส่วนตัวและดูประวัติการสั่งซื้อของคุณที่ Dexter Reptiles" />
+            <SEO title="โปรไฟล์ของฉัน" description="จัดการข้อมูลส่วนตัวและดูประวัติการสั่งซื้อของคุณที่ Dexter Reptiles" noindex={true} />
 
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
                 <div>

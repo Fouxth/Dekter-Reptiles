@@ -39,7 +39,7 @@ const Contact = () => {
 
     return (
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 animate-fade-in relative min-h-[80vh]">
-            <SEO title="ติดต่อเรา" description="ติดต่อ Dexter Reptiles สอบถามข้อมูลสัตว์เลี้ยง ปรึกษาการดูแล หรือแจ้งปัญหาการใช้งาน" />
+            <SEO title="ติดต่อเรา" description="ติดต่อ Dexter Reptiles สอบถามข้อมูลสัตว์เลี้ยง ปรึกษาการดูแล หรือแจ้งปัญหาการใช้งาน" url="/contact" />
 
             {/* Background Element */}
             <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">

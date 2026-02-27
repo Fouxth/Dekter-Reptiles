@@ -56,7 +56,7 @@ export function SocketProvider({ children }) {
                         notifSound.play().catch(e => console.log('Audio play blocked:', e));
                     }
                 }
-            } catch (e) { }
+            } catch { console.error('Failed to load sound settings'); }
         };
 
         socket.on('connect', () => setConnected(true));
@@ -109,12 +109,14 @@ export function SocketProvider({ children }) {
     }, []);
 
     return (
+        // eslint-disable-next-line react-hooks/refs
         <SocketContext.Provider value={{ socket: socketRef.current, connected, unreadCount, clearUnread }}>
             {children}
         </SocketContext.Provider>
     );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useSocket() {
     return useContext(SocketContext);
 }

@@ -1,7 +1,9 @@
 import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
+import { authenticate } from '../middleware/auth';
 
 const router = Router();
+router.use(authenticate);
 
 // GET /api/expenses?year=2024&month=2
 router.get('/', async (req: Request, res: Response) => {

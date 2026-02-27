@@ -24,6 +24,7 @@ export default function Users() {
         setLoading(false);
     }
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => { load(); }, []);
 
     function openNew() { setEditing(null); setForm({ name: '', email: '', password: '', role: 'staff' }); setError(''); setIsOpen(true); }

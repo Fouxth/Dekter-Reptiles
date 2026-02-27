@@ -1,18 +1,47 @@
-import { Router, Request, Response } from 'express';
-import { PrismaClient, Prisma } from '@prisma/client';
+import { Router, Request, Response, NextFunction } from 'express';
+import { PrismaClient } from '@prisma/client';
+import jwt from 'jsonwebtoken';
 import { slipUpload } from '../middleware/slipUpload';
 import { getIO } from '../socket';
+import { authenticate, requireAdmin, extractBearerToken, JWT_SECRET, verifyToken } from '../middleware/auth';
 
 const router = Router();
 
-interface OrderItemInput {
-    snakeId: number;
-    quantity: number;
-    price?: number;
+function resolveAuthIdentity(req: Request) {
+    const token = extractBearerToken(req.headers.authorization);
+    if (!token) return { userId: null as number | null, customerId: null as number | null };
+
+    try {
+        const payload = verifyToken(token);
+        if (!payload?.id) return { userId: null as number | null, customerId: null as number | null };
+
+        if (payload.type === 'customer') {
+            return { userId: null as number | null, customerId: Number(payload.id) };
+        }
+        if (payload.role) {
+            return { userId: Number(payload.id), customerId: null as number | null };
+        }
+        return { userId: null as number | null, customerId: null as number | null };
+    } catch {
+        return { userId: null as number | null, customerId: null as number | null };
+    }
+}
+
+function createSlipUploadToken(orderId: number) {
+    return jwt.sign({ type: 'order_slip', orderId }, JWT_SECRET, { expiresIn: '2h' });
+}
+
+function verifySlipUploadToken(token: string, orderId: number) {
+    try {
+        const payload = jwt.verify(token, JWT_SECRET) as any;
+        return payload?.type === 'order_slip' && Number(payload?.orderId) === orderId;
+    } catch {
+        return false;
+    }
 }
 
 // Get all orders
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', authenticate, requireAdmin, async (req: Request, res: Response) => {
     try {
         const prisma: PrismaClient = (req as any).prisma;
         const { status, startDate, endDate } = req.query;
@@ -45,7 +74,7 @@ router.get('/', async (req: Request, res: Response) => {
 });
 
 // Get single order
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', authenticate, requireAdmin, async (req: Request, res: Response) => {
     try {
         const prisma: PrismaClient = (req as any).prisma;
         const order = await prisma.order.findUnique({
@@ -73,6 +102,29 @@ router.post('/', async (req: Request, res: Response) => {
     try {
         const prisma: PrismaClient = (req as any).prisma;
         const { items, paymentMethod, note, userId, discount, customerId, shippingAddress } = req.body;
+        const authIdentity = resolveAuthIdentity(req);
+
+        if (userId !== undefined && userId !== null) {
+            if (!authIdentity.userId) {
+                return res.status(403).json({ error: 'ไม่สามารถระบุ userId โดยไม่มี token พนักงาน' });
+            }
+            if (Number(userId) !== authIdentity.userId) {
+                return res.status(403).json({ error: 'userId ไม่ตรงกับผู้ใช้งานที่ล็อกอินอยู่' });
+            }
+        }
+
+        if (customerId !== undefined && customerId !== null) {
+            if (authIdentity.customerId && Number(customerId) !== authIdentity.customerId) {
+                return res.status(403).json({ error: 'customerId ไม่ตรงกับลูกค้าที่ล็อกอินอยู่' });
+            }
+            if (!authIdentity.customerId && !authIdentity.userId) {
+                return res.status(403).json({ error: 'ไม่สามารถระบุ customerId โดยไม่มี token' });
+            }
+        }
+
+        const finalUserId = authIdentity.userId || undefined;
+        const finalCustomerId = authIdentity.customerId
+            || (authIdentity.userId && customerId !== undefined && customerId !== null ? Number(customerId) : undefined);
 
         // items: [{ snakeId: number, quantity: number }]
         if (!items || !items.length) {
@@ -144,6 +196,7 @@ router.post('/', async (req: Request, res: Response) => {
         const orderNo = `${prefix}-${yyyymmdd}-${String(nextNum).padStart(5, '0')}`;
 
         const discountAmount = Number(discount) || 0;
+        const normalizedPaymentMethod = paymentMethod || 'cash';
 
         // Calculate tax - Exclusive (add on top of subtotal)
         const currentTotal = total - discountAmount;
@@ -160,12 +213,12 @@ router.post('/', async (req: Request, res: Response) => {
                     discount: discountAmount,
                     tax: tax,
                     total: finalTotal,
-                    paymentMethod: paymentMethod || 'cash',
-                    status: paymentMethod === 'transfer' ? 'pending_payment' : 'completed',
+                    paymentMethod: normalizedPaymentMethod,
+                    status: (normalizedPaymentMethod === 'transfer' || normalizedPaymentMethod === 'qr') ? 'pending_payment' : 'completed',
                     note,
                     shippingAddress,
-                    ...(userId ? { user: { connect: { id: Number(userId) } } } : {}),
-                    ...(customerId ? { customer: { connect: { id: Number(customerId) } } } : {}),
+                    ...(finalUserId ? { user: { connect: { id: finalUserId } } } : {}),
+                    ...(finalCustomerId ? { customer: { connect: { id: finalCustomerId } } } : {}),
                     items: {
                         create: orderItems,
                     },
@@ -233,18 +286,55 @@ router.post('/', async (req: Request, res: Response) => {
             });
         } catch (_) { }
 
-        res.status(201).json(order);
+        const slipUploadToken = createSlipUploadToken(order.id);
+        res.status(201).json({ ...order, slipUploadToken });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Failed to create order' });
     }
 });
 
-// Upload payment slip
-router.post('/:id/slip', slipUpload.single('slip'), async (req: Request, res: Response) => {
+async function authorizeSlipUpload(req: Request, res: Response, next: NextFunction) {
     try {
         const prisma: PrismaClient = (req as any).prisma;
         const orderId = Number(req.params.id);
+        if (!orderId || Number.isNaN(orderId)) {
+            return res.status(400).json({ error: 'Invalid order id' });
+        }
+
+        const order = await prisma.order.findUnique({
+            where: { id: orderId },
+            select: { id: true, customerId: true, status: true }
+        });
+        if (!order) {
+            return res.status(404).json({ error: 'Order not found' });
+        }
+
+        const authIdentity = resolveAuthIdentity(req);
+        const isStaff = !!authIdentity.userId;
+        const isOrderOwner = !!authIdentity.customerId && order.customerId === authIdentity.customerId;
+
+        const rawSlipToken = req.headers['x-slip-token'];
+        const slipToken = Array.isArray(rawSlipToken) ? rawSlipToken[0] : rawSlipToken;
+        const hasValidSlipToken = typeof slipToken === 'string' && verifySlipUploadToken(slipToken, orderId);
+
+        if (!isStaff && !isOrderOwner && !hasValidSlipToken) {
+            return res.status(401).json({ error: 'ไม่ได้รับอนุญาตให้อัปโหลดสลิปสำหรับออเดอร์นี้' });
+        }
+
+        (res.locals as any).orderId = orderId;
+        next();
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ error: 'Failed to authorize slip upload' });
+    }
+}
+
+// Upload payment slip
+router.post('/:id/slip', authorizeSlipUpload, slipUpload.single('slip'), async (req: Request, res: Response) => {
+    try {
+        const prisma: PrismaClient = (req as any).prisma;
+        const orderId = Number((res.locals as any).orderId || req.params.id);
 
         if (!req.file) {
             return res.status(400).json({ error: 'Please upload a slip image' });
@@ -268,7 +358,7 @@ router.post('/:id/slip', slipUpload.single('slip'), async (req: Request, res: Re
 });
 
 // Update tracking number
-router.patch('/:id/tracking', async (req: Request, res: Response) => {
+router.patch('/:id/tracking', authenticate, requireAdmin, async (req: Request, res: Response) => {
     try {
         const prisma: PrismaClient = (req as any).prisma;
         const { trackingNo } = req.body;
@@ -289,7 +379,7 @@ router.patch('/:id/tracking', async (req: Request, res: Response) => {
 });
 
 // Update order status
-router.patch('/:id/status', async (req: Request, res: Response) => {
+router.patch('/:id/status', authenticate, requireAdmin, async (req: Request, res: Response) => {
     try {
         const prisma: PrismaClient = (req as any).prisma;
         const { status } = req.body;
@@ -324,7 +414,7 @@ router.patch('/:id/status', async (req: Request, res: Response) => {
 });
 
 // Cancel order (restore stock)
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:id', authenticate, requireAdmin, async (req: Request, res: Response) => {
     try {
         const prisma: PrismaClient = (req as any).prisma;
 

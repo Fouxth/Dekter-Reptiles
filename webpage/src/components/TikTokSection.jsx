@@ -24,7 +24,7 @@ const TikTokSection = () => {
                         if (Array.isArray(urls)) {
                             setVideos(urls);
                         }
-                    } catch (e) {
+                    } catch {
                         if (tiktokSetting.value.startsWith('http')) setVideos([tiktokSetting.value]);
                     }
                 }
@@ -36,7 +36,7 @@ const TikTokSection = () => {
                     try {
                         const parsed = JSON.parse(s.value);
                         return Array.isArray(parsed) ? parsed : [s.value];
-                    } catch (e) {
+                    } catch {
                         return s.value.startsWith('http') || s.value.length > 3 ? [s.value] : [];
                     }
                 };
@@ -59,6 +59,7 @@ const TikTokSection = () => {
 
     if (!loading && videos.length === 0 && socialLinks.fb.length === 0 && socialLinks.ig.length === 0 && socialLinks.yt.length === 0) return null;
 
+    // eslint-disable-next-line no-unused-vars
     const SocialButton = ({ href, icon: Icon, label, colorClass }) => {
         if (!href) return null;
         return (
@@ -116,7 +117,7 @@ const TikTokSection = () => {
                                         <div className="rounded-3xl overflow-hidden glass-card border-white/10 hover:border-sky-500/30 transition-all duration-500 shadow-2xl bg-black">
                                             {videoId ? (
                                                 <iframe
-                                                    src={`https://www.tiktok.com/player/v1/${videoId}?&autoplay=0&loop=1`}
+                                                    src={`https://www.tiktok.com/embed/v2/${videoId}`}
                                                     className="w-full aspect-[9/16] border-none"
                                                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                                                     allowFullScreen

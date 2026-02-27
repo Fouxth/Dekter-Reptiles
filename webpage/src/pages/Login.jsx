@@ -30,7 +30,7 @@ const Login = () => {
 
     return (
         <div className="min-h-[80vh] flex items-center justify-center px-4 py-12 relative overflow-hidden">
-            <SEO title="เข้าสู่ระบบ" description="เข้าสู่ระบบสมาชิก Dexter Reptiles เพื่อจัดการการสั่งซื้อและข้อมูลส่วนตัว" />
+            <SEO title="เข้าสู่ระบบ" description="เข้าสู่ระบบสมาชิก Dexter Reptiles เพื่อจัดการการสั่งซื้อและข้อมูลส่วนตัว" noindex={true} />
 
             {/* Background elements */}
             <div className="absolute top-1/4 -left-20 w-80 h-80 bg-sky-500/10 rounded-full blur-[120px] pointer-events-none"></div>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import {
     TrendingUp, Package, ShoppingCart, DollarSign,
     AlertTriangle, ArrowUpRight, ArrowDownRight,
@@ -85,19 +86,20 @@ function PieChart({ data = [], size = 160 }) {
     const total = data.reduce((s, d) => s + (Number(d.value) || 0), 0) || 1;
     const colors = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#ec4899', '#06b6d4', '#f472b6'];
 
-    let currentAngle = -Math.PI / 2;
-    const sectors = [...data].sort((a, b) => (b.value || 0) - (a.value || 0)).map((d, i) => {
+    const sectors = [...data].sort((a, b) => (b.value || 0) - (a.value || 0)).reduce((acc, d, i) => {
         const val = Number(d.value) || 0;
         const angle = (val / total) * Math.PI * 2;
-        const x1 = CTR + R * Math.cos(currentAngle);
-        const y1 = CTR + R * Math.sin(currentAngle);
-        const x2 = CTR + R * Math.cos(currentAngle + angle);
-        const y2 = CTR + R * Math.sin(currentAngle + angle);
+        const prevAngle = i === 0 ? -Math.PI / 2 : acc[i - 1].endAngle;
+        const nextAngle = prevAngle + angle;
+        const x1 = CTR + R * Math.cos(prevAngle);
+        const y1 = CTR + R * Math.sin(prevAngle);
+        const x2 = CTR + R * Math.cos(nextAngle);
+        const y2 = CTR + R * Math.sin(nextAngle);
         const largeArc = angle > Math.PI ? 1 : 0;
         const path = `M${CTR},${CTR} L${x1},${y1} A${R},${R} 0 ${largeArc} 1 ${x2},${y2} Z`;
-        currentAngle += angle;
-        return { path, color: colors[i % colors.length], ...d, value: val };
-    });
+        acc.push({ path, color: colors[i % colors.length], ...d, value: val, endAngle: nextAngle });
+        return acc;
+    }, []);
 
     return (
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
@@ -124,6 +126,7 @@ function PieChart({ data = [], size = 160 }) {
 
 export default function Dashboard() {
     const navigate = useNavigate();
+    const { getToken } = useAuth();
     const [stats, setStats] = useState(null);
     const [recentOrders, setRecentOrders] = useState([]);
     const [topSelling, setTopSelling] = useState([]);
@@ -132,8 +135,10 @@ export default function Dashboard() {
     const [loading, setLoading] = useState(true);
     const [settings, setSettings] = useState({});
 
+    const authHeaders = () => ({ Authorization: `Bearer ${getToken()}` });
+
     async function loadChart(days) {
-        const res = await fetch(`${API}/dashboard/sales-chart?days=${days}`);
+        const res = await fetch(`${API}/dashboard/sales-chart?days=${days}`, { headers: authHeaders() });
         if (res.ok) setChartData(await res.json());
     }
 
@@ -141,10 +146,10 @@ export default function Dashboard() {
         setLoading(true);
         try {
             const [statsRes, ordersRes, topRes, settingsRes] = await Promise.all([
-                fetch(`${API}/dashboard/stats`),
-                fetch(`${API}/dashboard/recent-orders`),
-                fetch(`${API}/dashboard/top-selling`),
-                fetch(`${API}/settings`),
+                fetch(`${API}/dashboard/stats`, { headers: authHeaders() }),
+                fetch(`${API}/dashboard/recent-orders`, { headers: authHeaders() }),
+                fetch(`${API}/dashboard/top-selling`, { headers: authHeaders() }),
+                fetch(`${API}/settings`, { headers: authHeaders() }),
             ]);
             if (statsRes.ok) setStats(await statsRes.json());
             if (ordersRes.ok) setRecentOrders(await ordersRes.json());
@@ -158,6 +163,7 @@ export default function Dashboard() {
         }
     }
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => { fetchDashboardData(); }, []);
 
     async function handleChangeDays(d) {

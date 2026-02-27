@@ -61,6 +61,7 @@ export default function SnakeDetail() {
         setLoading(false);
     }
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => { load(); }, [id]);
 
     async function saveHealth(e) {
@@ -78,6 +79,7 @@ export default function SnakeDetail() {
         setItemToDelete(r);
     }
 
+    // eslint-disable-next-line no-unused-vars
     async function confirmDeleteHealth() {
         if (!itemToDelete) return;
         try {

@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
+import { authenticate, requireAdmin } from '../middleware/auth';
 
 const router = Router();
 
@@ -42,7 +43,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 });
 
 // Create category
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', authenticate, requireAdmin, async (req: Request, res: Response) => {
     try {
         const prisma: PrismaClient = (req as any).prisma;
         const { name, description, image } = req.body;
@@ -59,7 +60,7 @@ router.post('/', async (req: Request, res: Response) => {
 });
 
 // Update category
-router.put('/:id', async (req: Request, res: Response) => {
+router.put('/:id', authenticate, requireAdmin, async (req: Request, res: Response) => {
     try {
         const prisma: PrismaClient = (req as any).prisma;
         const { name, description, image } = req.body;
@@ -77,7 +78,7 @@ router.put('/:id', async (req: Request, res: Response) => {
 });
 
 // Delete category
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:id', authenticate, requireAdmin, async (req: Request, res: Response) => {
     try {
         const prisma: PrismaClient = (req as any).prisma;
 

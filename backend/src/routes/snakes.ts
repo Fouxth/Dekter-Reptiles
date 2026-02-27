@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { snakeUpload } from '../middleware/snakeUpload';
 import { getIO } from '../socket';
+import { authenticate, requireAdmin } from '../middleware/auth';
 
 const router = Router();
 
@@ -57,7 +58,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 });
 
 // Create snake
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', authenticate, requireAdmin, async (req: Request, res: Response) => {
     try {
         const prisma: PrismaClient = (req as any).prisma;
         const { name, description, price, cost, stock, adminImage, customerImage, color, dateOfBirth, genetics, gender, categoryId, code, species, morph, year, feedSize, forSale } = req.body;
@@ -109,7 +110,7 @@ router.post('/', async (req: Request, res: Response) => {
 });
 
 // Bulk create snakes
-router.post('/bulk', async (req: Request, res: Response) => {
+router.post('/bulk', authenticate, requireAdmin, async (req: Request, res: Response) => {
     try {
         const prisma: PrismaClient = (req as any).prisma;
         const { snakes } = req.body;
@@ -167,7 +168,7 @@ router.post('/bulk', async (req: Request, res: Response) => {
 });
 
 // Update snake
-router.put('/:id', async (req: Request, res: Response) => {
+router.put('/:id', authenticate, requireAdmin, async (req: Request, res: Response) => {
     try {
         const prisma: PrismaClient = (req as any).prisma;
         const { name, description, price, cost, stock, adminImage, customerImage, color, dateOfBirth, genetics, gender, categoryId, code, species, morph, year, feedSize, forSale } = req.body;
@@ -221,7 +222,7 @@ router.put('/:id', async (req: Request, res: Response) => {
 });
 
 // Upload snake image
-router.post('/upload', snakeUpload.single('image'), async (req: Request, res: Response) => {
+router.post('/upload', authenticate, requireAdmin, snakeUpload.single('image'), async (req: Request, res: Response) => {
     try {
         const type = req.query.type === 'admin' ? 'admin' : 'customer';
         if (!req.file) {
@@ -237,7 +238,7 @@ router.post('/upload', snakeUpload.single('image'), async (req: Request, res: Re
 });
 
 // Delete snake
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:id', authenticate, requireAdmin, async (req: Request, res: Response) => {
     try {
         const prisma: PrismaClient = (req as any).prisma;
         const id = Number(req.params.id);

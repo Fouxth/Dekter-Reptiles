@@ -53,6 +53,7 @@ export default function Breeding() {
         setLoading(false);
     }
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => { load(); }, []);
 
     function openNew() {

@@ -1,19 +1,38 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'snake-pos-secret-key';
+export const JWT_SECRET = process.env.JWT_SECRET || 'snake-pos-secret-key';
 
 export interface AuthRequest extends Request {
     user?: { id: number; email: string; role: string };
 }
 
-export function authenticate(req: AuthRequest, res: Response, next: NextFunction) {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) return res.status(401).json({ error: 'ไม่มี token' });
+export interface DecodedToken {
+    id: number;
+    email?: string;
+    role?: string;
+    type?: string;
+    iat?: number;
+    exp?: number;
+}
 
-    const token = authHeader.split(' ')[1];
+export function extractBearerToken(authHeader?: string) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
+    return authHeader.split(' ')[1] || null;
+}
+
+export function verifyToken(token: string): DecodedToken {
+    return jwt.verify(token, JWT_SECRET) as DecodedToken;
+}
+
+export function authenticate(req: AuthRequest, res: Response, next: NextFunction) {
+    const token = extractBearerToken(req.headers.authorization);
+    if (!token) return res.status(401).json({ error: 'ไม่มี token' });
     try {
-        const payload = jwt.verify(token, JWT_SECRET) as any;
+        const payload = verifyToken(token);
+        if (!payload?.id || payload.type === 'customer' || !payload.role) {
+            return res.status(401).json({ error: 'token ไม่ถูกต้องหรือหมดอายุ' });
+        }
         req.user = { id: payload.id, email: payload.email, role: payload.role };
         next();
     } catch {

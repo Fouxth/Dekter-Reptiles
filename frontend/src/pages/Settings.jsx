@@ -1,15 +1,12 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import {
     Save, Building, Phone, Monitor, CreditCard, Bell, Database,
     CheckCircle2, AlertCircle, Clock, Banknote, ArrowLeftRight,
-    MessageSquare, Store, Settings as SettingsIcon, Youtube,
-    ChevronDown, Check, Download, RefreshCcw
+    MessageSquare, Store, Settings as SettingsIcon, Youtube
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { toast } from 'react-hot-toast';
-import BankBadge, { THAI_BANKS } from '../components/BankBadge';
 
-const API = import.meta.env.VITE_API_URL || 'http://103.142.150.196:5000/api';
+const API = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 /* ── Toggle Switch Component ───────────────────────────────────── */
 function Toggle({ checked, onChange, disabled }) {
@@ -69,8 +66,6 @@ const TABS = [
     { key: 'data', label: 'จัดการข้อมูล', icon: Database },
 ];
 
-
-
 /* ── Main Component ────────────────────────────────────────────── */
 export default function Settings() {
     const [activeTab, setActiveTab] = useState('store');
@@ -90,7 +85,6 @@ export default function Settings() {
         bank_name: '',
         promptpay_enabled: true,
         promptpay_id: '',
-        qr_expiry_minutes: 15,
         // Contact
         contact_phone: '',
         contact_email: '',
@@ -112,77 +106,8 @@ export default function Settings() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [status, setStatus] = useState(null);
-    const { user, getToken } = useAuth();
-    const [isBankDropdownOpen, setIsBankDropdownOpen] = useState(false);
-    const bankDropdownRef = useRef(null);
 
-    useEffect(() => {
-        function handleClickOutside(event) {
-            if (bankDropdownRef.current && !bankDropdownRef.current.contains(event.target)) {
-                setIsBankDropdownOpen(false);
-            }
-        }
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
-
-    const handleBackup = async () => {
-        try {
-            const token = getToken();
-            const res = await fetch(`${API}/settings/backup`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            if (res.ok) {
-                const blob = await res.blob();
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `snake_pos_backup_${new Date().toISOString().split('T')[0]}.json`;
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-                toast.success('ดาวน์โหลดไฟล์สำรองข้อมูลเรียบร้อยแล้ว');
-            } else {
-                toast.error('ไม่สามารถสำรองข้อมูลได้');
-            }
-        } catch (error) {
-            console.error('Backup failed:', error);
-            toast.error('เกิดข้อผิดพลาดในการสำรองข้อมูล');
-        }
-    };
-
-    const handleResetData = async () => {
-        if (user?.role !== 'admin') {
-            toast.error('เฉพาะผู้ดูแลระบบเท่านั้นที่สามารถรีเซ็ตข้อมูลได้');
-            return;
-        }
-
-        const confirm1 = window.confirm('คำเตือน: คุณกำลังจะลบข้อมูลธุรกรรม สินค้า และประวัติทั้งหมดในระบบ (ยกเว้นผู้ใช้และการตั้งค่า) ต้องการดำเนินการต่อหรือไม่?');
-        if (!confirm1) return;
-
-        const confirm2 = window.confirm('กรุณายืนยันอีกครั้ง! การกระทำนี้ไม่สามารถย้อนกลับได้ ข้อมูลจะหายไปถาวร');
-        if (!confirm2) return;
-
-        setSaving(true);
-        try {
-            const token = getToken();
-            const res = await fetch(`${API}/settings/reset`, {
-                method: 'DELETE',
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            if (res.ok) {
-                toast.success('รีเซ็ตข้อมูลระบบเรียบร้อยแล้ว');
-                window.location.reload();
-            } else {
-                toast.error('ไม่สามารถรีเซ็ตข้อมูลได้');
-            }
-        } catch (error) {
-            console.error('Reset failed:', error);
-            toast.error('เกิดข้อผิดพลาดในการรีเซ็ตข้อมูล');
-        } finally {
-            setSaving(false);
-        }
-    };
+    const { getToken } = useAuth();
 
     async function loadSettings() {
         setLoading(true);
@@ -195,14 +120,12 @@ export default function Settings() {
                 const data = await res.json();
                 // Backend stores all values as strings — parse them back to correct types
                 const parsed = {};
-                const iterable = Array.isArray(data) ? data.map(item => [item.key, item.value]) : Object.entries(data);
-
-                for (const [key, val] of iterable) {
+                for (const [key, val] of Object.entries(data)) {
                     if (val === 'true') parsed[key] = true;
                     else if (val === 'false') parsed[key] = false;
                     else if (val !== null && val !== '' && !isNaN(Number(val)) && typeof val === 'string' && val.trim() !== '') {
                         // Check if the key is expected to be a number
-                        const numericKeys = ['tax_rate', 'max_discount_cashier', 'max_discount_manager', 'daily_target', 'qr_expiry_minutes'];
+                        const numericKeys = ['tax_rate', 'max_discount_cashier', 'max_discount_manager', 'daily_target'];
                         parsed[key] = numericKeys.includes(key) ? Number(val) : val;
                     }
                     else parsed[key] = val;
@@ -213,6 +136,7 @@ export default function Settings() {
         finally { setLoading(false); }
     }
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => { loadSettings(); }, []);
 
     async function handleSave(e) {
@@ -220,25 +144,13 @@ export default function Settings() {
         setSaving(true); setStatus(null);
         try {
             const token = getToken();
-
-            // Clean up empty URLs from arrays before saving
-            const cleanedSettings = { ...settings };
-            ['tiktok_urls', 'social_fb', 'social_ig', 'social_yt'].forEach(k => {
-                try {
-                    const arr = JSON.parse(cleanedSettings[k]);
-                    if (Array.isArray(arr)) {
-                        cleanedSettings[k] = JSON.stringify(arr.filter(u => u && u.trim() !== ''));
-                    }
-                } catch (e) { }
-            });
-
             const res = await fetch(`${API}/settings`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify(cleanedSettings)
+                body: JSON.stringify(settings)
             });
             if (res.ok) { setStatus({ type: 'success', message: 'บันทึกการตั้งค่าเรียบร้อยแล้ว' }); setTimeout(() => setStatus(null), 3000); }
             else {
@@ -277,7 +189,7 @@ export default function Settings() {
             </div>
 
             {/* Tab Content */}
-            <form onSubmit={handleSave} className="w-full">
+            <form onSubmit={handleSave} style={{ maxWidth: 960 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
 
                     {/* ─── STORE TAB ─── */}
@@ -300,10 +212,6 @@ export default function Settings() {
                                     <div className="form-group">
                                         <label>Line</label>
                                         <input value={settings.contact_line} onChange={e => set('contact_line', e.target.value)} placeholder="@snakeparadise" />
-                                    </div>
-                                    <div className="form-group">
-                                        <label>Facebook</label>
-                                        <input value={settings.contact_facebook} onChange={e => set('contact_facebook', e.target.value)} placeholder="https://facebook.com/DexterReptiles" />
                                     </div>
                                     <div className="form-group" style={{ gridColumn: 'span 2' }}>
                                         <label>ที่อยู่</label>
@@ -348,6 +256,19 @@ export default function Settings() {
                                 </div>
                             </Section>
 
+                            <Section title="การให้ส่วนลด">
+                                <div style={{ display: 'grid', gap: '1rem' }} className="form-grid">
+                                    <div className="form-group">
+                                        <label>ส่วนลดสูงสุด (%) สำหรับ Cashier</label>
+                                        <input type="number" value={settings.max_discount_cashier} onChange={e => set('max_discount_cashier', Number(e.target.value))} min={0} max={100} />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>ส่วนลดสูงสุด (%) สำหรับ Manager</label>
+                                        <input type="number" value={settings.max_discount_manager} onChange={e => set('max_discount_manager', Number(e.target.value))} min={0} max={100} />
+                                    </div>
+                                </div>
+                            </Section>
+
                             <Section>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                                     <ToggleRow icon={Monitor} title="แสดงราคาทุน" desc="แสดงราคาทุนสินค้าในหน้า POS (เฉพาะ Manager ขึ้นไป)" checked={settings.show_cost_price} onChange={v => set('show_cost_price', v)} />
@@ -377,55 +298,13 @@ export default function Settings() {
                             <Section title="ข้อมูลบัญชีธนาคาร">
                                 <div className="form-group">
                                     <label>ธนาคารทื่ใช้รับเงิน</label>
-                                    <div className="relative" ref={bankDropdownRef}>
-                                        <button
-                                            type="button"
-                                            onClick={() => setIsBankDropdownOpen(!isBankDropdownOpen)}
-                                            className={`input-field flex items-center gap-3 text-left w-full h-11 bg-slate-900 border border-slate-800 rounded-xl px-4 hover:border-sky-500/50 transition-all ${isBankDropdownOpen ? 'border-sky-500 ring-2 ring-sky-500/10' : ''}`}
-                                        >
-                                            {settings.bank_name ? (
-                                                <>
-                                                    <BankBadge bankName={settings.bank_name} size={24} />
-                                                    <span className="text-stone-100 font-medium">{settings.bank_name}</span>
-                                                </>
-                                            ) : (
-                                                <span className="text-stone-500">เลือกธนาคาร</span>
-                                            )}
-                                            <ChevronDown size={18} className={`ml-auto text-stone-500 transition-transform ${isBankDropdownOpen ? 'rotate-180' : ''}`} />
-                                        </button>
-
-                                        {isBankDropdownOpen && (
-                                            <div className="absolute z-[100] left-0 right-0 mt-2 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl py-2 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                                                <div className="max-h-[300px] overflow-y-auto custom-scrollbar">
-                                                    {THAI_BANKS.map(bank => (
-                                                        <button
-                                                            key={bank.id}
-                                                            type="button"
-                                                            onClick={() => {
-                                                                set('bank_name', bank.name);
-                                                                setIsBankDropdownOpen(false);
-                                                            }}
-                                                            className={`w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/5 transition-colors text-left ${settings.bank_name === bank.name ? 'bg-sky-500/10' : ''}`}
-                                                        >
-                                                            <BankBadge bankName={bank.name} size={24} />
-                                                            <span className={`text-sm ${settings.bank_name === bank.name ? 'text-sky-400 font-bold' : 'text-stone-300'}`}>
-                                                                {bank.name}
-                                                            </span>
-                                                            {settings.bank_name === bank.name && (
-                                                                <Check className="ml-auto text-sky-400" size={16} />
-                                                            )}
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
+                                    <input value={settings.bank_name} onChange={e => set('bank_name', e.target.value)} placeholder="เช่น กสิกรไทย (K-Bank)" />
                                 </div>
-                                <div className="form-group mt-4">
+                                <div className="form-group">
                                     <label>ชื่อบัญชีธนาคาร</label>
                                     <input value={settings.bank_account_name} onChange={e => set('bank_account_name', e.target.value)} placeholder="ชื่อบัญชี" />
                                 </div>
-                                <div className="form-group mt-4">
+                                <div className="form-group">
                                     <label>เลขบัญชีธนาคาร</label>
                                     <input value={settings.bank_account_number} onChange={e => set('bank_account_number', e.target.value)} placeholder="เลขบัญชี" />
                                 </div>
@@ -434,20 +313,6 @@ export default function Settings() {
                                 <div className="form-group">
                                     <label>PromptPay ID (เบอร์/เลขบัตรประชาชน)</label>
                                     <input value={settings.promptpay_id} onChange={e => set('promptpay_id', e.target.value)} placeholder="0812345678 หรือ 1234567890123" />
-                                </div>
-                                <div className="form-group mt-4">
-                                    <label>ระยะเวลาหมดอายุของ QR Code (นาที)</label>
-                                    <div className="flex items-center gap-3">
-                                        <input
-                                            type="number"
-                                            value={settings.qr_expiry_minutes}
-                                            onChange={e => set('qr_expiry_minutes', Number(e.target.value))}
-                                            placeholder="15"
-                                            className="w-24"
-                                            min={1}
-                                        />
-                                        <span className="text-slate-400 text-sm">ถ้าไม่ระบุจะไม่มีการจับเวลา</span>
-                                    </div>
                                 </div>
                             </Section>
                         </>
@@ -475,51 +340,21 @@ export default function Settings() {
                     {/* ─── DATA TAB ─── */}
                     {activeTab === 'data' && (
                         <Section title="จัดการข้อมูล" subtitle="สำรองและรีเซ็ตข้อมูลระบบ">
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="form-group">
-                                        <label>สัญลักษณ์สกุลเงิน</label>
-                                        <input value={settings.currency_symbol} onChange={e => set('currency_symbol', e.target.value)} />
-                                    </div>
-                                    <div className="form-group">
-                                        <label>เลขที่ผู้เสียภาษี</label>
-                                        <input value={settings.tax_id} onChange={e => set('tax_id', e.target.value)} placeholder="1234567890123" />
-                                    </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                <div className="form-group">
+                                    <label>สัญลักษณ์สกุลเงิน</label>
+                                    <input value={settings.currency_symbol} onChange={e => set('currency_symbol', e.target.value)} style={{ maxWidth: 120 }} />
                                 </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <button
-                                        type="button"
-                                        onClick={handleBackup}
-                                        className="p-6 bg-white/5 border border-white/10 rounded-2xl text-left hover:bg-white/10 transition-all group flex flex-col items-center text-center"
-                                    >
-                                        <div className="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                                            <Download className="text-emerald-400" size={24} />
-                                        </div>
-                                        <h3 className="text-white font-bold mb-1">สำรองข้อมูลทั้งหมด</h3>
-                                        <p className="text-slate-400 text-xs">ดาวน์โหลดข้อมูลทุกตารางออกมาเป็นไฟล์ JSON เพื่อเก็บรักษา</p>
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        onClick={handleResetData}
-                                        disabled={user?.role !== 'admin'}
-                                        className="p-6 bg-white/5 border border-white/10 rounded-2xl text-left hover:bg-red-500/5 hover:border-red-500/20 transition-all group flex flex-col items-center text-center disabled:opacity-50"
-                                    >
-                                        <div className="w-12 h-12 bg-red-500/10 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                                            <RefreshCcw className="text-red-400" size={24} />
-                                        </div>
-                                        <h3 className="text-white font-bold mb-1">ล้างข้อมูลธุรกรรม</h3>
-                                        <p className="text-slate-400 text-xs">ลบประวัติการขาย สินค้า และรายการเดินบัญชีทั้งหมด (ผู้ใช้คงเดิม)</p>
-                                    </button>
+                                <div className="form-group">
+                                    <label>เลขที่ผู้เสียภาษี</label>
+                                    <input value={settings.tax_id} onChange={e => set('tax_id', e.target.value)} placeholder="1234567890123" />
                                 </div>
-
-                                <div className="p-4 bg-amber-500/5 border border-amber-500/10 rounded-xl">
-                                    <div className="flex gap-2 text-amber-500 mb-2">
-                                        <AlertCircle size={16} />
-                                        <span className="text-xs font-bold uppercase">ข้อควรระวัง</span>
-                                    </div>
-                                    <p className="text-xs text-stone-400">การสำรองข้อมูลเป็นเพียงการดาวน์โหลดไฟล์ JSON เท่านั้น ระบบยังไม่มีความสามารถในการ Restore ข้ามไฟล์อัตโนมัติ การล้างข้อมูลจะลบเกือบทุกอย่างออกจากฐานข้อมูลทันที</p>
+                                <div style={{ background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: 14, padding: '1rem' }}>
+                                    <h4 style={{ color: '#fca5a5', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>⚠️ โซนอันตราย</h4>
+                                    <p style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.75rem' }}>การรีเซ็ตข้อมูลจะลบข้อมูลทั้งหมดออกจากระบบอย่างถาวร ไม่สามารถกู้คืนได้</p>
+                                    <button type="button" className="btn btn-danger btn-sm" onClick={() => alert('ฟังก์ชันนี้ยังไม่เปิดใช้งาน')}>
+                                        รีเซ็ตข้อมูลทั้งหมด
+                                    </button>
                                 </div>
                             </div>
                         </Section>
@@ -539,14 +374,14 @@ export default function Settings() {
                                         let urls = [];
                                         try {
                                             urls = typeof settings.tiktok_urls === 'string' ? JSON.parse(settings.tiktok_urls) : (settings.tiktok_urls || []);
-                                        } catch (e) { urls = []; }
+                                        } catch { urls = []; }
 
                                         if (!Array.isArray(urls)) urls = [];
 
                                         const handleUrlChange = (index, value) => {
                                             const newUrls = [...urls];
                                             newUrls[index] = value;
-                                            set('tiktok_urls', JSON.stringify(newUrls));
+                                            set('tiktok_urls', JSON.stringify(newUrls.filter(u => u !== '')));
                                         };
 
                                         const addUrlField = () => {
@@ -602,9 +437,9 @@ export default function Settings() {
                                         {(() => {
                                             const key = 'social_fb';
                                             let urls = [];
-                                            try { urls = typeof settings[key] === 'string' ? JSON.parse(settings[key]) : (settings[key] || []); } catch (e) { urls = []; }
+                                            try { urls = typeof settings[key] === 'string' ? JSON.parse(settings[key]) : (settings[key] || []); } catch { urls = []; }
                                             if (!Array.isArray(urls)) urls = [];
-                                            const update = (newUrls) => set(key, JSON.stringify(newUrls));
+                                            const update = (newUrls) => set(key, JSON.stringify(newUrls.filter(u => u !== '' || urls.length === 0)));
                                             return (
                                                 <div className="space-y-2">
                                                     {urls.map((url, i) => (
@@ -628,9 +463,9 @@ export default function Settings() {
                                         {(() => {
                                             const key = 'social_ig';
                                             let urls = [];
-                                            try { urls = typeof settings[key] === 'string' ? JSON.parse(settings[key]) : (settings[key] || []); } catch (e) { urls = []; }
+                                            try { urls = typeof settings[key] === 'string' ? JSON.parse(settings[key]) : (settings[key] || []); } catch { urls = []; }
                                             if (!Array.isArray(urls)) urls = [];
-                                            const update = (newUrls) => set(key, JSON.stringify(newUrls));
+                                            const update = (newUrls) => set(key, JSON.stringify(newUrls.filter(u => u !== '' || urls.length === 0)));
                                             return (
                                                 <div className="space-y-2">
                                                     {urls.map((url, i) => (
@@ -654,9 +489,9 @@ export default function Settings() {
                                         {(() => {
                                             const key = 'social_yt';
                                             let urls = [];
-                                            try { urls = typeof settings[key] === 'string' ? JSON.parse(settings[key]) : (settings[key] || []); } catch (e) { urls = []; }
+                                            try { urls = typeof settings[key] === 'string' ? JSON.parse(settings[key]) : (settings[key] || []); } catch { urls = []; }
                                             if (!Array.isArray(urls)) urls = [];
-                                            const update = (newUrls) => set(key, JSON.stringify(newUrls));
+                                            const update = (newUrls) => set(key, JSON.stringify(newUrls.filter(u => u !== '' || urls.length === 0)));
                                             return (
                                                 <div className="space-y-2">
                                                     {urls.map((url, i) => (
@@ -700,7 +535,7 @@ export default function Settings() {
                         </button>
                     </div>
                 </div>
-            </form >
+            </form>
 
             <style>{`
                 @media (max-width: 639px) {
@@ -708,6 +543,6 @@ export default function Settings() {
                     .form-grid [style*="grid-column: span 2"] { grid-column: span 1 !important; }
                 }
             `}</style>
-        </div >
+        </div>
     );
 }

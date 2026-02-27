@@ -4,10 +4,7 @@ import SEO from '../components/SEO';
 import ProductCard from '../components/ProductCard';
 import { getSnakes, getCategories } from '../services/api';
 
-const capitalize = (str) => {
-    if (!str) return str;
-    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-};
+
 
 const Shop = ({ searchQuery, addToCart }) => {
     const [filter, setFilter] = useState('All');

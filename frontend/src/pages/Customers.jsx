@@ -29,6 +29,7 @@ export default function Customers() {
         setLoading(false);
     }
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => { load(); }, []);
 
     async function openDetail(c) {

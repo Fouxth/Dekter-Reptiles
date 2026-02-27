@@ -76,6 +76,7 @@ export default function Layout() {
     // Close sidebar on route change (mobile)
     useEffect(() => {
         if (isMobile) {
+            // eslint-disable-next-line
             setSidebarOpen(false);
         }
     }, [location.pathname, isMobile]);

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import {
     Search,
@@ -96,6 +96,7 @@ export default function POS() {
             if (res.ok) setCustomerResults(await res.json());
         }, 300);
         return () => clearTimeout(t);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [customerSearch]);
 
     // Listen for real-time settings updates

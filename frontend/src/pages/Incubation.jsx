@@ -54,6 +54,7 @@ export default function Incubation() {
         setLoading(false);
     }
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => { load(); }, []);
 
     function openNew() {

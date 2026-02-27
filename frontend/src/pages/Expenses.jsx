@@ -44,6 +44,7 @@ export default function Expenses() {
         }
     }
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => { fetchExpenses(); }, [selectedMonth, selectedYear]);
 
     async function handleSubmit(e) {

@@ -58,11 +58,20 @@ const ProductDetail = ({ addToCart }) => {
         </div>
     );
 
+    const API = import.meta.env.VITE_API_URL || 'http://103.142.150.196:5000/api';
+    const BASE_URL = API.replace('/api', '');
+    const imageUrl = product.customerImage
+        ? (product.customerImage.startsWith('http') ? product.customerImage : `${BASE_URL}${product.customerImage}`)
+        : (product.adminImage ? (product.adminImage.startsWith('http') ? product.adminImage : `${BASE_URL}${product.adminImage}`) : null);
+
     return (
         <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in relative">
             <SEO
                 title={`${product.name} - ${product.species}`}
                 description={`ขาย ${product.name} มอร์ฟ ${product.morph} ราคา ${product.price} บาท ร้าน Dexter Reptiles`}
+                image={imageUrl}
+                url={`/product/${product.id}`}
+                type="product"
             />
 
             <button
@@ -78,12 +87,6 @@ const ProductDetail = ({ addToCart }) => {
                     {/* Image Section */}
                     <div className="h-[400px] md:h-auto relative bg-stone-950 overflow-hidden group">
                         {(() => {
-                            const API = import.meta.env.VITE_API_URL || 'http://103.142.150.196:5000/api';
-                            const BASE_URL = API.replace('/api', '');
-                            const imageUrl = product.customerImage
-                                ? (product.customerImage.startsWith('http') ? product.customerImage : `${BASE_URL}${product.customerImage}`)
-                                : (product.adminImage ? (product.adminImage.startsWith('http') ? product.adminImage : `${BASE_URL}${product.adminImage}`) : null);
-
                             return (
                                 <img
                                     src={imageUrl}

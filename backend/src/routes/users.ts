@@ -1,7 +1,9 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
+import { authenticate, requireAdmin } from '../middleware/auth';
 
 const router = Router();
+router.use(authenticate, requireAdmin);
 
 // GET /api/users
 router.get('/', async (req: Request, res: Response) => {

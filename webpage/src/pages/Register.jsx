@@ -40,7 +40,7 @@ const Register = () => {
 
     return (
         <div className="min-h-[90vh] flex items-center justify-center px-4 py-16 relative overflow-hidden">
-            <SEO title="สมัครสมาชิก" description="สมัครสมาชิก Dexter Reptiles เพื่อรับสิทธิพิเศษและจัดการการสั่งซื้อได้ง่ายขึ้น" />
+            <SEO title="สมัครสมาชิก" description="สมัครสมาชิก Dexter Reptiles เพื่อรับสิทธิพิเศษและจัดการการสั่งซื้อได้ง่ายขึ้น" noindex={true} />
 
             <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-sky-500/5 rounded-full blur-[150px] pointer-events-none"></div>
             <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-cyan-500/5 rounded-full blur-[150px] pointer-events-none"></div>

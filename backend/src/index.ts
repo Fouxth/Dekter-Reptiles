@@ -33,8 +33,26 @@ const PORT = process.env.PORT || 5000;
 // Initialize Socket.io
 const io = initIO(httpServer);
 
-// Middleware
-app.use(cors());
+// CORS Configuration
+const allowedOrigins = [
+    'http://localhost:5173', // Admin Dev
+    'http://localhost:5174', // Customer Dev
+    process.env.ADMIN_URL || 'https://admin-siamreptiles.com',
+    process.env.WEB_URL || 'https://siamreptiles.com'
+];
+
+app.use(cors({
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.indexOf(origin) === -1) {
+            const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+            return callback(new Error(msg), false);
+        }
+        return callback(null, true);
+    },
+    credentials: true
+}));
 app.use(express.json());
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 

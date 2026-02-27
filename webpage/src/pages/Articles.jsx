@@ -9,7 +9,7 @@ const Articles = () => {
 
     return (
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 animate-fade-in min-h-[80vh]">
-            <SEO title="บทความและวิธีเลี้ยง" description="แหล่งรวมความรู้ วิธีการเลี้ยงงู Ball Python, Corn Snake และการดูแลสัตว์เลื้อยคลานเบื้องต้น" />
+            <SEO title="บทความและวิธีเลี้ยง" description="แหล่งรวมความรู้ วิธีการเลี้ยงงู Ball Python, Corn Snake และการดูแลสัตว์เลื้อยคลานเบื้องต้น" url="/articles" />
 
             <div className="text-center mb-16">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-sky-500/30 bg-sky-500/10 text-sky-400 text-xs uppercase tracking-widest font-semibold mb-4">

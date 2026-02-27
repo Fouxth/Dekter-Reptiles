@@ -51,6 +51,7 @@ export default function Reports() {
         setLoading(false);
     }
 
+    // eslint-disable-next-line
     useEffect(() => { fetchReport(); }, []);
 
     function handleExport() {

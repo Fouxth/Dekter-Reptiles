@@ -79,6 +79,7 @@ const Cart = ({ cart, setCart, updateQuantity, removeFromCart, cartTotal, cartIt
             }
         };
         fetchSettings();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // Reset timer when switching to QR or when total changes
@@ -155,6 +156,7 @@ const Cart = ({ cart, setCart, updateQuantity, removeFromCart, cartTotal, cartIt
                     orderNo: result.orderNo,
                     total: result.total,
                     orderId: result.id,
+                    slipUploadToken: result.slipUploadToken,
                     paymentMethod,
                     createdAt: result.createdAt // Pass timestamp for QR expiry
                 }
@@ -169,7 +171,7 @@ const Cart = ({ cart, setCart, updateQuantity, removeFromCart, cartTotal, cartIt
 
     return (
         <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in min-h-[70vh]">
-            <SEO title="ตะกร้าสินค้า" description="ตรวจสอบรายการสั่งซื้องูและสัตว์เลื้อยคลานของคุณ" />
+            <SEO title="ตะกร้าสินค้า" description="ตรวจสอบรายการสั่งซื้องูและสัตว์เลื้อยคลานของคุณ" noindex={true} />
 
             <div className="flex items-center gap-3 mb-6">
                 <div className="w-9 h-9 rounded-xl bg-sky-500/10 flex items-center justify-center border border-sky-500/20">

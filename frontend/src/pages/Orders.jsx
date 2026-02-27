@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { useAuth } from '../context/AuthContext';
 import {
     Search,
     Receipt,
@@ -21,25 +22,36 @@ import {
     Phone
 } from 'lucide-react';
 
+const API = import.meta.env.VITE_API_URL || 'http://103.142.150.196:5000/api';
+
 const capitalize = (str) => {
     if (!str) return str;
     return str.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
 };
 
 export default function Orders() {
+    const { getToken } = useAuth();
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
     const [selectedOrder, setSelectedOrder] = useState(null);
 
+    const authHeaders = (withContentType = false) => ({
+        ...(withContentType ? { 'Content-Type': 'application/json' } : {}),
+        Authorization: `Bearer ${getToken()}`,
+    });
+
     useEffect(() => {
         fetchOrders();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const fetchOrders = async () => {
         try {
-            const response = await fetch('/api/orders');
+            const response = await fetch(`${API}/orders`, {
+                headers: authHeaders(),
+            });
             if (response.ok) {
                 const data = await response.json();
                 setOrders(data);
@@ -58,9 +70,9 @@ export default function Orders() {
 
     const updateOrderStatus = async (orderId, newStatus) => {
         try {
-            const response = await fetch(`/api/orders/${orderId}/status`, {
+            const response = await fetch(`${API}/orders/${orderId}/status`, {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
+                headers: authHeaders(true),
                 body: JSON.stringify({ status: newStatus }),
             });
             if (response.ok) {
@@ -73,9 +85,9 @@ export default function Orders() {
 
     const updateOrderTracking = async (orderId, trackingNo) => {
         try {
-            const response = await fetch(`/api/orders/${orderId}/tracking`, {
+            const response = await fetch(`${API}/orders/${orderId}/tracking`, {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
+                headers: authHeaders(true),
                 body: JSON.stringify({ trackingNo }),
             });
             if (response.ok) {
@@ -144,7 +156,7 @@ export default function Orders() {
     // Calculate summary stats
     const totalRevenue = orders.filter(o => o.status === 'completed').reduce((sum, o) => sum + o.total, 0);
     const completedOrders = orders.filter(o => o.status === 'completed').length;
-    const pendingOrders = orders.filter(o => o.status === 'pending').length;
+    const pendingOrders = orders.filter(o => o.status === 'pending_payment').length;
 
     return (
         <div className="space-y-4 sm:space-y-6 animate-fade-in p-1 sm:p-2">

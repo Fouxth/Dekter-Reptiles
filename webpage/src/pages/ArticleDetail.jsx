@@ -20,7 +20,7 @@ const ArticleDetail = () => {
 
     return (
         <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 animate-fade-in relative z-10">
-            <SEO title={article.title} description={article.excerpt} />
+            <SEO title={article.title} description={article.excerpt} image={article.image} url={`/article/${article.id}`} type="article" />
 
             <button
                 onClick={() => navigate('/articles')}

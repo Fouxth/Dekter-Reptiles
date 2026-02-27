@@ -1,10 +1,11 @@
 import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
+import { authenticate, requireAdmin } from '../middleware/auth';
 
 const router = Router();
 
 // GET /api/dashboard/stats
-router.get('/stats', async (req: Request, res: Response) => {
+router.get('/stats', authenticate, requireAdmin, async (req: Request, res: Response) => {
     try {
         const prisma: PrismaClient = (req as any).prisma;
         const settings = await prisma.systemSetting.findUnique({
@@ -208,7 +209,7 @@ router.get('/stats', async (req: Request, res: Response) => {
 });
 
 // GET /api/dashboard/recent-orders
-router.get('/recent-orders', async (req: Request, res: Response) => {
+router.get('/recent-orders', authenticate, requireAdmin, async (req: Request, res: Response) => {
     try {
         const prisma: PrismaClient = (req as any).prisma;
         const orders = await prisma.order.findMany({
@@ -228,7 +229,7 @@ router.get('/recent-orders', async (req: Request, res: Response) => {
 });
 
 // GET /api/dashboard/top-selling
-router.get('/top-selling', async (req: Request, res: Response) => {
+router.get('/top-selling', authenticate, requireAdmin, async (req: Request, res: Response) => {
     try {
         const prisma: PrismaClient = (req as any).prisma;
         const topSelling = await prisma.orderItem.groupBy({
@@ -254,7 +255,7 @@ router.get('/top-selling', async (req: Request, res: Response) => {
 });
 
 // GET /api/dashboard/sales-chart?days=7|30
-router.get('/sales-chart', async (req: Request, res: Response) => {
+router.get('/sales-chart', authenticate, requireAdmin, async (req: Request, res: Response) => {
     try {
         const prisma: PrismaClient = (req as any).prisma;
         // Fetch reset time
@@ -300,7 +301,7 @@ router.get('/sales-chart', async (req: Request, res: Response) => {
 });
 
 // GET /api/dashboard/report?startDate=&endDate=
-router.get('/report', async (req: Request, res: Response) => {
+router.get('/report', authenticate, requireAdmin, async (req: Request, res: Response) => {
     try {
         const prisma: PrismaClient = (req as any).prisma;
         const { startDate, endDate } = req.query;

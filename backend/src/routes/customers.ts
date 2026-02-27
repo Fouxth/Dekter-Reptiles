@@ -1,7 +1,9 @@
 import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
+import { authenticate } from '../middleware/auth';
 
 const router = Router();
+router.use(authenticate);
 
 // GET /api/customers
 router.get('/', async (req: Request, res: Response) => {
@@ -15,7 +17,17 @@ router.get('/', async (req: Request, res: Response) => {
                     { phone: { contains: String(search), mode: 'insensitive' } },
                 ],
             } : undefined,
-            include: {
+            select: {
+                id: true,
+                email: true,
+                name: true,
+                phone: true,
+                address: true,
+                lineId: true,
+                note: true,
+                isActive: true,
+                createdAt: true,
+                updatedAt: true,
                 _count: { select: { orders: true } },
             },
             orderBy: { createdAt: 'desc' },
@@ -33,7 +45,17 @@ router.get('/:id', async (req: Request, res: Response) => {
     try {
         const customer = await prisma.customer.findUnique({
             where: { id: Number(req.params.id) },
-            include: {
+            select: {
+                id: true,
+                email: true,
+                name: true,
+                phone: true,
+                address: true,
+                lineId: true,
+                note: true,
+                isActive: true,
+                createdAt: true,
+                updatedAt: true,
                 orders: {
                     include: { items: { include: { snake: true } } },
                     orderBy: { createdAt: 'desc' },
@@ -52,13 +74,27 @@ router.get('/:id', async (req: Request, res: Response) => {
 // POST /api/customers
 router.post('/', async (req: Request, res: Response) => {
     const prisma: PrismaClient = (req as any).prisma;
-    const { name, phone, lineId, note } = req.body;
+    const { name, email, phone, address, lineId, note, isActive } = req.body;
     if (!name) return res.status(400).json({ error: 'กรุณากรอกชื่อลูกค้า' });
     try {
-        const customer = await prisma.customer.create({ data: { name, phone, lineId, note } });
+        const customer = await prisma.customer.create({
+            data: { name, email, phone, address, lineId, note, isActive: isActive !== undefined ? Boolean(isActive) : undefined },
+            select: {
+                id: true,
+                email: true,
+                name: true,
+                phone: true,
+                address: true,
+                lineId: true,
+                note: true,
+                isActive: true,
+                createdAt: true,
+                updatedAt: true,
+            },
+        });
         return res.status(201).json(customer);
     } catch (err: any) {
-        if (err.code === 'P2002') return res.status(400).json({ error: 'เบอร์โทรนี้ถูกใช้แล้ว' });
+        if (err.code === 'P2002') return res.status(400).json({ error: 'อีเมลหรือเบอร์โทรนี้ถูกใช้แล้ว' });
         console.error(err);
         return res.status(500).json({ error: 'เกิดข้อผิดพลาด' });
     }
@@ -67,11 +103,23 @@ router.post('/', async (req: Request, res: Response) => {
 // PUT /api/customers/:id
 router.put('/:id', async (req: Request, res: Response) => {
     const prisma: PrismaClient = (req as any).prisma;
-    const { name, phone, lineId, note } = req.body;
+    const { name, email, phone, address, lineId, note, isActive } = req.body;
     try {
         const customer = await prisma.customer.update({
             where: { id: Number(req.params.id) },
-            data: { name, phone, lineId, note },
+            data: { name, email, phone, address, lineId, note, isActive },
+            select: {
+                id: true,
+                email: true,
+                name: true,
+                phone: true,
+                address: true,
+                lineId: true,
+                note: true,
+                isActive: true,
+                createdAt: true,
+                updatedAt: true,
+            },
         });
         return res.json(customer);
     } catch (err: any) {

@@ -62,9 +62,8 @@ const CheckoutSuccess = () => {
         };
         fetchSettings();
     }, []);
-
-    if (!location.state || !location.state.orderNo) return null;
-    const { orderNo, total, orderId, paymentMethod, createdAt } = location.state;
+    const state = location.state || {};
+    const { orderNo, total, orderId, paymentMethod, createdAt, slipUploadToken } = state;
 
     useEffect(() => {
         if (!createdAt || !settings.qr_expiry_minutes) return;
@@ -112,6 +111,7 @@ const CheckoutSuccess = () => {
         try {
             const response = await fetch(`/api/orders/${orderId}/slip`, {
                 method: 'POST',
+                headers: slipUploadToken ? { 'X-Slip-Token': slipUploadToken } : undefined,
                 body: formData,
             });
 
@@ -122,15 +122,18 @@ const CheckoutSuccess = () => {
                 setError(data.error || 'เกิดข้อผิดพลาดในการอัปโหลด');
             }
         } catch (err) {
+            console.error("Upload error:", err);
             setError('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้');
         } finally {
             setUploading(false);
         }
     };
 
+    if (!state.orderNo) return null;
+
     return (
         <main className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-fade-in text-center min-h-[70vh] flex flex-col justify-center items-center relative overflow-hidden">
-            <SEO title="สั่งซื้อสำเร็จ" description="ขอบคุณที่สั่งซื้อสินค้ากับ Dexter Reptiles" />
+            <SEO title="สั่งซื้อสำเร็จ" description="ขอบคุณที่สั่งซื้อสินค้ากับ Dexter Reptiles" noindex={true} />
 
             {/* Background Element */}
             <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none flex items-center justify-center">
