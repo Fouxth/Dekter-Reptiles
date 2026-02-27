@@ -31,6 +31,7 @@ const navItems = [
     { path: '/customers', icon: UserCheck, label: 'ลูกค้า' },
     { path: '/breeding', icon: Dna, label: 'ผสมพันธุ์' },
     { path: '/incubation', icon: Egg, label: 'ฟักไข่' },
+    { path: '/expenses', icon: DollarSign, label: 'รายจ่าย' },
     { path: '/reports', icon: FileText, label: 'รายงาน' },
 ];
 

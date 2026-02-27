@@ -77,11 +77,21 @@ const ProductDetail = ({ addToCart }) => {
                     <div className="absolute inset-y-0 left-1/2 w-px bg-white/5 hidden md:block"></div>
                     {/* Image Section */}
                     <div className="h-[400px] md:h-auto relative bg-stone-950 overflow-hidden group">
-                        <img
-                            src={product.image}
-                            alt={`รูปภาพของงู ${product.name}`}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-90"
-                        />
+                        {(() => {
+                            const API = import.meta.env.VITE_API_URL || 'http://103.142.150.196:5000/api';
+                            const BASE_URL = API.replace('/api', '');
+                            const imageUrl = product.customerImage
+                                ? (product.customerImage.startsWith('http') ? product.customerImage : `${BASE_URL}${product.customerImage}`)
+                                : (product.adminImage ? (product.adminImage.startsWith('http') ? product.adminImage : `${BASE_URL}${product.adminImage}`) : null);
+
+                            return (
+                                <img
+                                    src={imageUrl}
+                                    alt={`รูปภาพของงู ${product.name}`}
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-90"
+                                />
+                            );
+                        })()}
                         <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-transparent to-transparent opacity-80 md:hidden"></div>
                         {!(product.stock > 0) && (
                             <div className="absolute inset-0 bg-stone-950/80 backdrop-blur-md flex items-center justify-center z-10">

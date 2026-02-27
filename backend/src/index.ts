@@ -19,6 +19,7 @@ import settingRoutes from './routes/settings';
 import feedingLogRoutes from './routes/feeding-logs';
 import incubationRecordRoutes from './routes/incubation-records';
 import customerAuthRoutes from './routes/customer-auth';
+import expenseRoutes from './routes/expenses';
 
 dotenv.config();
 
@@ -54,6 +55,7 @@ app.use('/api/breeding-records', breedingRecordRoutes);
 app.use('/api/settings', settingRoutes);
 app.use('/api/feeding-logs', feedingLogRoutes);
 app.use('/api/incubation-records', incubationRecordRoutes);
+app.use('/api/expenses', expenseRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

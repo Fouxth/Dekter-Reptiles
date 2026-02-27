@@ -33,7 +33,7 @@ router.get('/stats', async (req: Request, res: Response) => {
         const [totalSnakes, stockResult, lowStock, totalCategories, totalCustomers,
             todayOrders, weekOrders, monthOrders, totalOrdersCount, revenueResult,
             lastWeekOrders, categorySalesRaw, breedingSummaryRaw, dailyTasksRaw,
-            geneticsRaw, overdueRaw] = await Promise.all([
+            geneticsRaw, overdueRaw, monthExpensesRaw] = await Promise.all([
                 prisma.snake.count(),
                 prisma.snake.aggregate({ _sum: { stock: true } }),
                 prisma.snake.count({ where: { stock: { lt: 3, gt: 0 } } }),
@@ -96,6 +96,11 @@ router.get('/stats', async (req: Request, res: Response) => {
                             take: 1
                         }
                     }
+                }),
+                // Monthly Expenses
+                prisma.expense.aggregate({
+                    where: { date: { gte: startOfMonth } },
+                    _sum: { amount: true }
                 })
             ]);
 
@@ -166,6 +171,11 @@ router.get('/stats', async (req: Request, res: Response) => {
             count: g._count.id
         })).sort((a: any, b: any) => b.count - a.count).slice(0, 6);
 
+        // Month Financials
+        const monthRevenue = monthOrders.reduce((s, o) => s + o.total, 0);
+        const monthCost = (monthOrders as any[]).reduce((s, o) => s + o.items.reduce((si: any, i: any) => si + (i.cost * i.quantity), 0), 0);
+        const monthExpenses = (monthExpensesRaw as any)._sum.amount || 0;
+
         res.json({
             totalSnakes,
             totalStock: stockResult._sum.stock || 0,
@@ -176,7 +186,10 @@ router.get('/stats', async (req: Request, res: Response) => {
             weekSales: weekRevenue,
             lastWeekSales: lastWeekRevenue,
             growth,
-            monthSales: monthOrders.reduce((s, o) => s + o.total, 0),
+            monthSales: monthRevenue,
+            monthCost,
+            monthExpenses,
+            monthNetProfit: monthRevenue - monthCost - monthExpenses,
             totalOrders: totalOrdersCount,
             totalRevenue: revenueResult._sum.total || 0,
             totalDiscount: revenueResult._sum.discount || 0,

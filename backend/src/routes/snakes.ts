@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
+import { snakeUpload } from '../middleware/snakeUpload';
 
 const router = Router();
 
@@ -58,7 +59,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 router.post('/', async (req: Request, res: Response) => {
     try {
         const prisma: PrismaClient = (req as any).prisma;
-        const { name, description, price, cost, stock, image, color, dateOfBirth, genetics, gender, categoryId, code, species, morph, year, feedSize, forSale } = req.body;
+        const { name, description, price, cost, stock, adminImage, customerImage, color, dateOfBirth, genetics, gender, categoryId, code, species, morph, year, feedSize, forSale } = req.body;
 
         const snake = await prisma.$transaction(async (tx) => {
             const newSnake = await tx.snake.create({
@@ -68,7 +69,8 @@ router.post('/', async (req: Request, res: Response) => {
                     price: Number(price),
                     cost: cost !== undefined ? Number(cost) : undefined,
                     stock: Number(stock) || 0,
-                    image,
+                    adminImage,
+                    customerImage,
                     color,
                     genetics,
                     dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
@@ -125,7 +127,8 @@ router.post('/bulk', async (req: Request, res: Response) => {
                         price: Number(s.price),
                         cost: s.cost !== undefined ? Number(s.cost) : undefined,
                         stock: Number(s.stock) || 0,
-                        image: s.image,
+                        adminImage: s.adminImage,
+                        customerImage: s.customerImage,
                         color: s.color,
                         genetics: s.genetics,
                         dateOfBirth: s.dateOfBirth ? new Date(s.dateOfBirth) : undefined,
@@ -166,7 +169,7 @@ router.post('/bulk', async (req: Request, res: Response) => {
 router.put('/:id', async (req: Request, res: Response) => {
     try {
         const prisma: PrismaClient = (req as any).prisma;
-        const { name, description, price, cost, stock, image, color, dateOfBirth, genetics, gender, categoryId, code, species, morph, year, feedSize, forSale } = req.body;
+        const { name, description, price, cost, stock, adminImage, customerImage, color, dateOfBirth, genetics, gender, categoryId, code, species, morph, year, feedSize, forSale } = req.body;
 
         const snake = await prisma.snake.update({
             where: { id: Number(req.params.id) },
@@ -176,7 +179,8 @@ router.put('/:id', async (req: Request, res: Response) => {
                 price: price !== undefined ? Number(price) : undefined,
                 cost: cost !== undefined ? Number(cost) : undefined,
                 stock: stock !== undefined ? Number(stock) : undefined,
-                image,
+                adminImage,
+                customerImage,
                 color,
                 genetics,
                 dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
@@ -196,6 +200,22 @@ router.put('/:id', async (req: Request, res: Response) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Failed to update snake' });
+    }
+});
+
+// Upload snake image
+router.post('/upload', snakeUpload.single('image'), async (req: Request, res: Response) => {
+    try {
+        const type = req.query.type === 'admin' ? 'admin' : 'customer';
+        if (!req.file) {
+            return res.status(400).json({ error: 'Please upload an image' });
+        }
+
+        const imageUrl = `/uploads/snakes/${type}/${req.file.filename}`;
+        res.json({ url: imageUrl });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to upload image' });
     }
 });
 

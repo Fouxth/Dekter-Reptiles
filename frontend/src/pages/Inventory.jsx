@@ -15,6 +15,7 @@ import {
     ListPlus
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import ImageUpload from '../components/ImageUpload';
 
 const API = import.meta.env.VITE_API_URL || 'http://103.142.150.196:5000/api';
 
@@ -48,7 +49,8 @@ export default function Inventory() {
         dateOfBirth: '',
         gender: 'male',
         categoryId: '',
-        image: '',
+        adminImage: '',
+        customerImage: '',
         code: '',
         species: '',
         morph: '',
@@ -105,7 +107,8 @@ export default function Inventory() {
             dateOfBirth: '',
             gender: 'male',
             categoryId: categories[0]?.id || '',
-            image: '',
+            adminImage: '',
+            customerImage: '',
             code: '',
             species: '',
             morph: '',
@@ -129,7 +132,8 @@ export default function Inventory() {
             dateOfBirth: snake.dateOfBirth ? new Date(snake.dateOfBirth).toISOString().slice(0, 10) : '',
             gender: snake.gender || 'male',
             categoryId: snake.categoryId,
-            image: snake.image || '',
+            adminImage: snake.adminImage || '',
+            customerImage: snake.customerImage || '',
             code: snake.code || '',
             species: snake.species || '',
             morph: snake.morph || '',
@@ -352,8 +356,8 @@ export default function Inventory() {
                             <div className="flex gap-3">
                                 {/* Thumbnail */}
                                 <div className="w-16 h-16 rounded-lg bg-slate-800 overflow-hidden flex-shrink-0 border border-white/5">
-                                    {snake.image ? (
-                                        <img src={snake.image} alt={snake.name} className="w-full h-full object-cover" />
+                                    {snake.adminImage ? (
+                                        <img src={snake.adminImage.startsWith('http') ? snake.adminImage : `${API.replace('/api', '')}${snake.adminImage}`} alt={snake.name} className="w-full h-full object-cover" />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center text-xl">🐍</div>
                                     )}
@@ -456,8 +460,8 @@ export default function Inventory() {
                                         <td className="py-4 px-3 lg:px-4">
                                             <div className="flex items-center gap-3 lg:gap-4">
                                                 <div className="w-12 h-12 lg:w-16 lg:h-12 rounded-lg bg-slate-800 overflow-hidden flex-shrink-0 border border-white/5 group-hover:border-emerald-500/30 transition-colors">
-                                                    {snake.image ? (
-                                                        <img src={snake.image} alt={snake.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                                    {snake.adminImage ? (
+                                                        <img src={snake.adminImage.startsWith('http') ? snake.adminImage : `${API.replace('/api', '')}${snake.adminImage}`} alt={snake.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                                                     ) : (
                                                         <div className="w-full h-full flex items-center justify-center text-lg lg:text-xl">🐍</div>
                                                     )}
@@ -740,14 +744,18 @@ export default function Inventory() {
                                     </>
                                 )}
 
-                                <div className="col-span-1 sm:col-span-2">
-                                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">URL รูปภาพ</label>
-                                    <input
-                                        type="url"
-                                        value={formData.image}
-                                        onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                                        className="input-field"
-                                        placeholder="https://example.com/image.jpg"
+                                <div className="col-span-1 sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <ImageUpload
+                                        label="รูปภาพพนักงาน (หลังบ้าน)"
+                                        value={formData.adminImage}
+                                        onChange={(val) => setFormData({ ...formData, adminImage: val })}
+                                        type="admin"
+                                    />
+                                    <ImageUpload
+                                        label="รูปภาพลูกค้า (หน้าเว็บ)"
+                                        value={formData.customerImage}
+                                        onChange={(val) => setFormData({ ...formData, customerImage: val })}
+                                        type="customer"
                                     />
                                 </div>
 

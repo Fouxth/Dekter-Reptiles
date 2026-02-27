@@ -108,11 +108,15 @@ export default function SnakeDetail() {
             {/* Snake Header Card */}
             <div className="card snake-header-card" style={{ display: 'flex', gap: '1rem', padding: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap', alignItems: 'flex-start' }}>
                 <div className="snake-photo">
-                    {snake.image ? (
-                        <img src={snake.image} alt={snake.name} style={{ width: '100%', maxWidth: 140, height: 'auto', aspectRatio: '1/1', objectFit: 'cover', borderRadius: 16 }} />
-                    ) : (
-                        <div style={{ width: '100%', maxWidth: 140, aspectRatio: '1/1', background: 'rgba(255,255,255,0.05)', borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '3rem' }}>🐍</div>
-                    )}
+                    {(() => {
+                        const BASE_URL = API.replace('/api', '');
+                        const img = snake.adminImage || snake.image; // Fallback to legacy field if present
+                        return img ? (
+                            <img src={img.startsWith('http') ? img : `${BASE_URL}${img}`} alt={snake.name} style={{ width: '100%', maxWidth: 140, height: 'auto', aspectRatio: '1/1', objectFit: 'cover', borderRadius: 16 }} />
+                        ) : (
+                            <div style={{ width: '100%', maxWidth: 140, aspectRatio: '1/1', background: 'rgba(255,255,255,0.05)', borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '3rem' }}>🐍</div>
+                        );
+                    })()}
                 </div>
                 <div style={{ flex: 1, minWidth: 200 }}>
                     <div style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'capitalize', letterSpacing: '0.05em', marginBottom: 4 }}>{capitalize(snake.category?.name)}</div>

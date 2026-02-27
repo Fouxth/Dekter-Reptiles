@@ -11,14 +11,21 @@ const capitalize = (str) => {
     return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 };
 
+const API = import.meta.env.VITE_API_URL || 'http://103.142.150.196:5000/api';
+const BASE_URL = API.replace('/api', '');
+
 const ProductCard = ({ product, addToCart }) => {
     const navigate = useNavigate();
+
+    const imageUrl = product.customerImage
+        ? (product.customerImage.startsWith('http') ? product.customerImage : `${BASE_URL}${product.customerImage}`)
+        : (product.adminImage ? (product.adminImage.startsWith('http') ? product.adminImage : `${BASE_URL}${product.adminImage}`) : null);
 
     return (
         <article className="glass-card rounded-2xl overflow-hidden group flex flex-col h-full cursor-pointer hover:border-sky-500/50 transition-all duration-300 transform hover:-translate-y-1" onClick={() => navigate(`/product/${product.id}`)}>
             <div className="relative h-56 overflow-hidden bg-stone-950">
                 <img
-                    src={product.image}
+                    src={imageUrl}
                     alt={product.name}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-90 group-hover:opacity-100"
                     loading="lazy"

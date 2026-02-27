@@ -33,6 +33,7 @@ export default function Reports() {
     const [startDate, setStartDate] = useState(firstDay);
     const [endDate, setEndDate] = useState(today);
     const [report, setReport] = useState(null);
+    const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(false);
     const [loaded, setLoaded] = useState(false);
 
@@ -40,8 +41,13 @@ export default function Reports() {
 
     async function fetchReport() {
         setLoading(true);
-        const res = await fetch(`${API}/dashboard/report?startDate=${startDate}&endDate=${endDate}`, { headers: headers() });
-        if (res.ok) { setReport(await res.json()); setLoaded(true); }
+        const [reportRes, statsRes] = await Promise.all([
+            fetch(`${API}/dashboard/report?startDate=${startDate}&endDate=${endDate}`, { headers: headers() }),
+            fetch(`${API}/dashboard/stats`, { headers: headers() })
+        ]);
+        if (reportRes.ok) setReport(await reportRes.json());
+        if (statsRes.ok) setStats(await statsRes.json());
+        setLoaded(true);
         setLoading(false);
     }
 
@@ -92,10 +98,29 @@ export default function Reports() {
 
             {loaded && report && (
                 <>
+                    {/* Financial Summary Cards */}
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+                        {[
+                            { label: 'รายรับเดือนนี้', value: `฿${formatCurrency(stats?.monthSales)}`, color: 'emerald', sub: 'ยอดขายทั้งหมด' },
+                            { label: 'รายจ่ายเดือนนี้', value: `฿${formatCurrency(stats?.monthExpenses)}`, color: 'red', sub: 'รวมทุกหมวดหมู่' },
+                            { label: 'ต้นทุนสินค้า', value: `฿${formatCurrency(stats?.monthCost)}`, color: 'amber', sub: 'COGS เดือนนี้' },
+                            { label: 'กำไรสุทธิ', value: `฿${formatCurrency(stats?.monthNetProfit)}`, color: 'blue', sub: 'รายได้ - ต้นทุน - รายจ่าย' },
+                        ].map(c => (
+                            <div key={c.label} className="glass-card p-4 border border-white/5 bg-white/[0.02]">
+                                <div className="flex justify-between items-start mb-2">
+                                    <p className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-wider">{c.label}</p>
+                                    <div className={`w-2 h-2 rounded-full bg-${c.color}-400 shadow-[0_0_8px] shadow-${c.color}-400/50`} />
+                                </div>
+                                <p className={`text-xl sm:text-2xl font-black text-white`}>{c.value}</p>
+                                <p className="text-[10px] text-slate-500 mt-1">{c.sub}</p>
+                            </div>
+                        ))}
+                    </div>
+
                     {/* Summary Cards */}
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                         {[
-                            { label: 'ยอดขายรวม', value: `฿${formatCurrency(report.totalRevenue)}`, color: 'emerald' },
+                            { label: 'ยอดขายช่วงวันที่เลือก', value: `฿${formatCurrency(report.totalRevenue)}`, color: 'emerald' },
                             { label: 'ส่วนลดรวม', value: `฿${formatCurrency(report.totalDiscount)}`, color: 'red' },
                             { label: 'จำนวนออเดอร์', value: `${report.orderCount}`, color: 'blue' },
                             { label: 'จำนวนสินค้า', value: `${report.totalItems} ตัว`, color: 'violet' },

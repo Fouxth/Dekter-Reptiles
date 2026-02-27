@@ -8,15 +8,16 @@ datasource db {
 }
 
 model User {
-  id           Int      @id @default(autoincrement())
-  email        String   @unique
+  id           Int       @id @default(autoincrement())
+  email        String    @unique
   passwordHash String
   name         String
-  role         String   @default("staff") // admin, staff
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  role         String    @default("staff") // admin, staff
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
   orders       Order[]
+  Expense      Expense[]
 }
 
 model Category {
@@ -30,35 +31,36 @@ model Category {
 }
 
 model Snake {
-  id          Int           @id @default(autoincrement())
-  code        String?       @unique // MDT0001, FS0001
-  name        String
-  species     String?       // Ball Python, Hognose
-  morph       String?       // Pastel Pied, Spider Clown
-  description String?
-  price       Float
-  cost        Float?        // ราคาทุน
-  stock       Int           @default(0)
-  image       String?
-  color       String?
-  genetics    String?       // เช่น "het clown", "visual albino"
-  dateOfBirth DateTime?     // วันเกิด
-  year        String?       // ปีเกิด "25", "26"
-  gender      String?       // male, female  (1.0 = male, 0.1 = female)
-  feedSize    String?       // ขนาดหนู: S, M, L, XL, RXL
-  forSale     Boolean       @default(false)
-  categoryId  Int
-  category    Category      @relation(fields: [categoryId], references: [id])
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  orderItems  OrderItem[]
-  healthRecords HealthRecord[]
-  feedingLogs   FeedingLog[]
-  breedingAsFemale BreedingRecord[] @relation("FemalePairing")
-  breedingAsMale   BreedingRecord[] @relation("MalePairing")
+  id                 Int                @id @default(autoincrement())
+  code               String?            @unique // MDT0001, FS0001
+  name               String
+  species            String? // Ball Python, Hognose
+  morph              String? // Pastel Pied, Spider Clown
+  description        String?
+  price              Float
+  cost               Float? // ราคาทุน
+  stock              Int                @default(0)
+  adminImage         String?
+  customerImage      String?
+  color              String?
+  genetics           String? // เช่น "het clown", "visual albino"
+  dateOfBirth        DateTime? // วันเกิด
+  year               String? // ปีเกิด "25", "26"
+  gender             String? // male, female  (1.0 = male, 0.1 = female)
+  feedSize           String? // ขนาดหนู: S, M, L, XL, RXL
+  forSale            Boolean            @default(false)
+  categoryId         Int
+  category           Category           @relation(fields: [categoryId], references: [id])
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  orderItems         OrderItem[]
+  healthRecords      HealthRecord[]
+  feedingLogs        FeedingLog[]
+  breedingAsFemale   BreedingRecord[]   @relation("FemalePairing")
+  breedingAsMale     BreedingRecord[]   @relation("MalePairing")
   incubationAsFemale IncubationRecord[] @relation("IncubationFemale")
   incubationAsMale   IncubationRecord[] @relation("IncubationMale")
-  stockLogs   StockLog[]
+  stockLogs          StockLog[]
 }
 
 model Customer {
@@ -77,25 +79,25 @@ model Customer {
 }
 
 model Order {
-  id            Int         @id @default(autoincrement())
-  orderNo       String      @unique @default(cuid())
-  subtotal      Float
-  discount      Float       @default(0)
-  tax           Float       @default(0)
-  total         Float
-  status        String      @default("pending_payment") // pending_payment, awaiting_verification, processing, shipping, completed, cancelled, rejected
-  paymentMethod String      @default("cash")      // cash, transfer, card
-  paymentSlip   String?     // URL to uploaded slip image
-  trackingNo    String?
+  id              Int         @id @default(autoincrement())
+  orderNo         String      @unique @default(cuid())
+  subtotal        Float
+  discount        Float       @default(0)
+  tax             Float       @default(0)
+  total           Float
+  status          String      @default("pending_payment") // pending_payment, awaiting_verification, processing, shipping, completed, cancelled, rejected
+  paymentMethod   String      @default("cash") // cash, transfer, card
+  paymentSlip     String? // URL to uploaded slip image
+  trackingNo      String?
   shippingAddress String?
-  note          String?
-  userId        Int?
-  user          User?       @relation(fields: [userId], references: [id])
-  customerId    Int?
-  customer      Customer?   @relation(fields: [customerId], references: [id])
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  items         OrderItem[]
+  note            String?
+  userId          Int?
+  user            User?       @relation(fields: [userId], references: [id])
+  customerId      Int?
+  customer        Customer?   @relation(fields: [customerId], references: [id])
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  items           OrderItem[]
 }
 
 model OrderItem {
@@ -113,78 +115,78 @@ model StockLog {
   id        Int      @id @default(autoincrement())
   snakeId   Int
   snake     Snake    @relation(fields: [snakeId], references: [id])
-  change    Int      // + เพิ่ม, - ลด
-  reason    String   // "purchase", "sale", "adjustment", "return"
+  change    Int // + เพิ่ม, - ลด
+  reason    String // "purchase", "sale", "adjustment", "return"
   note      String?
   createdAt DateTime @default(now())
 }
 
 model HealthRecord {
-  id          Int      @id @default(autoincrement())
-  snakeId     Int
-  snake       Snake    @relation(fields: [snakeId], references: [id])
-  recordDate  DateTime @default(now())
-  weight      Float?   // กรัม
-  length      Float?   // ซม.
-  fed         Boolean  @default(false) // ให้อาหารหรือเปล่า
-  feedItem    String?  // เช่น "หนูแรกเกิด", "หนูโต"
-  shed        Boolean  @default(false) // ลอกคราบ
-  note        String?
-  createdAt   DateTime @default(now())
-}
-
-model FeedingLog {
   id         Int      @id @default(autoincrement())
   snakeId    Int
   snake      Snake    @relation(fields: [snakeId], references: [id])
-  feedDate   DateTime @default(now())
-  feedSize   String?  // S, M, L, XL, RXL
-  feedItem   String?  // หนูแรกเกิด, หนูโต, ไก่
-  accepted   Boolean  @default(true)  // กินหรือไม่กิน
+  recordDate DateTime @default(now())
+  weight     Float? // กรัม
+  length     Float? // ซม.
+  fed        Boolean  @default(false) // ให้อาหารหรือเปล่า
+  feedItem   String? // เช่น "หนูแรกเกิด", "หนูโต"
+  shed       Boolean  @default(false) // ลอกคราบ
   note       String?
   createdAt  DateTime @default(now())
 }
 
+model FeedingLog {
+  id        Int      @id @default(autoincrement())
+  snakeId   Int
+  snake     Snake    @relation(fields: [snakeId], references: [id])
+  feedDate  DateTime @default(now())
+  feedSize  String? // S, M, L, XL, RXL
+  feedItem  String? // หนูแรกเกิด, หนูโต, ไก่
+  accepted  Boolean  @default(true) // กินหรือไม่กิน
+  note      String?
+  createdAt DateTime @default(now())
+}
+
 model BreedingRecord {
-  id              Int       @id @default(autoincrement())
-  femaleId        Int
-  female          Snake     @relation("FemalePairing", fields: [femaleId], references: [id])
-  maleId          Int
-  male            Snake     @relation("MalePairing", fields: [maleId], references: [id])
-  pairedDate      DateTime  // วันเข้า (เอาเข้าด้วยกัน)
-  lockDate        DateTime? // วัน Lock
-  separateDate    DateTime? // วันแยก (ออก)
-  daysCohabited   Int?      // จำนวนวันที่อยู่ด้วยกัน
-  ovulationDate   DateTime? // วันคลกไข่ / Ovulation
-  preLayShed      Boolean?  // ลอกคราบก่อนออกไข่ (Pre-Lay)
-  clutchDate      DateTime? // วันออกไข่ / คลอดลูก
-  eggCount        Int?      // จำนวนไข่ทั้งหมด
-  goodEggs        Int?      // ไข่ดี
-  badEggs         Int?      // ไข่เสีย
-  offspringCount  Int?      // จำนวนลูก (สำหรับ live-bearing)
-  notes           String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  incubation      IncubationRecord[]
+  id             Int                @id @default(autoincrement())
+  femaleId       Int
+  female         Snake              @relation("FemalePairing", fields: [femaleId], references: [id])
+  maleId         Int
+  male           Snake              @relation("MalePairing", fields: [maleId], references: [id])
+  pairedDate     DateTime // วันเข้า (เอาเข้าด้วยกัน)
+  lockDate       DateTime? // วัน Lock
+  separateDate   DateTime? // วันแยก (ออก)
+  daysCohabited  Int? // จำนวนวันที่อยู่ด้วยกัน
+  ovulationDate  DateTime? // วันคลกไข่ / Ovulation
+  preLayShed     Boolean? // ลอกคราบก่อนออกไข่ (Pre-Lay)
+  clutchDate     DateTime? // วันออกไข่ / คลอดลูก
+  eggCount       Int? // จำนวนไข่ทั้งหมด
+  goodEggs       Int? // ไข่ดี
+  badEggs        Int? // ไข่เสีย
+  offspringCount Int? // จำนวนลูก (สำหรับ live-bearing)
+  notes          String?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  incubation     IncubationRecord[]
 }
 
 model IncubationRecord {
-  id              Int              @id @default(autoincrement())
+  id              Int             @id @default(autoincrement())
   breedingId      Int?
-  breeding        BreedingRecord?  @relation(fields: [breedingId], references: [id])
+  breeding        BreedingRecord? @relation(fields: [breedingId], references: [id])
   femaleId        Int
-  female          Snake            @relation("IncubationFemale", fields: [femaleId], references: [id])
+  female          Snake           @relation("IncubationFemale", fields: [femaleId], references: [id])
   maleId          Int
-  male            Snake            @relation("IncubationMale", fields: [maleId], references: [id])
-  incubationStart DateTime?        // วันเข้าเครื่องฟัก
-  pippingDate     DateTime?        // วันเริ่มบุ๋ม
-  hatchDate       DateTime?        // วันฟัก
-  temperature     Float?           // อุณหภูมิ
-  actualHatched   Int?             // จำนวนฟักจริง
-  deadCount       Int?             // จำนวนเสีย
+  male            Snake           @relation("IncubationMale", fields: [maleId], references: [id])
+  incubationStart DateTime? // วันเข้าเครื่องฟัก
+  pippingDate     DateTime? // วันเริ่มบุ๋ม
+  hatchDate       DateTime? // วันฟัก
+  temperature     Float? // อุณหภูมิ
+  actualHatched   Int? // จำนวนฟักจริง
+  deadCount       Int? // จำนวนเสีย
   notes           String?
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
 }
 
 model SystemSetting {
@@ -192,5 +194,17 @@ model SystemSetting {
   key         String   @unique // e.g., "store_name", "store_address"
   value       String?
   description String?
+  updatedAt   DateTime @updatedAt
+}
+
+model Expense {
+  id          Int      @id @default(autoincrement())
+  amount      Float
+  description String
+  category    String // e.g., "หนูแช่แข็ง", "อุปกรณ์เลี้ยง", "อื่นๆ"
+  date        DateTime @default(now())
+  userId      Int?
+  user        User?    @relation(fields: [userId], references: [id])
+  createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }

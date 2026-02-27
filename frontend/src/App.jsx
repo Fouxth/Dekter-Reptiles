@@ -13,6 +13,7 @@ import SnakeDetail from './pages/SnakeDetail';
 import Breeding from './pages/Breeding';
 import Incubation from './pages/Incubation';
 import Reports from './pages/Reports';
+import Expenses from './pages/Expenses';
 import Login from './pages/Login';
 import Settings from './pages/Settings';
 import { Toaster } from 'react-hot-toast';
@@ -50,6 +51,7 @@ function AppRoutes() {
         <Route path="breeding" element={<Breeding />} />
         <Route path="incubation" element={<Incubation />} />
         <Route path="reports" element={<Reports />} />
+        <Route path="expenses" element={<Expenses />} />
         <Route
           path="users"
           element={
