@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import Receipt from '../components/Receipt';
 import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../context/SocketContext';
 import { toast } from 'react-hot-toast';
 
 const API = import.meta.env.VITE_API_URL || 'http://103.142.150.196:5000/api';
@@ -30,6 +31,7 @@ const capitalize = (str) => {
 
 export default function POS() {
     const { getToken, user } = useAuth();
+    const { socket } = useSocket();
     const [snakes, setSnakes] = useState([]);
     const [categories, setCategories] = useState([]);
     const [cart, setCart] = useState([]);
@@ -67,7 +69,15 @@ export default function POS() {
             if (snakesRes.ok && categoriesRes.ok && settingsRes.ok) {
                 setSnakes(await snakesRes.json());
                 setCategories(await categoriesRes.json());
-                setSettings(await settingsRes.json());
+
+                const settingsData = await settingsRes.json();
+                const parsedSettings = {};
+                if (Array.isArray(settingsData)) {
+                    settingsData.forEach(item => {
+                        parsedSettings[item.key] = item.value;
+                    });
+                }
+                setSettings(parsedSettings);
             }
         } catch (error) {
             console.error('Failed to fetch data:', error);
@@ -87,6 +97,15 @@ export default function POS() {
         }, 300);
         return () => clearTimeout(t);
     }, [customerSearch]);
+
+    // Listen for real-time settings updates
+    useEffect(() => {
+        if (!socket) return;
+        socket.on('settings_updated', () => {
+            fetchData();
+        });
+        return () => socket.off('settings_updated');
+    }, [socket]);
 
     // Keyboard shortcut: Enter = checkout confirm (when modal open)
     useEffect(() => {

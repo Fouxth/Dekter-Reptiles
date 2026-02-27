@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { authenticate, requireAdmin } from '../middleware/auth';
+import { getIO } from '../socket';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -31,6 +32,10 @@ router.patch('/', authenticate, requireAdmin, async (req, res) => {
             );
         }
         await Promise.all(updates);
+
+        const io = getIO();
+        io.emit('settings_updated');
+
         res.json({ message: 'Settings updated successfully' });
     } catch (error) {
         console.error('Failed to update settings:', error);
@@ -114,6 +119,10 @@ router.post('/', authenticate, requireAdmin, async (req, res) => {
             update: { value: String(value), description },
             create: { key, value: String(value), description },
         });
+
+        const io = getIO();
+        io.emit('settings_updated');
+
         res.json(setting);
     } catch (error) {
         res.status(500).json({ error: 'Failed to save setting' });

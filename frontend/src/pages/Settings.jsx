@@ -110,6 +110,7 @@ export default function Settings() {
         social_yt: '[]',
     });
     const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
     const [status, setStatus] = useState(null);
     const { user, getToken } = useAuth();
     const [isBankDropdownOpen, setIsBankDropdownOpen] = useState(false);
