@@ -39,9 +39,9 @@ const Shop = ({ searchQuery, addToCart }) => {
     const filteredProducts = useMemo(() => {
         let result = products;
 
-        // Filter by Species
+        // Filter by Category
         if (filter !== 'All') {
-            result = result.filter(p => p.species === filter);
+            result = result.filter(p => p.categoryId === filter);
         }
 
         // Filter by Search Query
@@ -50,18 +50,41 @@ const Shop = ({ searchQuery, addToCart }) => {
             result = result.filter(p =>
                 (p.name && p.name.toLowerCase().includes(lowerQuery)) ||
                 (p.morph && p.morph.toLowerCase().includes(lowerQuery)) ||
-                (p.species && p.species.toLowerCase().includes(lowerQuery))
+                (p.species && p.species.toLowerCase().includes(lowerQuery)) ||
+                (categories.find(c => c.id === p.categoryId)?.name?.toLowerCase().includes(lowerQuery))
             );
         }
 
         return result;
-    }, [filter, searchQuery, products]);
+    }, [filter, searchQuery, products, categories]);
 
-    // Extract unique species specifically from available categories or products
-    const availableSpecies = useMemo(() => {
-        const speciesSet = new Set(products.map(p => p.species).filter(Boolean));
-        return ['All', ...Array.from(speciesSet)];
-    }, [products]);
+    // Extract categories that actually have available products
+    const availableCategories = useMemo(() => {
+        const activeIds = new Set(products.map(p => p.categoryId));
+        // We want snakes to appear first. Let's try to identify snake categories vs others
+        // We'll prioritize Categories whose name contains 'งู', 'Python', 'Snake', 'Hognose'
+        // or prioritize known typical IDs if they had been fixed. But based on text:
+        const isSnakeCategory = (name) => {
+            const lowerName = name?.toLowerCase() || '';
+            return lowerName.includes('งู') || lowerName.includes('python') || lowerName.includes('snake') || lowerName.includes('hognose') || lowerName.includes('boa');
+        };
+
+        const activeCategories = categories.filter(c => activeIds.has(c.id));
+
+        // Sort active categories: Snakes first, then alphabetically
+        activeCategories.sort((a, b) => {
+            const aIsSnake = isSnakeCategory(a.name);
+            const bIsSnake = isSnakeCategory(b.name);
+            if (aIsSnake && !bIsSnake) return -1;
+            if (!aIsSnake && bIsSnake) return 1;
+            return a.name.localeCompare(b.name);
+        });
+
+        return [
+            { id: 'All', name: 'ดูสินค้าทั้งหมด' },
+            ...activeCategories
+        ];
+    }, [products, categories]);
 
     return (
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 animate-fade-in min-h-[80vh]">
@@ -72,25 +95,27 @@ const Shop = ({ searchQuery, addToCart }) => {
 
             <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
                 <div>
-                    <div className="text-sky-500 font-bold tracking-widest uppercase text-sm mb-2">Available Snakes</div>
+                    <div className="text-sky-500 font-bold tracking-widest uppercase text-sm mb-2">Available Products</div>
                     <h1 className="text-4xl font-light text-stone-100">เลือกชม<span className="font-bold">สินค้า</span></h1>
                     <p className="text-stone-400 mt-2">พบกับงูสวยงามกว่า {loading ? '...' : products.length} รายการ</p>
                 </div>
 
-                <div className="flex items-center gap-3 overflow-x-auto pb-2 md:pb-0 hide-scrollbar scroll-smooth">
-                    <Filter size={20} className="text-sky-500 mr-2 flex-shrink-0" />
-                    {availableSpecies.map(species => (
-                        <button
-                            key={species}
-                            onClick={() => setFilter(species)}
-                            className={`whitespace-nowrap px-6 py-2.5 rounded-full text-sm font-bold tracking-wide uppercase transition-all duration-300 border ${filter === species
-                                ? 'bg-sky-500/10 text-sky-400 border-sky-500/50 shadow-[0_0_15px_rgba(14,165,233,0.2)]'
-                                : 'bg-stone-900/50 text-stone-400 border-white/5 hover:border-sky-500/30 hover:text-stone-200'
-                                }`}
-                        >
-                            {species === 'All' ? 'ทั้งหมด' : capitalize(species)}
-                        </button>
-                    ))}
+                <div className="flex items-center gap-3 w-full md:w-auto relative group">
+                    <Filter size={20} className="text-sky-500 absolute left-4 pointer-events-none z-10" />
+                    <select
+                        value={filter}
+                        onChange={(e) => setFilter(e.target.value)}
+                        className="appearance-none bg-stone-900/50 text-stone-300 font-bold tracking-wide border border-white/5 hover:border-sky-500/30 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 rounded-full pl-12 pr-12 py-3 w-full md:w-64 transition-all shadow-lg cursor-pointer outline-none"
+                    >
+                        {availableCategories.map(category => (
+                            <option key={category.id} value={category.id} className="bg-stone-900 text-stone-300">
+                                {category.name}
+                            </option>
+                        ))}
+                    </select>
+                    <div className="absolute right-4 pointer-events-none text-stone-500 group-hover:text-sky-400 transition-colors">
+                        <span className="text-xs">▼</span>
+                    </div>
                 </div>
             </div>
 

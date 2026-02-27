@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { toast } from 'react-hot-toast';
+import ConfirmModal from '../components/ConfirmModal';
 
 const API = import.meta.env.VITE_API_URL || 'http://103.142.150.196:5000/api';
 
@@ -34,6 +36,7 @@ export default function Breeding() {
     const [editingId, setEditingId] = useState(null);
     const [saving, setSaving] = useState(false);
     const [form, setForm] = useState(EMPTY_FORM);
+    const [itemToDelete, setItemToDelete] = useState(null);
 
     const headers = () => ({ 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` });
     const femaleSnakes = snakes.filter(s => s.gender === 'female');
@@ -88,10 +91,26 @@ export default function Breeding() {
         setSaving(false);
     }
 
-    async function handleDelete(id) {
-        if (!confirm('ลบบันทึกนี้?')) return;
-        await fetch(`${API}/breeding-records/${id}`, { method: 'DELETE', headers: headers() });
-        load();
+    function handleDelete(r) {
+        setItemToDelete(r);
+    }
+
+    async function confirmDelete() {
+        if (!itemToDelete) return;
+        try {
+            const res = await fetch(`${API}/breeding-records/${itemToDelete.id}`, { method: 'DELETE', headers: headers() });
+            if (res.ok) {
+                toast.success('ลบบันทึกสำเร็จ');
+                load();
+            } else {
+                toast.error('ไม่สามารถลบบันทึกได้');
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error('เกิดข้อผิดพลาดในการลบ');
+        } finally {
+            setItemToDelete(null);
+        }
     }
 
     const InfoRow = ({ label, value, color }) => (
@@ -170,7 +189,7 @@ export default function Breeding() {
 
                                 <div className="action-btns">
                                     <button className="btn btn-sm btn-outline" onClick={() => openEdit(r)}>แก้ไข</button>
-                                    <button className="btn btn-sm btn-danger" onClick={() => handleDelete(r.id)}>ลบ</button>
+                                    <button className="btn btn-sm btn-danger" onClick={() => handleDelete(r)}>ลบ</button>
                                 </div>
                             </div>
                         ))}
@@ -273,6 +292,15 @@ export default function Breeding() {
                 </div>,
                 document.body
             )}
+            {/* Confirm Modal */}
+            <ConfirmModal
+                isOpen={!!itemToDelete}
+                onClose={() => setItemToDelete(null)}
+                onConfirm={confirmDelete}
+                title="ยืนยันการลบบันทึก"
+                message="คุณต้องการลบบันทึกการผสมพันธุ์นี้ใช่หรือไม่?"
+                itemName={itemToDelete ? `${capitalize(itemToDelete.female?.name)} × ${capitalize(itemToDelete.male?.name)}` : ''}
+            />
         </div>
     );
 }

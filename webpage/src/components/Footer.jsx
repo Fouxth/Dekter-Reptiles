@@ -71,7 +71,7 @@ const Footer = () => {
                         </div>
                     </div>
                     <p className="mb-4 max-w-sm">ร้านจำหน่ายงูสวยงามนำเข้า เพาะพันธุ์เอง และอุปกรณ์การเลี้ยงครบวงจร ซื้อขายมั่นใจ</p>
-                    <p className="text-sm">© {new Date().getFullYear()} Dexter Reptiles. All rights reserved.</p>
+                    <p className="text-sm">© {new Date().getFullYear()} Dexter Reptiles. All rights reserved. | by dxv4th</p>
                 </div>
                 <div>
                     <h4 className="text-white font-bold mb-4">ลิงก์ด่วน</h4>

@@ -203,8 +203,31 @@ router.put('/:id', async (req: Request, res: Response) => {
 router.delete('/:id', async (req: Request, res: Response) => {
     try {
         const prisma: PrismaClient = (req as any).prisma;
-        await prisma.snake.delete({
-            where: { id: Number(req.params.id) },
+        const id = Number(req.params.id);
+
+        // First check if the snake has ever been sold (has an OrderItem history)
+        const orderItemCount = await prisma.orderItem.count({
+            where: { snakeId: id }
+        });
+
+        if (orderItemCount > 0) {
+            return res.status(400).json({
+                error: 'ไม่สามารถลบสินค้าที่มีประวัติการขายได้ (ระบบต้องเก็บไว้เป็นหลักฐานการสั่งซื้อ) กรุณาแก้ไขโดยเปลี่ยนสต็อกเป็น 0 แทน'
+            });
+        }
+
+        // Run deletion of related records in a transaction to safely handle foreign keys
+        await prisma.$transaction(async (tx) => {
+            await tx.stockLog.deleteMany({ where: { snakeId: id } });
+            await tx.healthRecord.deleteMany({ where: { snakeId: id } });
+            await tx.feedingLog.deleteMany({ where: { snakeId: id } });
+
+            await tx.incubationRecord.deleteMany({ where: { OR: [{ femaleId: id }, { maleId: id }] } });
+            await tx.breedingRecord.deleteMany({ where: { OR: [{ femaleId: id }, { maleId: id }] } });
+
+            await tx.snake.delete({
+                where: { id },
+            });
         });
 
         res.json({ message: 'Snake deleted successfully' });

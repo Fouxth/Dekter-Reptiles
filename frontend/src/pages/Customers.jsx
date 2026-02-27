@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '../context/AuthContext';
 import { Search, UserCheck, Plus, X, Phone, MessageCircle } from 'lucide-react';
+import { toast } from 'react-hot-toast';
+import ConfirmModal from '../components/ConfirmModal';
 
 const API = import.meta.env.VITE_API_URL || 'http://103.142.150.196:5000/api';
 
@@ -16,6 +18,7 @@ export default function Customers() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
+    const [itemToDelete, setItemToDelete] = useState(null);
 
     const headers = () => ({ 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` });
 
@@ -49,10 +52,27 @@ export default function Customers() {
         } catch (err) { setError(err.message); } finally { setSaving(false); }
     }
 
-    async function handleDelete(id) {
-        if (!confirm('ต้องการลบลูกค้านี้ใช่หรือไม่?')) return;
-        await fetch(`${API}/customers/${id}`, { method: 'DELETE', headers: headers() });
-        load();
+    function handleDelete(c) {
+        setItemToDelete(c);
+    }
+
+    async function confirmDelete() {
+        if (!itemToDelete) return;
+        try {
+            const res = await fetch(`${API}/customers/${itemToDelete.id}`, { method: 'DELETE', headers: headers() });
+            if (res.ok) {
+                toast.success('ลบข้อมูลลูกค้าสำเร็จ');
+                load();
+            } else {
+                const data = await res.json();
+                toast.error(data.error || 'ไม่สามารถลบได้');
+            }
+        } catch (err) {
+            console.error(err);
+            toast.error('เกิดข้อผิดพลาดในการลบ');
+        } finally {
+            setItemToDelete(null);
+        }
     }
 
     function formatDate(d) { return new Date(d).toLocaleDateString('th-TH'); }
@@ -115,7 +135,7 @@ export default function Customers() {
                                 </div>
                                 <div className="flex gap-2">
                                     <button className="flex-1 text-xs py-2 px-3 rounded-lg bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10 transition-colors" onClick={() => openEdit(c)}>แก้ไข</button>
-                                    <button className="flex-1 text-xs py-2 px-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition-colors" onClick={() => handleDelete(c.id)}>ลบ</button>
+                                    <button className="flex-1 text-xs py-2 px-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition-colors" onClick={() => handleDelete(c)}>ลบ</button>
                                 </div>
                             </div>
                         ))}
@@ -156,7 +176,7 @@ export default function Customers() {
                                         <td className="py-4 px-6">
                                             <div className="flex gap-2">
                                                 <button className="text-xs py-1.5 px-3 rounded-lg bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10 transition-colors" onClick={() => openEdit(c)}>แก้ไข</button>
-                                                <button className="text-xs py-1.5 px-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition-colors" onClick={() => handleDelete(c.id)}>ลบ</button>
+                                                <button className="text-xs py-1.5 px-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition-colors" onClick={() => handleDelete(c)}>ลบ</button>
                                             </div>
                                         </td>
                                     </tr>
@@ -244,6 +264,15 @@ export default function Customers() {
                 </div>,
                 document.body
             )}
+            {/* Confirm Modal */}
+            <ConfirmModal
+                isOpen={!!itemToDelete}
+                onClose={() => setItemToDelete(null)}
+                onConfirm={confirmDelete}
+                title="ยืนยันการลบลูกค้า"
+                message="คุณต้องการลบข้อมูลลูกค้านี้ใช่หรือไม่? ประวัติการสั่งซื้อจะยังคงอยู่แต่ชื่อลูกค้าจะแสดงเป็นแบบทั่วไป"
+                itemName={itemToDelete?.name}
+            />
         </div>
     );
 }

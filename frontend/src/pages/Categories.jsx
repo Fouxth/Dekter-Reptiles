@@ -11,6 +11,7 @@ import {
     Image as ImageIcon
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import ConfirmModal from '../components/ConfirmModal';
 
 const API = import.meta.env.VITE_API_URL || 'http://103.142.150.196:5000/api';
 
@@ -25,6 +26,7 @@ export default function Categories() {
         description: '',
         image: ''
     });
+    const [itemToDelete, setItemToDelete] = useState(null);
 
     useEffect(() => {
         fetchCategories();
@@ -93,16 +95,21 @@ export default function Categories() {
         }
     };
 
-    const handleDelete = async (category) => {
-        if (!confirm(`ต้องการลบหมวดหมู่ "${category.name}" ใช่หรือไม่?`)) return;
+    const handleDelete = (category) => {
+        setItemToDelete(category);
+    };
 
-        if (category._count?.snakes > 0) {
+    const confirmDelete = async () => {
+        if (!itemToDelete) return;
+
+        if (itemToDelete._count?.snakes > 0) {
             toast.error('ไม่สามารถลบหมวดหมู่ที่มีสินค้าอยู่ได้ กรุณาย้ายหรือลบสินค้าก่อน');
+            setItemToDelete(null);
             return;
         }
 
         try {
-            const res = await fetch(`${API}/categories/${category.id}`, { method: 'DELETE' });
+            const res = await fetch(`${API}/categories/${itemToDelete.id}`, { method: 'DELETE' });
             if (res.ok) {
                 toast.success('ลบหมวดหมู่สำเร็จ');
                 fetchCategories();
@@ -113,6 +120,8 @@ export default function Categories() {
         } catch (error) {
             console.error('Delete error:', error);
             toast.error('Cannot connect to server');
+        } finally {
+            setItemToDelete(null);
         }
     };
 
@@ -294,6 +303,15 @@ export default function Categories() {
                 </div>,
                 document.body
             )}
+            {/* Confirm Modal */}
+            <ConfirmModal
+                isOpen={!!itemToDelete}
+                onClose={() => setItemToDelete(null)}
+                onConfirm={confirmDelete}
+                title="ยืนยันการลบหมวดหมู่"
+                message="คุณต้องการลบหมวดหมู่นี้ใช่หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้"
+                itemName={itemToDelete?.name}
+            />
         </div>
     );
 }

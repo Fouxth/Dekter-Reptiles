@@ -20,8 +20,8 @@ import { toast } from 'react-hot-toast';
 
 const API = import.meta.env.VITE_API_URL || 'http://103.142.150.196:5000/api';
 
-// Sound effect for successful checkout
-const successSound = new Audio('https://cdn.pixabay.com/download/audio/2021/08/04/audio_33a7e583f7.mp3');
+// Sound effect for successful checkout (Temporarily disabled to prevent 403 error)
+const successSound = { volume: 0.5, play: async () => { } };
 
 const capitalize = (str) => {
     if (!str) return str;
@@ -238,11 +238,11 @@ export default function POS() {
                 }
             } else {
                 const err = await response.json();
-                alert(err.error || 'เกิดข้อผิดพลาด');
+                toast.error(err.error || 'เกิดข้อผิดพลาด');
             }
         } catch (error) {
             console.error('Checkout failed:', error);
-            alert('ไม่สามารถทำรายการได้');
+            toast.error('ไม่สามารถทำรายการได้');
         } finally {
             setProcessing(false);
         }

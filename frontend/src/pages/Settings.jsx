@@ -5,6 +5,7 @@ import {
     MessageSquare, Store, Settings as SettingsIcon, Youtube
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { toast } from 'react-hot-toast';
 
 const API = import.meta.env.VITE_API_URL || 'http://103.142.150.196:5000/api';
 
@@ -356,7 +357,7 @@ export default function Settings() {
                                 <div style={{ background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: 14, padding: '1rem' }}>
                                     <h4 style={{ color: '#fca5a5', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>⚠️ โซนอันตราย</h4>
                                     <p style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.75rem' }}>การรีเซ็ตข้อมูลจะลบข้อมูลทั้งหมดออกจากระบบอย่างถาวร ไม่สามารถกู้คืนได้</p>
-                                    <button type="button" className="btn btn-danger btn-sm" onClick={() => alert('ฟังก์ชันนี้ยังไม่เปิดใช้งาน')}>
+                                    <button type="button" className="btn btn-danger btn-sm" onClick={() => toast.error('ฟังก์ชันนี้ยังไม่เปิดใช้งาน')}>
                                         รีเซ็ตข้อมูลทั้งหมด
                                     </button>
                                 </div>

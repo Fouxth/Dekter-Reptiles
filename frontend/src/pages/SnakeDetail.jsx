@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { toast } from 'react-hot-toast';
+import ConfirmModal from '../components/ConfirmModal';
 
 const API = import.meta.env.VITE_API_URL || 'http://103.142.150.196:5000/api';
 
@@ -39,6 +41,7 @@ export default function SnakeDetail() {
     const [showHealthForm, setShowHealthForm] = useState(false);
     const [healthForm, setHealthForm] = useState({ recordDate: localDate, weight: '', length: '', fed: false, feedItem: '', shed: false, note: '' });
     const [saving, setSaving] = useState(false);
+    const [itemToDelete, setItemToDelete] = useState(null);
 
     const headers = () => ({ 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` });
 
@@ -70,10 +73,26 @@ export default function SnakeDetail() {
         setSaving(false);
     }
 
-    async function deleteHealth(hid) {
-        if (!confirm('ลบรายการนี้?')) return;
-        await fetch(`${API}/health-records/${hid}`, { method: 'DELETE', headers: headers() });
-        load();
+    function deleteHealth(r) {
+        setItemToDelete(r);
+    }
+
+    async function confirmDeleteHealth() {
+        if (!itemToDelete) return;
+        try {
+            const res = await fetch(`${API}/health-records/${itemToDelete.id}`, { method: 'DELETE', headers: headers() });
+            if (res.ok) {
+                toast.success('ลบบันทึกแล้ว');
+                load();
+            } else {
+                toast.error('ไม่สามารถลบได้');
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error('เกิดข้อผิดพลาด');
+        } finally {
+            setItemToDelete(null);
+        }
     }
 
     if (loading) return <div className="loading-center"><div className="spinner" /></div>;
@@ -188,7 +207,7 @@ export default function SnakeDetail() {
                                         {r.note && <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>{r.note}</span>}
                                     </div>
                                 </div>
-                                <button className="btn btn-sm btn-danger" onClick={() => deleteHealth(r.id)} style={{ flexShrink: 0 }}>ลบ</button>
+                                <button className="btn btn-sm btn-danger" onClick={() => deleteHealth(r)} style={{ flexShrink: 0 }}>ลบ</button>
                             </div>
                         ))}
                     </div>

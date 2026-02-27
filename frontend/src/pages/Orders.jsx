@@ -12,6 +12,7 @@ import {
     XCircle,
     Truck,
     FileSearch,
+    FileText,
     AlertCircle,
     Package,
     ExternalLink,
@@ -562,40 +563,42 @@ export default function Orders() {
 
                                     {/* Tracking Number Input */}
                                     <div className="pt-4 border-t border-white/5">
-                                        <div className="flex items-center gap-2 text-slate-400 text-[10px] uppercase font-bold mb-2">
-                                            <Truck size={12} /> หมายเลขพัสดุ (Tracking)
+                                        <div className="flex items-center justify-between mb-2">
+                                            <div className="flex items-center gap-2 text-slate-400 text-[10px] uppercase font-bold">
+                                                <Truck size={12} /> หมายเลขพัสดุ (Tracking)
+                                            </div>
                                         </div>
-                                        {selectedOrder.status === 'shipping' || selectedOrder.status === 'completed' ? (
-                                            <div className="flex justify-between items-center bg-black/20 p-3 rounded-lg border border-white/5">
-                                                <span className="text-emerald-400 font-mono font-bold tracking-wider">{selectedOrder.trackingNo || 'ยังไม่มีเลขพัสดุ'}</span>
-                                                {selectedOrder.status === 'shipping' && (
-                                                    <button
-                                                        onClick={() => updateOrderStatus(selectedOrder.id, 'completed')}
-                                                        className="text-[10px] bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-lg border border-emerald-500/20 font-bold hover:bg-emerald-500 hover:text-white transition-all uppercase"
-                                                    >
-                                                        สำเร็จแล้ว
-                                                    </button>
-                                                )}
-                                            </div>
-                                        ) : (
-                                            <div className="flex gap-2">
-                                                <input
-                                                    type="text"
-                                                    placeholder="กรอกเลขพัสดุ..."
-                                                    id="trackingInput"
-                                                    defaultValue={selectedOrder.trackingNo || ''}
-                                                    className="flex-1 bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-emerald-500/50 outline-none"
-                                                />
-                                                <button
-                                                    onClick={() => {
-                                                        const val = document.getElementById('trackingInput').value;
-                                                        if (val) updateOrderTracking(selectedOrder.id, val);
-                                                    }}
-                                                    className="bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-white border border-emerald-500/20 px-4 py-2 rounded-lg transition-all text-xs font-bold"
-                                                >
-                                                    บันทึก
-                                                </button>
-                                            </div>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                placeholder="กรอกเลขพัสดุ..."
+                                                id="trackingInput"
+                                                defaultValue={selectedOrder.trackingNo || ''}
+                                                className="flex-1 bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-emerald-400 font-mono tracking-wider focus:border-emerald-500/50 outline-none"
+                                            />
+                                            <button
+                                                onClick={() => {
+                                                    const val = document.getElementById('trackingInput').value;
+                                                    if (val) {
+                                                        updateOrderTracking(selectedOrder.id, val);
+                                                        // Auto-advance status if entered during processing
+                                                        if (selectedOrder.status === 'processing') {
+                                                            updateOrderStatus(selectedOrder.id, 'shipping');
+                                                        }
+                                                    }
+                                                }}
+                                                className="bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-white border border-emerald-500/20 px-4 py-2 rounded-lg transition-all text-xs font-bold whitespace-nowrap"
+                                            >
+                                                บันทึกเลขพัสดุ
+                                            </button>
+                                        </div>
+                                        {selectedOrder.status === 'shipping' && (
+                                            <button
+                                                onClick={() => updateOrderStatus(selectedOrder.id, 'completed')}
+                                                className="mt-3 w-full bg-blue-500/10 hover:bg-blue-500 text-blue-400 hover:text-white border border-blue-500/20 py-2.5 rounded-lg transition-all text-sm font-bold flex items-center justify-center gap-2"
+                                            >
+                                                <CheckCircle size={16} /> ยืนยันลูกค้าได้รับของแล้ว (สำเร็จ)
+                                            </button>
                                         )}
                                     </div>
                                 </div>

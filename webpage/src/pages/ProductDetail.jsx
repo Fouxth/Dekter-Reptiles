@@ -13,6 +13,12 @@ const capitalize = (str) => {
     return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 };
 
+const checkIsSnakeCategory = (product) => {
+    if (product.species) return true;
+    const catName = product?.category?.name?.toLowerCase() || '';
+    return catName.includes('งู') || catName.includes('python') || catName.includes('snake') || catName.includes('hognose') || catName.includes('boa');
+};
+
 const ProductDetail = ({ addToCart }) => {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -103,33 +109,35 @@ const ProductDetail = ({ addToCart }) => {
                             <p>{product.description}</p>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-y-5 gap-x-6 mb-8 glass bg-stone-900/30 p-6 rounded-[2rem] border border-white/5 shadow-inner">
-                            <div>
-                                <span className="block text-[0.6rem] uppercase tracking-widest text-stone-500 mb-1">มอร์ฟ (Morph)</span>
-                                <span className="font-semibold text-stone-200 text-sm">{capitalize(product.morph) || "-"}</span>
+                        {checkIsSnakeCategory(product) && (
+                            <div className="grid grid-cols-2 gap-y-5 gap-x-6 mb-8 glass bg-stone-900/30 p-6 rounded-[2rem] border border-white/5 shadow-inner">
+                                <div>
+                                    <span className="block text-[0.6rem] uppercase tracking-widest text-stone-500 mb-1">มอร์ฟ (Morph)</span>
+                                    <span className="font-semibold text-stone-200 text-sm">{capitalize(product.morph) || "-"}</span>
+                                </div>
+                                <div>
+                                    <span className="block text-[0.6rem] uppercase tracking-widest text-stone-500 mb-1">เพศ (Gender)</span>
+                                    <span className="font-semibold text-stone-200 text-sm">{capitalize(product.gender) || "-"}</span>
+                                </div>
+                                <div>
+                                    <span className="block text-[0.6rem] uppercase tracking-widest text-stone-500 mb-1">อายุ (Year/DOB)</span>
+                                    <span className="font-semibold text-stone-200 text-sm">{product.year || "-"}</span>
+                                </div>
+                                <div>
+                                    <span className="block text-[0.6rem] uppercase tracking-widest text-stone-500 mb-1">อาหาร (Diet)</span>
+                                    <span className="font-semibold text-stone-200 text-sm">{product.feedSize || "-"}</span>
+                                </div>
+                                <div className="col-span-2 pt-3 border-t border-white/5">
+                                    <span className="block text-[0.6rem] uppercase tracking-widest text-stone-500 mb-1.5">Genetic Details</span>
+                                    <span className="inline-flex items-center gap-2 font-semibold text-stone-200 text-sm">
+                                        <div className="w-5 h-5 rounded-full bg-sky-500/10 flex items-center justify-center border border-sky-500/30">
+                                            <Info size={10} className="text-sky-500" />
+                                        </div>
+                                        {capitalize(product.genetics) || "ข้อมูลเพิ่มเติม ไม่มีระบุ"}
+                                    </span>
+                                </div>
                             </div>
-                            <div>
-                                <span className="block text-[0.6rem] uppercase tracking-widest text-stone-500 mb-1">เพศ (Gender)</span>
-                                <span className="font-semibold text-stone-200 text-sm">{capitalize(product.gender) || "-"}</span>
-                            </div>
-                            <div>
-                                <span className="block text-[0.6rem] uppercase tracking-widest text-stone-500 mb-1">อายุ (Year/DOB)</span>
-                                <span className="font-semibold text-stone-200 text-sm">{product.year || "-"}</span>
-                            </div>
-                            <div>
-                                <span className="block text-[0.6rem] uppercase tracking-widest text-stone-500 mb-1">อาหาร (Diet)</span>
-                                <span className="font-semibold text-stone-200 text-sm">{product.feedSize || "-"}</span>
-                            </div>
-                            <div className="col-span-2 pt-3 border-t border-white/5">
-                                <span className="block text-[0.6rem] uppercase tracking-widest text-stone-500 mb-1.5">Genetic Details</span>
-                                <span className="inline-flex items-center gap-2 font-semibold text-stone-200 text-sm">
-                                    <div className="w-5 h-5 rounded-full bg-sky-500/10 flex items-center justify-center border border-sky-500/30">
-                                        <Info size={10} className="text-sky-500" />
-                                    </div>
-                                    {capitalize(product.genetics) || "ข้อมูลเพิ่มเติม ไม่มีระบุ"}
-                                </span>
-                            </div>
-                        </div>
+                        )}
 
                         {product.stock > 0 ? (
                             <div className="flex items-center gap-2 text-cyan-400 text-sm font-bold mb-6">

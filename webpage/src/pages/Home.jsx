@@ -16,9 +16,22 @@ const Home = ({ addToCart }) => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // Fetch the newest 4 snakes marked as forSale
-                const data = await getSnakes({ forSale: true, limit: 4, sortBy: 'createdAt', order: 'desc' });
-                setFeaturedSnakes(data);
+                // Fetch all items for sale
+                const data = await getSnakes({ forSale: true });
+
+                // Helper to check if a product is a snake
+                const isSnake = (product) => {
+                    if (product.species) return true; // Has species defined
+                    const catName = product?.category?.name?.toLowerCase() || '';
+                    return catName.includes('งู') || catName.includes('python') || catName.includes('snake') || catName.includes('hognose') || catName.includes('boa');
+                };
+
+                // Filter to only snakes, then sort by price (highest first)
+                const snakeProducts = data.filter(isSnake);
+                snakeProducts.sort((a, b) => b.price - a.price);
+
+                // Set top 4 most expensive snakes
+                setFeaturedSnakes(snakeProducts.slice(0, 4));
 
                 // Fetch system settings for contact phone
                 const settingsInfo = await getSystemSettings();
