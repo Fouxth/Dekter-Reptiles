@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Upload, X, Loader2, Image as ImageIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-const API = import.meta.env.VITE_API_URL;
+const API = import.meta.env.VITE_API_URL || 'http://103.142.150.196:5000/api';
+const BASE_URL = API.replace('/api', '');
 
 export default function ImageUpload({ value, onChange, label, type = 'admin' }) {
     const [uploading, setUploading] = useState(false);
@@ -54,7 +55,7 @@ export default function ImageUpload({ value, onChange, label, type = 'admin' }) 
                 {value ? (
                     <div className="relative aspect-video rounded-xl overflow-hidden border border-white/10 glass-card bg-slate-900/50">
                         <img
-                            src={value.startsWith('http') ? value : `${API}${value}`}
+                            src={value.startsWith('http') ? value : `${BASE_URL}${value}`}
                             alt="Preview"
                             className="w-full h-full object-cover"
                         />

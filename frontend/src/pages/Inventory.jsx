@@ -18,6 +18,7 @@ import toast from 'react-hot-toast';
 import ImageUpload from '../components/ImageUpload';
 
 const API = import.meta.env.VITE_API_URL || 'http://103.142.150.196:5000/api';
+const BASE_URL = API.replace('/api', '');
 
 const capitalize = (str) => {
     if (!str) return str;
@@ -357,7 +358,7 @@ export default function Inventory() {
                                 {/* Thumbnail */}
                                 <div className="w-16 h-16 rounded-lg bg-slate-800 overflow-hidden flex-shrink-0 border border-white/5">
                                     {snake.adminImage ? (
-                                        <img src={snake.adminImage.startsWith('http') ? snake.adminImage : `${API.replace('/api', '')}${snake.adminImage}`} alt={snake.name} className="w-full h-full object-cover" />
+                                        <img src={snake.adminImage.startsWith('http') ? snake.adminImage : `${BASE_URL}${snake.adminImage}`} alt={snake.name} className="w-full h-full object-cover" />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center text-xl">🐍</div>
                                     )}
@@ -461,7 +462,7 @@ export default function Inventory() {
                                             <div className="flex items-center gap-3 lg:gap-4">
                                                 <div className="w-12 h-12 lg:w-16 lg:h-12 rounded-lg bg-slate-800 overflow-hidden flex-shrink-0 border border-white/5 group-hover:border-emerald-500/30 transition-colors">
                                                     {snake.adminImage ? (
-                                                        <img src={snake.adminImage.startsWith('http') ? snake.adminImage : `${API.replace('/api', '')}${snake.adminImage}`} alt={snake.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                                        <img src={snake.adminImage.startsWith('http') ? snake.adminImage : `${BASE_URL}${snake.adminImage}`} alt={snake.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                                                     ) : (
                                                         <div className="w-full h-full flex items-center justify-center text-lg lg:text-xl">🐍</div>
                                                     )}
@@ -630,7 +631,7 @@ export default function Inventory() {
                                             type="number"
                                             value={formData.price}
                                             onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                                            className="input-field pl-8"
+                                            className="input-field pl-11"
                                             min="0"
                                             step="0.01"
                                             required
@@ -701,7 +702,7 @@ export default function Inventory() {
                                             type="number"
                                             value={formData.cost}
                                             onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
-                                            className="input-field pl-8"
+                                            className="input-field pl-11"
                                             min="0" step="0.01"
                                             placeholder="ราคาต้นทุน"
                                         />

@@ -5,6 +5,7 @@ import { toast } from 'react-hot-toast';
 import ConfirmModal from '../components/ConfirmModal';
 
 const API = import.meta.env.VITE_API_URL || 'http://103.142.150.196:5000/api';
+const BASE_URL = API.replace('/api', '');
 
 function calcAge(dob) {
     if (!dob) return '-';
@@ -109,7 +110,6 @@ export default function SnakeDetail() {
             <div className="card snake-header-card" style={{ display: 'flex', gap: '1rem', padding: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap', alignItems: 'flex-start' }}>
                 <div className="snake-photo">
                     {(() => {
-                        const BASE_URL = API.replace('/api', '');
                         const img = snake.adminImage || snake.image; // Fallback to legacy field if present
                         return img ? (
                             <img src={img.startsWith('http') ? img : `${BASE_URL}${img}`} alt={snake.name} style={{ width: '100%', maxWidth: 140, height: 'auto', aspectRatio: '1/1', objectFit: 'cover', borderRadius: 16 }} />
