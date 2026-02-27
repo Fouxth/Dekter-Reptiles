@@ -14,6 +14,8 @@ const formatPrice = (price) => {
     return new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', minimumFractionDigits: 0 }).format(price);
 };
 
+const API = import.meta.env.VITE_API_URL || 'http://103.142.150.196:5000/api';
+
 const CheckoutSuccess = () => {
     const navigate = useNavigate();
     const location = useLocation();
@@ -109,7 +111,7 @@ const CheckoutSuccess = () => {
         formData.append('slip', file);
 
         try {
-            const response = await fetch(`/api/orders/${orderId}/slip`, {
+            const response = await fetch(`${API}/orders/${orderId}/slip`, {
                 method: 'POST',
                 headers: slipUploadToken ? { 'X-Slip-Token': slipUploadToken } : undefined,
                 body: formData,

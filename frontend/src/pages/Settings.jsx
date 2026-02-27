@@ -5,8 +5,9 @@ import {
     MessageSquare, Store, Settings as SettingsIcon, Youtube
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import BankBadge, { THAI_BANKS } from '../components/BankBadge';
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API = import.meta.env.VITE_API_URL || 'http://103.142.150.196:5000/api';
 
 /* ── Toggle Switch Component ───────────────────────────────────── */
 function Toggle({ checked, onChange, disabled }) {
@@ -77,6 +78,7 @@ export default function Settings() {
         receipt_prefix: 'POS', tax_rate: 7, enable_vat: true,
         max_discount_cashier: 10, max_discount_manager: 30,
         show_cost_price: true, auto_print_receipt: true,
+        shipping_fee: 0, free_shipping_min: 1000,
         // Payment
         accept_cash: true, accept_transfer: true,
         payment_enabled: true,
@@ -125,7 +127,7 @@ export default function Settings() {
                     else if (val === 'false') parsed[key] = false;
                     else if (val !== null && val !== '' && !isNaN(Number(val)) && typeof val === 'string' && val.trim() !== '') {
                         // Check if the key is expected to be a number
-                        const numericKeys = ['tax_rate', 'max_discount_cashier', 'max_discount_manager', 'daily_target'];
+                        const numericKeys = ['tax_rate', 'max_discount_cashier', 'max_discount_manager', 'daily_target', 'shipping_fee', 'free_shipping_min'];
                         parsed[key] = numericKeys.includes(key) ? Number(val) : val;
                     }
                     else parsed[key] = val;
@@ -298,7 +300,24 @@ export default function Settings() {
                             <Section title="ข้อมูลบัญชีธนาคาร">
                                 <div className="form-group">
                                     <label>ธนาคารทื่ใช้รับเงิน</label>
-                                    <input value={settings.bank_name} onChange={e => set('bank_name', e.target.value)} placeholder="เช่น กสิกรไทย (K-Bank)" />
+                                    <div className="flex gap-2">
+                                        <select
+                                            value={settings.bank_name}
+                                            onChange={e => set('bank_name', e.target.value)}
+                                            className="flex-1 input-field"
+                                            style={{ appearance: 'none' }}
+                                        >
+                                            <option value="">เลือกธนาคาร...</option>
+                                            {THAI_BANKS.map(bank => (
+                                                <option key={bank.id} value={bank.name}>{bank.name}</option>
+                                            ))}
+                                        </select>
+                                        {settings.bank_name && (
+                                            <div className="flex items-center justify-center p-2 bg-white/5 rounded-xl border border-white/10">
+                                                <BankBadge bankName={settings.bank_name} size={28} />
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                                 <div className="form-group">
                                     <label>ชื่อบัญชีธนาคาร</label>
@@ -307,6 +326,19 @@ export default function Settings() {
                                 <div className="form-group">
                                     <label>เลขบัญชีธนาคาร</label>
                                     <input value={settings.bank_account_number} onChange={e => set('bank_account_number', e.target.value)} placeholder="เลขบัญชี" />
+                                </div>
+                            </Section>
+
+                            <Section title="การจัดส่ง" subtitle="ตั้งค่าค่าธรรมเนียมการจัดส่ง">
+                                <div style={{ display: 'grid', gap: '1rem' }} className="form-grid">
+                                    <div className="form-group">
+                                        <label>ค่าจัดส่ง (บาท)</label>
+                                        <input type="number" value={settings.shipping_fee} onChange={e => set('shipping_fee', Number(e.target.value))} min={0} />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>ยอดขั้นต่ำส่งฟรี (บาท)</label>
+                                        <input type="number" value={settings.free_shipping_min} onChange={e => set('free_shipping_min', Number(e.target.value))} min={0} />
+                                    </div>
                                 </div>
                             </Section>
                             <Section title="PromptPay QR">

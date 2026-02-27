@@ -37,7 +37,9 @@ const Cart = ({ cart, setCart, updateQuantity, removeFromCart, cartTotal, cartIt
         bank_name: '',
         qr_expiry_minutes: 15,
         enable_vat: false,
-        tax_rate: 7
+        tax_rate: 7,
+        shipping_fee: 0,
+        free_shipping_min: 1000
     });
 
     useEffect(() => {
@@ -64,7 +66,9 @@ const Cart = ({ cart, setCart, updateQuantity, removeFromCart, cartTotal, cartIt
                     promptpay_id: getText('promptpay_id', ''),
                     qr_expiry_minutes: parseInt(getText('qr_expiry_minutes', '15')),
                     enable_vat: getBool('enable_vat', false),
-                    tax_rate: parseFloat(getText('tax_rate', '7')) || 7
+                    tax_rate: parseFloat(getText('tax_rate', '7')) || 7,
+                    shipping_fee: parseFloat(getText('shipping_fee', '0')) || 0,
+                    free_shipping_min: parseFloat(getText('free_shipping_min', '1000')) || 1000
                 };
 
                 setSettings(s);
@@ -263,11 +267,20 @@ const Cart = ({ cart, setCart, updateQuantity, removeFromCart, cartTotal, cartIt
                                     )}
                                     <div className="flex justify-between items-center text-stone-400 text-sm">
                                         <span>ค่าจัดส่ง</span>
-                                        <div className="flex items-center gap-1.5">
-                                            <span className="text-[8px] uppercase font-bold tracking-wider text-emerald-400/80 border border-emerald-500/30 px-1.5 py-px rounded">Free</span>
-                                            <span className="text-emerald-400 font-semibold text-sm">ส่งฟรี</span>
-                                        </div>
+                                        {cartTotal >= settings.free_shipping_min ? (
+                                            <div className="flex items-center gap-1.5">
+                                                <span className="text-[8px] uppercase font-bold tracking-wider text-emerald-400/80 border border-emerald-500/30 px-1.5 py-px rounded">Free</span>
+                                                <span className="text-emerald-400 font-semibold text-sm">ส่งฟรี</span>
+                                            </div>
+                                        ) : (
+                                            <span className="text-stone-100 font-medium">{formatPrice(settings.shipping_fee)}</span>
+                                        )}
                                     </div>
+                                    {cartTotal < settings.free_shipping_min && settings.free_shipping_min > 0 && (
+                                        <div className="p-2 rounded-lg bg-emerald-500/5 border border-emerald-500/10 text-[10px] text-emerald-400/80 text-center animate-pulse">
+                                            ซื้ออีก {formatPrice(settings.free_shipping_min - cartTotal)} เพื่อรับสิทธิ์ส่งฟรี!
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Customer Info */}
@@ -483,7 +496,12 @@ const Cart = ({ cart, setCart, updateQuantity, removeFromCart, cartTotal, cartIt
                                         <span className="text-stone-400 font-light text-xs">รวมภาษีแล้ว</span>
                                     </div>
                                     <div className="text-2xl font-bold text-sky-400 tracking-tighter">
-                                        {formatPrice(cartTotal * (settings.enable_vat ? (1 + settings.tax_rate / 100) : 1))}
+                                        {(() => {
+                                            const subtotal = cartTotal;
+                                            const tax = settings.enable_vat ? (subtotal * settings.tax_rate / 100) : 0;
+                                            const shipping = cartTotal >= settings.free_shipping_min ? 0 : settings.shipping_fee;
+                                            return formatPrice(subtotal + tax + shipping);
+                                        })()}
                                     </div>
                                 </div>
 

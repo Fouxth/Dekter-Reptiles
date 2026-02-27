@@ -62,9 +62,9 @@ export default function POS() {
     const fetchData = async () => {
         try {
             const [snakesRes, categoriesRes, settingsRes] = await Promise.all([
-                fetch(`${API}/snakes`),
-                fetch(`${API}/categories`),
-                fetch(`${API}/settings`)
+                fetch(`${API}/snakes`, { headers: { Authorization: `Bearer ${getToken()}` } }),
+                fetch(`${API}/categories`, { headers: { Authorization: `Bearer ${getToken()}` } }),
+                fetch(`${API}/settings`, { headers: { Authorization: `Bearer ${getToken()}` } })
             ]);
             if (snakesRes.ok && categoriesRes.ok && settingsRes.ok) {
                 setSnakes(await snakesRes.json());

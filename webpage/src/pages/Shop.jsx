@@ -38,7 +38,7 @@ const Shop = ({ searchQuery, addToCart }) => {
 
         // Filter by Category
         if (filter !== 'All') {
-            result = result.filter(p => p.categoryId === filter);
+            result = result.filter(p => Number(p.categoryId) === Number(filter));
         }
 
         // Filter by Search Query
@@ -57,29 +57,26 @@ const Shop = ({ searchQuery, addToCart }) => {
 
     // Extract categories that actually have available products
     const availableCategories = useMemo(() => {
-        const activeIds = new Set(products.map(p => p.categoryId));
-        // We want snakes to appear first. Let's try to identify snake categories vs others
-        // We'll prioritize Categories whose name contains 'งู', 'Python', 'Snake', 'Hognose'
-        // or prioritize known typical IDs if they had been fixed. But based on text:
         const isSnakeCategory = (name) => {
             const lowerName = name?.toLowerCase() || '';
-            return lowerName.includes('งู') || lowerName.includes('python') || lowerName.includes('snake') || lowerName.includes('hognose') || lowerName.includes('boa') || lowerName.includes('ของจิปาถะ');
+            return lowerName.includes('งู') || lowerName.includes('python') || lowerName.includes('snake') || lowerName.includes('hognose') || lowerName.includes('boa') || lowerName.includes('ของจิปาถะ') || lowerName.includes('ball python');
         };
 
-        const activeCategories = categories.filter(c => activeIds.has(c.id));
+        // Show all categories from database
+        const allCategories = [...categories];
 
-        // Sort active categories: Snakes first, then alphabetically
-        activeCategories.sort((a, b) => {
+        // Sort categories: Snakes first, then alphabetically
+        allCategories.sort((a, b) => {
             const aIsSnake = isSnakeCategory(a.name);
             const bIsSnake = isSnakeCategory(b.name);
             if (aIsSnake && !bIsSnake) return -1;
             if (!aIsSnake && bIsSnake) return 1;
-            return a.name.localeCompare(b.name);
+            return a.name.localeCompare(b.name, 'th');
         });
 
         return [
             { id: 'All', name: 'ดูสินค้าทั้งหมด' },
-            ...activeCategories
+            ...allCategories
         ];
     }, [products, categories]);
 

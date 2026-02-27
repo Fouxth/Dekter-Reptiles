@@ -1,6 +1,6 @@
 import React from 'react';
 
-const THAI_BANKS = [
+export const THAI_BANKS = [
     { id: 'kbank', name: 'กสิกรไทย (K-Bank)', abbr: 'K', color: '#138f2d', textColor: '#fff' },
     { id: 'scb', name: 'ไทยพาณิชย์ (SCB)', abbr: 'SCB', color: '#4e2e7f', textColor: '#fff' },
     { id: 'bbl', name: 'กรุงเทพ (BBL)', abbr: 'BBL', color: '#1e388c', textColor: '#fff' },

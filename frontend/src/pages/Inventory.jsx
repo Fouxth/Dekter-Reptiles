@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import {
     Search,
     Plus,
@@ -26,6 +27,7 @@ const capitalize = (str) => {
 };
 
 export default function Inventory() {
+    const { getToken } = useAuth();
     const navigate = useNavigate();
     const [snakes, setSnakes] = useState([]);
     const [categories, setCategories] = useState([]);
@@ -67,8 +69,12 @@ export default function Inventory() {
     const fetchData = async () => {
         try {
             const [snakesRes, categoriesRes] = await Promise.all([
-                fetch(`${API}/snakes`),
-                fetch(`${API}/categories`)
+                fetch(`${API}/snakes`, {
+                    headers: { Authorization: `Bearer ${getToken()}` }
+                }),
+                fetch(`${API}/categories`, {
+                    headers: { Authorization: `Bearer ${getToken()}` }
+                })
             ]);
             if (snakesRes.ok && categoriesRes.ok) {
                 setSnakes(await snakesRes.json());
@@ -152,7 +158,10 @@ export default function Inventory() {
             const method = editingSnake ? 'PUT' : 'POST';
             const response = await fetch(url, {
                 method,
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${getToken()}`
+                },
                 body: JSON.stringify({
                     ...formData,
                     price: parseFloat(formData.price),
@@ -215,7 +224,10 @@ export default function Inventory() {
         try {
             const response = await fetch(`${API}/snakes/bulk`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${getToken()}`
+                },
                 body: JSON.stringify({ snakes: payloadSnakes })
             });
 
@@ -241,7 +253,10 @@ export default function Inventory() {
     const confirmDelete = async () => {
         if (!itemToDelete) return;
         try {
-            const response = await fetch(`${API}/snakes/${itemToDelete.id}`, { method: 'DELETE' });
+            const response = await fetch(`${API}/snakes/${itemToDelete.id}`, {
+                method: 'DELETE',
+                headers: { Authorization: `Bearer ${getToken()}` }
+            });
             if (response.ok) {
                 toast.success('ลบสินค้าสำเร็จ');
                 fetchData();
@@ -577,7 +592,7 @@ export default function Inventory() {
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">รหัสสินค้า (Code)</label>
+                                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">รหัส (Code)</label>
                                     <input
                                         type="text"
                                         value={formData.code}

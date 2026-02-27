@@ -38,7 +38,9 @@ export default function Stock() {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const res = await fetch(`${API}/snakes`);
+            const res = await fetch(`${API}/snakes`, {
+                headers: authHeaders(),
+            });
             if (res.ok) setSnakes(await res.json());
         } catch (error) { console.error('Failed to fetch snakes:', error); }
         finally { setLoading(false); }

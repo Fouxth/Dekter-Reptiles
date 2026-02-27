@@ -136,7 +136,9 @@ async function main() {
 
             const sexVal = getCellValue(row.getCell(4)); // Col D
             const gender = sexVal === '1.0' ? 'male' : (sexVal === '0.1' ? 'female' : null);
-            const rawMorph = getCellValue(row.getCell(3)) || ''; // Col C
+            const rawMorph = getRichText(row.getCell(3)) || ''; // Col C
+            if (!rawMorph || rawMorph === 'Morph' || rawMorph === 'Name') return;
+
             let snakeName = rawMorph || code;
             let snakeMorph = rawMorph;
             const nameMatch = rawMorph.match(/^\(([^)]+)\)-(.*)$/);
@@ -160,7 +162,9 @@ async function main() {
 
             const sexVal = getCellValue(row.getCell(4));
             const gender = sexVal === '1.0' ? 'male' : (sexVal === '0.1' ? 'female' : null);
-            const rawMorph = getCellValue(row.getCell(3)) || '';
+            const rawMorph = getRichText(row.getCell(3)) || '';
+            if (!rawMorph || rawMorph === 'Morph' || rawMorph === 'Name') return;
+
             let snakeName = rawMorph || code;
             let snakeMorph = rawMorph;
             const nameMatch = rawMorph.match(/^\(([^)]+)\)-(.*)$/);
@@ -173,25 +177,11 @@ async function main() {
         });
     }
 
-    // 4. OLD SNAKES SHEET
+    // 4. (OLD SNAKES SHEET REMOVED - NOT IN LATEST GID LIST)
+    /* 
     const oldSheet = workbook.getWorksheet('เก่า-อัพเดทน้ำหนัก');
-    if (oldSheet) {
-        oldSheet.eachRow((row, rowNumber) => {
-            if (rowNumber <= 5) return;
-            const name = getCellValue(row.getCell(2));
-            const morph = getCellValue(row.getCell(3));
-            if (!name && !morph) return;
-
-            const sexVal = getCellValue(row.getCell(4));
-            const gender = sexVal === '1.0' || sexVal === 'M' ? 'male' : (sexVal === '0.1' || sexVal === 'F' ? 'female' : null);
-
-            snakeDataToInsert.push({
-                code: `OLD-${(name || morph || rowNumber).toString().replace(/[^a-zA-Z0-9]/g, '-')}-${rowNumber}`,
-                name: name || morph, species: null, morph: morph || '', gender, year: getCellValue(row.getCell(5)) || '',
-                forSale: false, stock: 1, price: 0, cost: 0, categoryId: defaultCategory.id
-            });
-        });
-    }
+    if (oldSheet) { ... }
+    */
 
     // 5. EQUIPMENT STOCK SHEET
     const equipSheet = workbook.getWorksheet('Stock');
@@ -204,8 +194,8 @@ async function main() {
             const stockStr = getCellValue(row.getCell(10)); // J (Stock)
             const stock = parseInt(stockStr || '0');
             const name = getRichText(row.getCell(5)); // E (Other/Name)
-
             if (!name && !codeVal) return;
+            if (name === '[object Object]' || name === 'Other' || name === 'Product') return;
 
             // Generate code if missing for equipment as per user request
             const finalCode = codeVal ? `EQUIP-${codeVal}` : `EQUIP-GEN-${rowNumber.toString().padStart(4, '0')}`;
@@ -226,10 +216,18 @@ async function main() {
         });
     }
 
+    // Filter out common header junk
+    const finalData = snakeDataToInsert.filter(item => {
+        const n = item.name?.toString().toLowerCase();
+        if (n === 'morph' || n === 'name' || n === 'other' || n === 'product' || n === '[object object]') return false;
+        if (item.code?.includes('object Object')) return false;
+        return true;
+    });
+
     // INSERT ALL SNAKES & EQUIP
-    if (snakeDataToInsert.length > 0) {
-        await prisma.snake.createMany({ data: snakeDataToInsert, skipDuplicates: true });
-        console.log(`✅ Inserted ${snakeDataToInsert.length} items to database.`);
+    if (finalData.length > 0) {
+        await prisma.snake.createMany({ data: finalData, skipDuplicates: true });
+        console.log(`✅ Inserted ${finalData.length} items to database.`);
     }
 
     const allSnakes = await prisma.snake.findMany();

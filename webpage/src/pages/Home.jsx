@@ -21,9 +21,11 @@ const Home = ({ addToCart }) => {
 
                 // Helper to check if a product is a snake
                 const isSnake = (product) => {
-                    if (product.species) return true; // Has species defined
+                    const species = product.species?.toLowerCase();
+                    if (species === 'equipment') return false;
+                    if (species) return true;
                     const catName = product?.category?.name?.toLowerCase() || '';
-                    return catName.includes('งู') || catName.includes('python') || catName.includes('snake') || catName.includes('hognose') || catName.includes('boa') || catName.includes('ของจิปาถะ');
+                    return catName.includes('งู') || catName.includes('python') || catName.includes('snake') || catName.includes('hognose') || catName.includes('boa') || catName.includes('ball python');
                 };
 
                 // Filter to only snakes, then sort by price (highest first)
@@ -137,9 +139,9 @@ const Home = ({ addToCart }) => {
             <section className="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
                 <div className="flex justify-between items-end mb-12">
                     <div>
-                        <div className="text-sky-500 font-bold tracking-widest uppercase text-sm mb-2">New Arrivals</div>
-                        <h2 className="text-4xl font-light text-stone-100 mb-2">งูมาใหม่<span className="font-bold">แนะนำ</span></h2>
-                        <p className="text-stone-400">คัดพิเศษ ลวดลายสวย สุขภาพแข็งแรง</p>
+                        <div className="text-sky-500 font-bold tracking-widest uppercase text-sm mb-2">Premium Selection</div>
+                        <h2 className="text-4xl font-light text-stone-100 mb-2">งูแนะนำ<span className="font-bold">คัดพิเศษ</span></h2>
+                        <p className="text-stone-400">คัดสรรเฉพาะตัวที่สวยและโดดเด่นที่สุด</p>
                     </div>
                     <button onClick={() => navigate('/shop')} className="hidden md:flex text-sky-400 font-medium hover:text-sky-300 items-center gap-1 uppercase tracking-wider text-sm transition-colors cursor-pointer group pb-2 border-b border-transparent hover:border-sky-400">
                         ดูคอลเลกชันทั้งหมด <ArrowUpRight size={16} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />

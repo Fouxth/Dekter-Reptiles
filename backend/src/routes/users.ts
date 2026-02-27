@@ -3,7 +3,34 @@ import bcrypt from 'bcryptjs';
 import { authenticate, requireAdmin } from '../middleware/auth';
 
 const router = Router();
-router.use(authenticate, requireAdmin);
+router.use(authenticate);
+
+// PATCH /api/users/profile - Update current user's profile
+router.patch('/profile', async (req: any, res: Response) => {
+    const { name, email, password } = req.body;
+    const userId = req.user.id;
+    const prisma = (req as any).prisma;
+
+    try {
+        const data: any = {};
+        if (name !== undefined) data.name = name;
+        if (email !== undefined) data.email = email;
+        if (password) data.passwordHash = await bcrypt.hash(password, 10);
+
+        const user = await prisma.user.update({
+            where: { id: userId },
+            data,
+            select: { id: true, email: true, name: true, role: true, isActive: true },
+        });
+        return res.json(user);
+    } catch (err: any) {
+        if (err.code === 'P2002') return res.status(400).json({ error: 'อีเมลนี้ถูกใช้แล้ว' });
+        console.error(err);
+        return res.status(500).json({ error: 'เกิดข้อผิดพลาดในการอัปเดตโปรไฟล์' });
+    }
+});
+
+router.use(requireAdmin);
 
 // GET /api/users
 router.get('/', async (req: Request, res: Response) => {

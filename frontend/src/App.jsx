@@ -17,6 +17,7 @@ import Reports from './pages/Reports';
 import Expenses from './pages/Expenses';
 import Login from './pages/Login';
 import Settings from './pages/Settings';
+import Profile from './pages/Profile';
 import { Toaster } from 'react-hot-toast';
 import './App.css';
 
@@ -69,6 +70,7 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
+        <Route path="profile" element={<Profile />} />
       </Route>
     </Routes>
   );

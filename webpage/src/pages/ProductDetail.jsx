@@ -14,10 +14,11 @@ const capitalize = (str) => {
 };
 
 const checkIsSnakeCategory = (product) => {
-    if (product.species === 'Equipment') return false;
-    if (product.species) return true;
+    const species = product.species?.toLowerCase();
+    if (species === 'equipment') return false;
+    if (species) return true;
     const catName = product?.category?.name?.toLowerCase() || '';
-    return catName.includes('งู') || catName.includes('python') || catName.includes('snake') || catName.includes('hognose') || catName.includes('boa');
+    return catName.includes('งู') || catName.includes('python') || catName.includes('snake') || catName.includes('hognose') || catName.includes('boa') || catName.includes('ball python');
 };
 
 const ProductDetail = ({ addToCart }) => {
@@ -134,7 +135,7 @@ const ProductDetail = ({ addToCart }) => {
                                     <span className="font-semibold text-stone-200 text-sm">{capitalize(product.gender) || "-"}</span>
                                 </div>
                                 <div>
-                                    <span className="block text-[0.6rem] uppercase tracking-widest text-stone-500 mb-1">อายุ (Year/DOB)</span>
+                                    <span className="block text-[0.6rem] uppercase tracking-widest text-stone-500 mb-1">ปี (YEAR)</span>
                                     <span className="font-semibold text-stone-200 text-sm">{product.year || "-"}</span>
                                 </div>
                                 <div>
@@ -151,7 +152,7 @@ const ProductDetail = ({ addToCart }) => {
                                     </span>
                                 </div>
                                 <div className="col-span-1 pt-3 border-t border-white/5">
-                                    <span className="block text-[0.6rem] uppercase tracking-widest text-stone-500 mb-1.5">รหัสสินค้า (Code)</span>
+                                    <span className="block text-[0.6rem] uppercase tracking-widest text-stone-500 mb-1.5">รหัส (Code)</span>
                                     <span className="font-semibold text-stone-200 text-sm">{product.code || "-"}</span>
                                 </div>
                             </div>

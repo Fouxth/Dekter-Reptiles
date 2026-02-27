@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
 import { createPortal } from 'react-dom';
 import {
     Folder,
@@ -17,6 +18,7 @@ const API = import.meta.env.VITE_API_URL || 'http://103.142.150.196:5000/api';
 const BASE_URL = API.replace('/api', '');
 
 export default function Categories() {
+    const { getToken } = useAuth();
     const [categories, setCategories] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
@@ -35,7 +37,9 @@ export default function Categories() {
 
     const fetchCategories = async () => {
         try {
-            const res = await fetch(`${API}/categories`);
+            const res = await fetch(`${API}/categories`, {
+                headers: { Authorization: `Bearer ${getToken()}` }
+            });
             if (res.ok) {
                 setCategories(await res.json());
             } else {
@@ -78,7 +82,10 @@ export default function Categories() {
 
             const res = await fetch(url, {
                 method,
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${getToken()}`
+                },
                 body: JSON.stringify(formData)
             });
 
@@ -110,7 +117,10 @@ export default function Categories() {
         }
 
         try {
-            const res = await fetch(`${API}/categories/${itemToDelete.id}`, { method: 'DELETE' });
+            const res = await fetch(`${API}/categories/${itemToDelete.id}`, {
+                method: 'DELETE',
+                headers: { Authorization: `Bearer ${getToken()}` }
+            });
             if (res.ok) {
                 toast.success('ลบหมวดหมู่สำเร็จ');
                 fetchCategories();

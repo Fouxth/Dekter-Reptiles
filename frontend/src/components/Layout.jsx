@@ -35,6 +35,7 @@ const navItems = [
     { path: '/incubation', icon: Egg, label: 'ฟักไข่' },
     { path: '/expenses', icon: DollarSign, label: 'รายจ่าย' },
     { path: '/reports', icon: FileText, label: 'รายงาน' },
+    { path: '/profile', icon: User, label: 'โปรไฟล์ส่วนตัว' },
 ];
 
 const adminNavItems = [
@@ -191,15 +192,19 @@ export default function Layout() {
                         </nav>
 
                         {/* User Profile Card */}
-                        <div className="p-4 bg-white/5 rounded-2xl mb-4 border border-white/5">
+                        <div
+                            className="p-4 bg-white/5 rounded-2xl mb-4 border border-white/5 cursor-pointer hover:bg-white/10 transition-all active:scale-[0.98] group"
+                            onClick={() => navigate('/profile')}
+                        >
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-violet-600 flex items-center justify-center">
+                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-violet-600 flex items-center justify-center group-hover:scale-110 transition-transform">
                                     <User size={18} className="text-white" />
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-medium text-white truncate">{user?.name || 'ผู้ใช้'}</p>
                                     <p className="text-xs text-slate-400 truncate">{user?.role === 'admin' ? '👑 Admin' : '👤 Staff'}</p>
                                 </div>
+                                <ChevronRight size={14} className="text-slate-600" />
                             </div>
                         </div>
 
