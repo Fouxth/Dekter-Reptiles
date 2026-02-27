@@ -18,7 +18,8 @@ import {
     ChevronRight,
     Bell,
     User,
-    Settings
+    Settings,
+    DollarSign
 } from 'lucide-react';
 
 const navItems = [
