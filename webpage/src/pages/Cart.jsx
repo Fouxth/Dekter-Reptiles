@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, Trash2, CheckCircle2, Loader2, User, Phone, FileText, ArrowRight, MapPin } from 'lucide-react';
+import { ShoppingCart, Trash2, CheckCircle2, Loader2, User, Phone, FileText, ArrowRight, MapPin, Clock } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useCustomerAuth } from '../contexts/CustomerAuthContext';
 import SEO from '../components/SEO';
 import { getSystemSettings, createOrder } from '../services/api';
 import generatePayload from 'promptpay-qr';
 import { QRCodeSVG } from 'qrcode.react';
+import BankBadge from '../components/BankBadge';
 
 const formatPrice = (price) => {
     return new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', minimumFractionDigits: 0 }).format(price);
 };
+
+
 
 const Cart = ({ cart, setCart, updateQuantity, removeFromCart, cartTotal, cartItemCount }) => {
     const navigate = useNavigate();
@@ -24,6 +27,8 @@ const Cart = ({ cart, setCart, updateQuantity, removeFromCart, cartTotal, cartIt
     const [paymentMethod, setPaymentMethod] = useState('transfer'); // default to transfer
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState(null);
+    const [timeLeft, setTimeLeft] = useState(null);
+    const [isExpired, setIsExpired] = useState(false);
     const [settings, setSettings] = useState({
         payment_enabled: true,
         accept_cash: true,
@@ -32,7 +37,8 @@ const Cart = ({ cart, setCart, updateQuantity, removeFromCart, cartTotal, cartIt
         bank_name: '',
         bank_account_name: '',
         bank_account_number: '',
-        promptpay_id: ''
+        promptpay_id: '',
+        qr_expiry_minutes: 15
     });
 
     useEffect(() => {
@@ -56,7 +62,8 @@ const Cart = ({ cart, setCart, updateQuantity, removeFromCart, cartTotal, cartIt
                     bank_name: getText('bank_name', 'กสิกรไทย (K-Bank)'),
                     bank_account_name: getText('bank_account_name', ''),
                     bank_account_number: getText('bank_account_number', ''),
-                    promptpay_id: getText('promptpay_id', '')
+                    promptpay_id: getText('promptpay_id', ''),
+                    qr_expiry_minutes: parseInt(getText('qr_expiry_minutes', '15'))
                 };
 
                 setSettings(s);
@@ -73,7 +80,43 @@ const Cart = ({ cart, setCart, updateQuantity, removeFromCart, cartTotal, cartIt
         fetchSettings();
     }, []);
 
-    // Update form if customer logs in while on cart page
+    // Reset timer when switching to QR or when total changes
+    useEffect(() => {
+        if (paymentMethod === 'qr' && settings.promptpay_id) {
+            setTimeLeft(settings.qr_expiry_minutes * 60);
+            setIsExpired(false);
+        } else {
+            setTimeLeft(null);
+            setIsExpired(false);
+        }
+    }, [paymentMethod, cartTotal, settings.promptpay_id, settings.qr_expiry_minutes]);
+
+    // Timer countdown logic
+    useEffect(() => {
+        if (timeLeft === null || timeLeft <= 0) {
+            if (timeLeft === 0) setIsExpired(true);
+            return;
+        }
+
+        const timer = setInterval(() => {
+            setTimeLeft(prev => {
+                if (prev <= 1) {
+                    clearInterval(timer);
+                    setIsExpired(true);
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [timeLeft]);
+
+    const formatTimeLeft = (seconds) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    };
     React.useEffect(() => {
         if (customer) {
             setFormData(prev => ({
@@ -106,7 +149,15 @@ const Cart = ({ cart, setCart, updateQuantity, removeFromCart, cartTotal, cartIt
 
             const result = await createOrder(orderData);
             setCart([]);
-            navigate('/checkout-success', { state: { orderNo: result.orderNo, total: result.total, orderId: result.id, paymentMethod } });
+            navigate('/checkout-success', {
+                state: {
+                    orderNo: result.orderNo,
+                    total: result.total,
+                    orderId: result.id,
+                    paymentMethod,
+                    createdAt: result.createdAt // Pass timestamp for QR expiry
+                }
+            });
         } catch (err) {
             console.error("Checkout failed:", err);
             setError("เกิดข้อผิดพลาดในการสั่งซื้อ ลองใหม่อีกครั้งหรือติดต่อแอดมิน");
@@ -150,33 +201,41 @@ const Cart = ({ cart, setCart, updateQuantity, removeFromCart, cartTotal, cartIt
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                     {/* Cart Items */}
                     <div className="lg:col-span-7 space-y-4">
-                        {cart.map(item => (
-                            <div key={item.id} className="glass-premium rounded-2xl p-3 flex flex-col sm:flex-row gap-4 items-center group transition-all duration-300 hover:border-sky-500/30">
-                                <div className="relative w-full sm:w-24 h-24 rounded-lg overflow-hidden bg-stone-950 flex-shrink-0 shadow-inner">
-                                    {item.image ? (
-                                        <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center text-stone-700"><ShoppingCart size={22} /></div>
-                                    )}
-                                </div>
-                                <div className="flex-1 text-center sm:text-left min-w-0">
-                                    <span className="inline-block px-2 py-px bg-sky-500/10 border border-sky-500/20 rounded-full text-[8px] text-sky-400 uppercase tracking-wider font-bold mb-1">{item.species}</span>
-                                    <h3 className="font-semibold text-stone-100 text-sm group-hover:text-sky-400 transition-colors truncate">{item.name}</h3>
-                                    <p className="text-stone-500 text-[11px] font-light truncate">{item.morph || 'Common Morph'}</p>
-                                    <div className="text-base font-bold tracking-tight text-white mt-1">{formatPrice(item.price)}</div>
-                                </div>
-                                <div className="flex flex-row sm:flex-col items-center gap-3 sm:gap-2">
-                                    <div className="flex items-center glass rounded-lg bg-black/30 border border-white/5">
-                                        <button onClick={() => updateQuantity(item.id, -1)} className="w-7 h-7 flex items-center justify-center text-stone-500 hover:text-sky-400 transition-colors text-sm">-</button>
-                                        <span className="w-7 text-center font-bold text-stone-200 text-sm tabular-nums">{item.quantity}</span>
-                                        <button onClick={() => updateQuantity(item.id, 1)} className="w-7 h-7 flex items-center justify-center text-stone-500 hover:text-sky-400 transition-colors text-sm">+</button>
+                        {cart.map(item => {
+                            const API = import.meta.env.VITE_API_URL || 'http://103.142.150.196:5000/api';
+                            const BASE_URL = API.replace('/api', '');
+                            const imageUrl = item.customerImage
+                                ? (item.customerImage.startsWith('http') ? item.customerImage : `${BASE_URL}${item.customerImage}`)
+                                : (item.adminImage ? (item.adminImage.startsWith('http') ? item.adminImage : `${BASE_URL}${item.adminImage}`) : null);
+
+                            return (
+                                <div key={item.id} className="glass-premium rounded-2xl p-3 flex flex-col sm:flex-row gap-4 items-center group transition-all duration-300 hover:border-sky-500/30">
+                                    <div className="relative w-full sm:w-24 h-24 rounded-lg overflow-hidden bg-stone-950 flex-shrink-0 shadow-inner">
+                                        {imageUrl ? (
+                                            <img src={imageUrl} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-stone-700"><ShoppingCart size={22} /></div>
+                                        )}
                                     </div>
-                                    <button onClick={() => removeFromCart(item.id)} className="text-stone-700 hover:text-red-500 p-1 transition-colors" title="ลบสินค้า">
-                                        <Trash2 size={16} />
-                                    </button>
+                                    <div className="flex-1 text-center sm:text-left min-w-0">
+                                        <span className="inline-block px-2 py-px bg-sky-500/10 border border-sky-500/20 rounded-full text-[8px] text-sky-400 uppercase tracking-wider font-bold mb-1">{item.species}</span>
+                                        <h3 className="font-semibold text-stone-100 text-sm group-hover:text-sky-400 transition-colors truncate">{item.name}</h3>
+                                        <p className="text-stone-500 text-[11px] font-light truncate">{item.morph || 'Common Morph'}</p>
+                                        <div className="text-base font-bold tracking-tight text-white mt-1">{formatPrice(item.price)}</div>
+                                    </div>
+                                    <div className="flex flex-row sm:flex-col items-center gap-3 sm:gap-2">
+                                        <div className="flex items-center glass rounded-lg bg-black/30 border border-white/5">
+                                            <button onClick={() => updateQuantity(item.id, -1)} className="w-7 h-7 flex items-center justify-center text-stone-500 hover:text-sky-400 transition-colors text-sm">-</button>
+                                            <span className="w-7 text-center font-bold text-stone-200 text-sm tabular-nums">{item.quantity}</span>
+                                            <button onClick={() => updateQuantity(item.id, 1)} className="w-7 h-7 flex items-center justify-center text-stone-500 hover:text-sky-400 transition-colors text-sm">+</button>
+                                        </div>
+                                        <button onClick={() => removeFromCart(item.id)} className="text-stone-700 hover:text-red-500 p-1 transition-colors" title="ลบสินค้า">
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
 
                     {/* Order Summary */}
@@ -338,10 +397,15 @@ const Cart = ({ cart, setCart, updateQuantity, removeFromCart, cartTotal, cartIt
                                                         <div className="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse"></div>
                                                         ข้อมูลบัญชีธนาคาร
                                                     </div>
-                                                    <div className="space-y-2">
+                                                    <div className="space-y-3">
                                                         <div className="flex justify-between items-center text-xs">
                                                             <span className="text-stone-500">ธนาคาร</span>
-                                                            <span className="text-stone-200 font-bold">{settings.bank_name || '-'}</span>
+                                                            <div className="flex items-center gap-2">
+                                                                {settings.bank_name && (
+                                                                    <BankBadge bankName={settings.bank_name} size={18} />
+                                                                )}
+                                                                <span className="text-stone-200 font-bold">{settings.bank_name || '-'}</span>
+                                                            </div>
                                                         </div>
                                                         <div className="flex justify-between items-center text-xs">
                                                             <span className="text-stone-500">เลขบัญชี</span>
@@ -356,20 +420,48 @@ const Cart = ({ cart, setCart, updateQuantity, removeFromCart, cartTotal, cartIt
                                             )}
 
                                             {paymentMethod === 'qr' && settings.promptpay_enabled && (
-                                                <div className="mb-5 p-4 rounded-xl bg-white/5 border border-white/10 animate-fade-in text-center">
-                                                    <div className="text-[10px] font-bold text-cyan-400 uppercase tracking-widest mb-3 flex items-center justify-center gap-2">
-                                                        <div className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse"></div>
-                                                        PROMPTPAY QR CODE
+                                                <div className="mb-5 p-4 rounded-xl bg-white/5 border border-white/10 animate-fade-in text-center relative overflow-hidden">
+                                                    {isExpired && (
+                                                        <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center p-4">
+                                                            <div className="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center mb-3">
+                                                                <Clock className="text-red-500" size={24} />
+                                                            </div>
+                                                            <h4 className="text-white font-bold mb-1">QR Code หมดอายุ</h4>
+                                                            <p className="text-stone-400 text-[10px] mb-4">เพื่อความปลอดภัย กรุณากดเลือกวิธีชำระเงินใหม่อีกครั้ง</p>
+                                                            <button
+                                                                onClick={() => {
+                                                                    setPaymentMethod('transfer');
+                                                                    setTimeout(() => setPaymentMethod('qr'), 50);
+                                                                }}
+                                                                className="px-4 py-1.5 bg-sky-500 text-slate-950 text-[10px] font-bold rounded-lg hover:bg-sky-400"
+                                                            >
+                                                                ทำรายการใหม่
+                                                            </button>
+                                                        </div>
+                                                    )}
+
+                                                    <div className="flex items-center justify-between mb-3">
+                                                        <div className="text-[10px] font-bold text-cyan-400 uppercase tracking-widest flex items-center gap-2">
+                                                            <div className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse"></div>
+                                                            PROMPTPAY QR
+                                                        </div>
+                                                        {timeLeft !== null && !isExpired && (
+                                                            <div className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1.5 ${timeLeft < 60 ? 'bg-red-500/20 text-red-500 animate-pulse' : 'bg-white/10 text-stone-300'}`}>
+                                                                <Clock size={10} />
+                                                                {formatTimeLeft(timeLeft)}
+                                                            </div>
+                                                        )}
                                                     </div>
+
                                                     <div className="bg-white p-3 rounded-lg inline-block mb-3 shadow-xl">
                                                         {settings.promptpay_id ? (
                                                             <QRCodeSVG value={generatePayload(settings.promptpay_id, { amount: cartTotal })} size={140} />
                                                         ) : (
-                                                            <div className="w-[140px] h-[140px] bg-gray-100 flex items-center justify-center text-gray-400 text-xs">ระบุ PromptPay ID ในตั้งค่า</div>
+                                                            <div className="w-[140px] h-[140px] bg-gray-100 flex items-center justify-center text-gray-400 text-xs text-slate-900">ระบุ PromptPay ID ในตั้งค่า</div>
                                                         )}
                                                     </div>
-                                                    <p className="text-[10px] text-stone-500 uppercase tracking-widest font-medium">สแกนเพื่อชำระเงินจำนวน {formatPrice(cartTotal)}</p>
-                                                    <p className="text-xs text-stone-400 mt-2">{settings.bank_account_name}</p>
+                                                    <p className="text-[10px] text-stone-400 uppercase tracking-widest font-medium">สแกนเพื่อชำระเงินจำนวน {formatPrice(cartTotal)}</p>
+                                                    <p className="text-xs text-stone-300 mt-2">{settings.bank_account_name}</p>
                                                 </div>
                                             )}
                                         </>

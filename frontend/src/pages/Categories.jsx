@@ -275,7 +275,8 @@ export default function Categories() {
                                         type="url"
                                         value={formData.image}
                                         onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                                        className="input-field pl-11"
+                                        className="input-field"
+                                        style={{ paddingLeft: '44px' }}
                                         placeholder="https://example.com/image.jpg"
                                     />
                                 </div>

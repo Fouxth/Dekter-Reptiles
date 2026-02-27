@@ -206,19 +206,27 @@ const Profile = () => {
 
                                         <div className="bg-stone-950/30 rounded-2xl p-4 border border-white/5">
                                             <div className="flex flex-wrap gap-3">
-                                                {order.items.map(item => (
-                                                    <div key={item.id} className="flex items-center gap-3 bg-stone-900/50 pr-4 rounded-xl border border-white/5 group/item">
-                                                        {item.snake?.image ? (
-                                                            <img src={item.snake.image} alt={item.snake.name} className="w-12 h-12 object-cover rounded-l-xl opacity-80 group-hover/item:opacity-100 transition-opacity" />
-                                                        ) : (
-                                                            <div className="w-12 h-12 bg-white/5 flex items-center justify-center rounded-l-xl"><Package size={16} /></div>
-                                                        )}
-                                                        <div className="text-xs">
-                                                            <div className="font-bold text-stone-200">{item.snake?.name || 'สินค้า'}</div>
-                                                            <div className="text-stone-500">{item.quantity} x {formatPrice(item.price)}</div>
+                                                {order.items.map(item => {
+                                                    const API = import.meta.env.VITE_API_URL || 'http://103.142.150.196:5000/api';
+                                                    const BASE_URL = API.replace('/api', '');
+                                                    const imageUrl = item.snake?.customerImage
+                                                        ? (item.snake.customerImage.startsWith('http') ? item.snake.customerImage : `${BASE_URL}${item.snake.customerImage}`)
+                                                        : (item.snake?.adminImage ? (item.snake.adminImage.startsWith('http') ? item.snake.adminImage : `${BASE_URL}${item.snake.adminImage}`) : null);
+
+                                                    return (
+                                                        <div key={item.id} className="flex items-center gap-3 bg-stone-900/50 pr-4 rounded-xl border border-white/5 group/item">
+                                                            {imageUrl ? (
+                                                                <img src={imageUrl} alt={item.snake?.name} className="w-12 h-12 object-cover rounded-l-xl opacity-80 group-hover/item:opacity-100 transition-opacity" />
+                                                            ) : (
+                                                                <div className="w-12 h-12 bg-white/5 flex items-center justify-center rounded-l-xl"><Package size={16} /></div>
+                                                            )}
+                                                            <div className="text-xs">
+                                                                <div className="font-bold text-stone-200">{item.snake?.name || 'สินค้า'}</div>
+                                                                <div className="text-stone-500">{item.quantity} x {formatPrice(item.price)}</div>
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                ))}
+                                                    );
+                                                })}
                                             </div>
                                         </div>
                                     </div>

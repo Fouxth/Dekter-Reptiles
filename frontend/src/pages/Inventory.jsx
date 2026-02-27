@@ -631,7 +631,8 @@ export default function Inventory() {
                                             type="number"
                                             value={formData.price}
                                             onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                                            className="input-field pl-11"
+                                            className="input-field"
+                                            style={{ paddingLeft: '44px' }}
                                             min="0"
                                             step="0.01"
                                             required
@@ -702,7 +703,8 @@ export default function Inventory() {
                                             type="number"
                                             value={formData.cost}
                                             onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
-                                            className="input-field pl-11"
+                                            className="input-field"
+                                            style={{ paddingLeft: '44px' }}
                                             min="0" step="0.01"
                                             placeholder="ราคาต้นทุน"
                                         />

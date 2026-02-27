@@ -6,6 +6,9 @@ import SEO from '../components/SEO';
 import { getSystemSettings } from '../services/api';
 import generatePayload from 'promptpay-qr';
 import { QRCodeSVG } from 'qrcode.react';
+import BankBadge from '../components/BankBadge';
+
+
 
 const formatPrice = (price) => {
     return new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', minimumFractionDigits: 0 }).format(price);
@@ -31,8 +34,12 @@ const CheckoutSuccess = () => {
         bank_name: '',
         bank_account_name: '',
         bank_account_number: '',
-        promptpay_id: ''
+        promptpay_id: '',
+        qr_expiry_minutes: 15
     });
+
+    const [timeLeft, setTimeLeft] = useState(null);
+    const [isExpired, setIsExpired] = useState(false);
 
     useEffect(() => {
         const fetchSettings = async () => {
@@ -46,7 +53,8 @@ const CheckoutSuccess = () => {
                     bank_name: getText('bank_name', 'กสิกรไทย (K-Bank)'),
                     bank_account_name: getText('bank_account_name', ''),
                     bank_account_number: getText('bank_account_number', ''),
-                    promptpay_id: getText('promptpay_id', '')
+                    promptpay_id: getText('promptpay_id', ''),
+                    qr_expiry_minutes: parseInt(getText('qr_expiry_minutes', '15'))
                 });
             } catch (err) {
                 console.error("Failed to fetch settings:", err);
@@ -56,7 +64,35 @@ const CheckoutSuccess = () => {
     }, []);
 
     if (!location.state || !location.state.orderNo) return null;
-    const { orderNo, total, orderId, paymentMethod } = location.state;
+    const { orderNo, total, orderId, paymentMethod, createdAt } = location.state;
+
+    useEffect(() => {
+        if (!createdAt || !settings.qr_expiry_minutes) return;
+
+        const expiryTime = new Date(createdAt).getTime() + (settings.qr_expiry_minutes * 60 * 1000);
+
+        const timer = setInterval(() => {
+            const now = new Date().getTime();
+            const distance = expiryTime - now;
+
+            if (distance < 0) {
+                clearInterval(timer);
+                setTimeLeft(0);
+                setIsExpired(true);
+            } else {
+                setTimeLeft(distance);
+            }
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [createdAt, settings.qr_expiry_minutes]);
+
+    const formatTimeLeft = (ms) => {
+        if (ms === null) return '';
+        const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((ms % (1000 * 60)) / 1000);
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    };
 
     const handleFileChange = (e) => {
         if (e.target.files && e.target.files[0]) {
@@ -146,26 +182,66 @@ const CheckoutSuccess = () => {
                         </div>
 
                         {paymentMethod === 'transfer' ? (
-                            <div className="space-y-3 mb-6">
+                            <div className="space-y-4 mb-6 animate-fade-in">
                                 <div className="flex justify-between items-center text-xs">
-                                    <span className="text-stone-500">{settings.bank_name || '-'}</span>
+                                    <div className="flex items-center gap-2">
+                                        {settings.bank_name && (
+                                            <BankBadge bankName={settings.bank_name} size={22} />
+                                        )}
+                                        <span className="text-stone-300 font-bold">{settings.bank_name || '-'}</span>
+                                    </div>
                                 </div>
-                                <div className="flex justify-between items-center bg-black/20 p-3 rounded-lg border border-white/5">
-                                    <span className="text-sky-400 font-mono text-sm font-bold tracking-wider">{settings.bank_account_number || '-'}</span>
-                                    <span className="text-[10px] text-stone-500 uppercase font-bold">{settings.bank_account_name || '-'}</span>
+                                <div className="flex justify-between items-center bg-black/40 p-4 rounded-xl border border-white/5 shadow-inner group/bank">
+                                    <div className="flex flex-col">
+                                        <span className="text-[8px] font-bold text-stone-500 uppercase tracking-widest mb-1">Account Number</span>
+                                        <span className="text-sky-400 font-mono text-base font-bold tracking-widest">{settings.bank_account_number || '-'}</span>
+                                    </div>
+                                    <div className="text-right">
+                                        <span className="text-[8px] font-bold text-stone-500 uppercase tracking-widest block mb-1">Account Name</span>
+                                        <span className="text-xs text-stone-200 font-bold">{settings.bank_account_name || '-'}</span>
+                                    </div>
                                 </div>
                             </div>
                         ) : (
-                            <div className="text-center mb-6">
-                                <div className="bg-white p-3 rounded-lg inline-block mb-3 shadow-xl">
-                                    {settings.promptpay_id ? (
-                                        <QRCodeSVG value={generatePayload(settings.promptpay_id, { amount: total })} size={140} />
-                                    ) : (
-                                        <div className="w-[140px] h-[140px] bg-gray-100 flex items-center justify-center text-gray-400 text-xs">ระบุ PromptPay ID ในตั้งค่า</div>
-                                    )}
-                                </div>
-                                <p className="text-[10px] text-stone-500 uppercase tracking-widest font-medium mb-1">สแกนเพื่อชำระเงินจำนวน {formatPrice(total)}</p>
-                                <p className="text-xs text-stone-400">{settings.bank_account_name}</p>
+                            <div className="text-center mb-6 animate-fade-in">
+                                {!isExpired ? (
+                                    <>
+                                        {settings.qr_expiry_minutes > 0 && timeLeft !== null && (
+                                            <div className="flex items-center justify-center gap-2 mb-4 text-amber-400">
+                                                <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>
+                                                <span className="text-[10px] font-bold uppercase tracking-widest">QR จะหมดอายุใน {formatTimeLeft(timeLeft)} นาที</span>
+                                            </div>
+                                        )}
+                                        <div className="bg-white p-4 rounded-2xl inline-block mb-4 shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-white/10 relative group/qr">
+                                            <div className="absolute inset-0 bg-sky-500/5 rounded-2xl group-hover/qr:opacity-0 transition-opacity"></div>
+                                            {settings.promptpay_id ? (
+                                                <QRCodeSVG value={generatePayload(settings.promptpay_id, { amount: total })} size={160} />
+                                            ) : (
+                                                <div className="w-[160px] h-[160px] bg-gray-100 flex items-center justify-center text-gray-400 text-xs">ระบุ PromptPay ID ในตั้งค่า</div>
+                                            )}
+                                        </div>
+                                        <div className="space-y-1">
+                                            <p className="text-[10px] text-stone-500 uppercase tracking-widest font-bold">สแกนเพื่อชำระเงิน {formatPrice(total)}</p>
+                                            <p className="text-xs text-stone-300 font-medium">{settings.bank_account_name}</p>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="py-10 px-6 rounded-2xl border border-dashed border-red-500/30 bg-red-500/5 flex flex-col items-center gap-3">
+                                        <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center text-red-500">
+                                            <CreditCard size={24} />
+                                        </div>
+                                        <div className="text-center">
+                                            <h4 className="text-red-400 font-bold text-sm uppercase tracking-wider mb-1">QR Code หมดอายุแล้ว</h4>
+                                            <p className="text-[10px] text-stone-500">กรุณาทำรายการใหม่ หรือติดต่อแอดมินเพื่อยืนยันการโอนเงิน</p>
+                                        </div>
+                                        <button
+                                            onClick={() => window.location.reload()}
+                                            className="mt-2 text-[10px] font-bold text-sky-400 uppercase tracking-widest hover:text-sky-300"
+                                        >
+                                            ลองใหม่
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         )}
 

@@ -1,11 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
     Save, Building, Phone, Monitor, CreditCard, Bell, Database,
     CheckCircle2, AlertCircle, Clock, Banknote, ArrowLeftRight,
-    MessageSquare, Store, Settings as SettingsIcon, Youtube
+    MessageSquare, Store, Settings as SettingsIcon, Youtube,
+    ChevronDown, Check
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
+import BankBadge, { THAI_BANKS } from '../components/BankBadge';
 
 const API = import.meta.env.VITE_API_URL || 'http://103.142.150.196:5000/api';
 
@@ -67,6 +69,8 @@ const TABS = [
     { key: 'data', label: 'จัดการข้อมูล', icon: Database },
 ];
 
+
+
 /* ── Main Component ────────────────────────────────────────────── */
 export default function Settings() {
     const [activeTab, setActiveTab] = useState('store');
@@ -86,6 +90,7 @@ export default function Settings() {
         bank_name: '',
         promptpay_enabled: true,
         promptpay_id: '',
+        qr_expiry_minutes: 15,
         // Contact
         contact_phone: '',
         contact_email: '',
@@ -107,6 +112,18 @@ export default function Settings() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [status, setStatus] = useState(null);
+    const [isBankDropdownOpen, setIsBankDropdownOpen] = useState(false);
+    const bankDropdownRef = useRef(null);
+
+    useEffect(() => {
+        function handleClickOutside(event) {
+            if (bankDropdownRef.current && !bankDropdownRef.current.contains(event.target)) {
+                setIsBankDropdownOpen(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
 
     const { getToken } = useAuth();
 
@@ -128,7 +145,7 @@ export default function Settings() {
                     else if (val === 'false') parsed[key] = false;
                     else if (val !== null && val !== '' && !isNaN(Number(val)) && typeof val === 'string' && val.trim() !== '') {
                         // Check if the key is expected to be a number
-                        const numericKeys = ['tax_rate', 'max_discount_cashier', 'max_discount_manager', 'daily_target'];
+                        const numericKeys = ['tax_rate', 'max_discount_cashier', 'max_discount_manager', 'daily_target', 'qr_expiry_minutes'];
                         parsed[key] = numericKeys.includes(key) ? Number(val) : val;
                     }
                     else parsed[key] = val;
@@ -303,13 +320,55 @@ export default function Settings() {
                             <Section title="ข้อมูลบัญชีธนาคาร">
                                 <div className="form-group">
                                     <label>ธนาคารทื่ใช้รับเงิน</label>
-                                    <input value={settings.bank_name} onChange={e => set('bank_name', e.target.value)} placeholder="เช่น กสิกรไทย (K-Bank)" />
+                                    <div className="relative" ref={bankDropdownRef}>
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsBankDropdownOpen(!isBankDropdownOpen)}
+                                            className={`input-field flex items-center gap-3 text-left w-full h-11 bg-slate-900 border border-slate-800 rounded-xl px-4 hover:border-sky-500/50 transition-all ${isBankDropdownOpen ? 'border-sky-500 ring-2 ring-sky-500/10' : ''}`}
+                                        >
+                                            {settings.bank_name ? (
+                                                <>
+                                                    <BankBadge bankName={settings.bank_name} size={24} />
+                                                    <span className="text-stone-100 font-medium">{settings.bank_name}</span>
+                                                </>
+                                            ) : (
+                                                <span className="text-stone-500">เลือกธนาคาร</span>
+                                            )}
+                                            <ChevronDown size={18} className={`ml-auto text-stone-500 transition-transform ${isBankDropdownOpen ? 'rotate-180' : ''}`} />
+                                        </button>
+
+                                        {isBankDropdownOpen && (
+                                            <div className="absolute z-[100] left-0 right-0 mt-2 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl py-2 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                                                <div className="max-h-[300px] overflow-y-auto custom-scrollbar">
+                                                    {THAI_BANKS.map(bank => (
+                                                        <button
+                                                            key={bank.id}
+                                                            type="button"
+                                                            onClick={() => {
+                                                                set('bank_name', bank.name);
+                                                                setIsBankDropdownOpen(false);
+                                                            }}
+                                                            className={`w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/5 transition-colors text-left ${settings.bank_name === bank.name ? 'bg-sky-500/10' : ''}`}
+                                                        >
+                                                            <BankBadge bankName={bank.name} size={24} />
+                                                            <span className={`text-sm ${settings.bank_name === bank.name ? 'text-sky-400 font-bold' : 'text-stone-300'}`}>
+                                                                {bank.name}
+                                                            </span>
+                                                            {settings.bank_name === bank.name && (
+                                                                <Check className="ml-auto text-sky-400" size={16} />
+                                                            )}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                                <div className="form-group">
+                                <div className="form-group mt-4">
                                     <label>ชื่อบัญชีธนาคาร</label>
                                     <input value={settings.bank_account_name} onChange={e => set('bank_account_name', e.target.value)} placeholder="ชื่อบัญชี" />
                                 </div>
-                                <div className="form-group">
+                                <div className="form-group mt-4">
                                     <label>เลขบัญชีธนาคาร</label>
                                     <input value={settings.bank_account_number} onChange={e => set('bank_account_number', e.target.value)} placeholder="เลขบัญชี" />
                                 </div>
@@ -318,6 +377,20 @@ export default function Settings() {
                                 <div className="form-group">
                                     <label>PromptPay ID (เบอร์/เลขบัตรประชาชน)</label>
                                     <input value={settings.promptpay_id} onChange={e => set('promptpay_id', e.target.value)} placeholder="0812345678 หรือ 1234567890123" />
+                                </div>
+                                <div className="form-group mt-4">
+                                    <label>ระยะเวลาหมดอายุของ QR Code (นาที)</label>
+                                    <div className="flex items-center gap-3">
+                                        <input
+                                            type="number"
+                                            value={settings.qr_expiry_minutes}
+                                            onChange={e => set('qr_expiry_minutes', Number(e.target.value))}
+                                            placeholder="15"
+                                            className="w-24"
+                                            min={1}
+                                        />
+                                        <span className="text-slate-400 text-sm">ถ้าไม่ระบุจะไม่มีการจับเวลา</span>
+                                    </div>
                                 </div>
                             </Section>
                         </>
@@ -540,7 +613,7 @@ export default function Settings() {
                         </button>
                     </div>
                 </div>
-            </form>
+            </form >
 
             <style>{`
                 @media (max-width: 639px) {
@@ -548,6 +621,6 @@ export default function Settings() {
                     .form-grid [style*="grid-column: span 2"] { grid-column: span 1 !important; }
                 }
             `}</style>
-        </div>
+        </div >
     );
 }

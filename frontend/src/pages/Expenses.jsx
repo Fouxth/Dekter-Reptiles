@@ -150,7 +150,8 @@ export default function Expenses() {
                             placeholder="ค้นหารายจ่าย..."
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
-                            className="input-field w-full pl-11 py-2 text-sm"
+                            className="input-field w-full py-2 text-sm"
+                            style={{ paddingLeft: '44px' }}
                         />
                     </div>
                 </div>
@@ -237,7 +238,8 @@ export default function Expenses() {
                                         onChange={e => setFormData({ ...formData, description: e.target.value })}
                                         placeholder="เช่น ซื้อหนู 50 ตัว, ค่าไฟเดือน ม.ค."
                                         rows={2}
-                                        className="input-field w-full pl-11"
+                                        className="input-field w-full"
+                                        style={{ paddingLeft: '44px' }}
                                     />
                                 </div>
                             </div>
@@ -252,7 +254,8 @@ export default function Expenses() {
                                             value={formData.amount}
                                             onChange={e => setFormData({ ...formData, amount: e.target.value })}
                                             placeholder="0"
-                                            className="input-field w-full pl-11"
+                                            className="input-field w-full"
+                                            style={{ paddingLeft: '44px' }}
                                         />
                                     </div>
                                 </div>
@@ -265,7 +268,8 @@ export default function Expenses() {
                                             type="date"
                                             value={formData.date}
                                             onChange={e => setFormData({ ...formData, date: e.target.value })}
-                                            className="input-field w-full pl-11"
+                                            className="input-field w-full"
+                                            style={{ paddingLeft: '44px' }}
                                         />
                                     </div>
                                 </div>
@@ -277,7 +281,8 @@ export default function Expenses() {
                                     <select
                                         value={formData.category}
                                         onChange={e => setFormData({ ...formData, category: e.target.value })}
-                                        className="input-field w-full pl-11 appearance-none bg-slate-900"
+                                        className="input-field w-full appearance-none bg-slate-900"
+                                        style={{ paddingLeft: '44px' }}
                                     >
                                         {categories.map(c => <option key={c} value={c}>{c}</option>)}
                                     </select>
