@@ -23,7 +23,7 @@ const Home = ({ addToCart }) => {
                 const isSnake = (product) => {
                     if (product.species) return true; // Has species defined
                     const catName = product?.category?.name?.toLowerCase() || '';
-                    return catName.includes('งู') || catName.includes('python') || catName.includes('snake') || catName.includes('hognose') || catName.includes('boa');
+                    return catName.includes('งู') || catName.includes('python') || catName.includes('snake') || catName.includes('hognose') || catName.includes('boa') || catName.includes('ของจิปาถะ');
                 };
 
                 // Filter to only snakes, then sort by price (highest first)

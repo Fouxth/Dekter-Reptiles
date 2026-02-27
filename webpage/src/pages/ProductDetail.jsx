@@ -14,6 +14,7 @@ const capitalize = (str) => {
 };
 
 const checkIsSnakeCategory = (product) => {
+    if (product.species === 'Equipment') return false;
     if (product.species) return true;
     const catName = product?.category?.name?.toLowerCase() || '';
     return catName.includes('งู') || catName.includes('python') || catName.includes('snake') || catName.includes('hognose') || catName.includes('boa');
@@ -140,14 +141,18 @@ const ProductDetail = ({ addToCart }) => {
                                     <span className="block text-[0.6rem] uppercase tracking-widest text-stone-500 mb-1">อาหาร (Diet)</span>
                                     <span className="font-semibold text-stone-200 text-sm">{product.feedSize || "-"}</span>
                                 </div>
-                                <div className="col-span-2 pt-3 border-t border-white/5">
+                                <div className="col-span-1 pt-3 border-t border-white/5">
                                     <span className="block text-[0.6rem] uppercase tracking-widest text-stone-500 mb-1.5">Genetic Details</span>
-                                    <span className="inline-flex items-center gap-2 font-semibold text-stone-200 text-sm">
-                                        <div className="w-5 h-5 rounded-full bg-sky-500/10 flex items-center justify-center border border-sky-500/30">
+                                    <span className="inline-flex items-center gap-2 font-semibold text-stone-200 text-[0.8rem] leading-tight">
+                                        <div className="w-5 h-5 rounded-full bg-sky-500/10 flex-shrink-0 flex items-center justify-center border border-sky-500/30">
                                             <Info size={10} className="text-sky-500" />
                                         </div>
-                                        {capitalize(product.genetics) || "ข้อมูลเพิ่มเติม ไม่มีระบุ"}
+                                        <span className="line-clamp-2">{capitalize(product.genetics) || "ข้อมูลเพิ่มเติม ไม่มีระบุ"}</span>
                                     </span>
+                                </div>
+                                <div className="col-span-1 pt-3 border-t border-white/5">
+                                    <span className="block text-[0.6rem] uppercase tracking-widest text-stone-500 mb-1.5">รหัสสินค้า (Code)</span>
+                                    <span className="font-semibold text-stone-200 text-sm">{product.code || "-"}</span>
                                 </div>
                             </div>
                         )}

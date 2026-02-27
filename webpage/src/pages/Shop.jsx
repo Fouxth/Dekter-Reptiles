@@ -63,7 +63,7 @@ const Shop = ({ searchQuery, addToCart }) => {
         // or prioritize known typical IDs if they had been fixed. But based on text:
         const isSnakeCategory = (name) => {
             const lowerName = name?.toLowerCase() || '';
-            return lowerName.includes('งู') || lowerName.includes('python') || lowerName.includes('snake') || lowerName.includes('hognose') || lowerName.includes('boa');
+            return lowerName.includes('งู') || lowerName.includes('python') || lowerName.includes('snake') || lowerName.includes('hognose') || lowerName.includes('boa') || lowerName.includes('ของจิปาถะ');
         };
 
         const activeCategories = categories.filter(c => activeIds.has(c.id));

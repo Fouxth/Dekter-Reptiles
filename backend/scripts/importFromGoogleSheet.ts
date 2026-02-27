@@ -55,21 +55,26 @@ async function main() {
     if (!otherCategory) {
         otherCategory = await prisma.category.create({ data: { name: 'Other Snakes' } });
     }
-    let equipCategory = await prisma.category.findFirst({ where: { name: 'Equipment' } });
+    let equipCategory = await prisma.category.findFirst({ where: { name: 'ของจิปาถะ' } });
     if (!equipCategory) {
-        equipCategory = await prisma.category.create({ data: { name: 'Equipment' } });
+        equipCategory = await prisma.category.create({ data: { name: 'ของจิปาถะ' } });
     }
 
     // --- DB Clear ---
-    console.log('🗑️ Deleting existing records...');
-    await prisma.stockLog.deleteMany({});
-    await prisma.healthRecord.deleteMany({});
-    await prisma.feedingLog.deleteMany({});
-    await prisma.orderItem.deleteMany({});
-    await prisma.incubationRecord.deleteMany({});
-    await prisma.breedingRecord.deleteMany({});
-    await prisma.snake.deleteMany({});
-    console.log('✅ Database cleared.');
+    console.log('🗑️ Clearing Database (Full Reset)...');
+    try {
+        await prisma.stockLog.deleteMany({});
+        await prisma.healthRecord.deleteMany({});
+        await prisma.feedingLog.deleteMany({});
+        await prisma.orderItem.deleteMany({});
+        await prisma.incubationRecord.deleteMany({});
+        await prisma.breedingRecord.deleteMany({});
+        await prisma.snake.deleteMany({});
+        // We keep Categories and Users as they are fundamental structures
+        console.log('✅ Base tables cleared.');
+    } catch (err) {
+        console.error('⚠️ Warning during clear:', err);
+    }
 
     const snakeDataToInsert: any[] = [];
 
@@ -79,6 +84,7 @@ async function main() {
         saleSheet.eachRow((row, rowNumber) => {
             if (rowNumber <= 2) return;
             const codeCell = row.getCell(2);
+            const speciesCell = row.getCell(3);
             const nameMorphCell = row.getCell(4);
             const sexCell = row.getCell(5);
             const yearCell = row.getCell(6);
@@ -110,8 +116,10 @@ async function main() {
                 snakeName = rawMorph || code;
             }
 
+            const speciesVal = speciesCell.value?.toString().trim() || null;
+
             snakeDataToInsert.push({
-                code, name: snakeName, morph: snakeMorph, gender, year: yearCell.value?.toString() || '',
+                code, name: snakeName, species: speciesVal, morph: snakeMorph, gender, year: yearCell.value?.toString() || '',
                 forSale, stock: isSoldOut ? 0 : 1, price: 0, cost: 0, categoryId: defaultCategory.id
             });
         });
@@ -135,7 +143,7 @@ async function main() {
             if (nameMatch) { snakeName = nameMatch[1].trim(); snakeMorph = nameMatch[2].trim(); }
 
             snakeDataToInsert.push({
-                code, name: snakeName, morph: snakeMorph, gender, year: getCellValue(row.getCell(5)) || '',
+                code, name: snakeName, species: null, morph: snakeMorph, gender, year: getCellValue(row.getCell(5)) || '',
                 forSale: false, stock: 1, price: 0, cost: 0, categoryId: defaultCategory.id
             });
         });
@@ -159,7 +167,7 @@ async function main() {
             if (nameMatch) { snakeName = nameMatch[1].trim(); snakeMorph = nameMatch[2].trim(); }
 
             snakeDataToInsert.push({
-                code, name: snakeName, morph: snakeMorph, gender, year: getCellValue(row.getCell(5)) || '',
+                code, name: snakeName, species: null, morph: snakeMorph, gender, year: getCellValue(row.getCell(5)) || '',
                 forSale: false, stock: 1, price: 0, cost: 0, categoryId: otherCategory.id
             });
         });
@@ -179,7 +187,7 @@ async function main() {
 
             snakeDataToInsert.push({
                 code: `OLD-${(name || morph || rowNumber).toString().replace(/[^a-zA-Z0-9]/g, '-')}-${rowNumber}`,
-                name: name || morph, morph: morph || '', gender, year: getCellValue(row.getCell(5)) || '',
+                name: name || morph, species: null, morph: morph || '', gender, year: getCellValue(row.getCell(5)) || '',
                 forSale: false, stock: 1, price: 0, cost: 0, categoryId: defaultCategory.id
             });
         });
@@ -190,17 +198,30 @@ async function main() {
     if (equipSheet) {
         equipSheet.eachRow((row, rowNumber) => {
             if (rowNumber <= 4) return;
-            const codeVal = getCellValue(row.getCell(5)); // E
-            if (!codeVal) return;
-            const cost = parseFloat(getCellValue(row.getCell(3)) || '0');
-            const price = parseFloat(getCellValue(row.getCell(4)) || '0');
-            const stockStr = getCellValue(row.getCell(11));
+            const codeVal = getCellValue(row.getCell(4)); // D (Code)
+            const cost = parseFloat(getCellValue(row.getCell(2)) || '0'); // B (Cost)
+            const price = parseFloat(getCellValue(row.getCell(3)) || '0'); // C (Sale)
+            const stockStr = getCellValue(row.getCell(10)); // J (Stock)
             const stock = parseInt(stockStr || '0');
-            const name = getRichText(row.getCell(6));
+            const name = getRichText(row.getCell(5)); // E (Other/Name)
+
+            if (!name && !codeVal) return;
+
+            // Generate code if missing for equipment as per user request
+            const finalCode = codeVal ? `EQUIP-${codeVal}` : `EQUIP-GEN-${rowNumber.toString().padStart(4, '0')}`;
 
             snakeDataToInsert.push({
-                code: `EQUIP-${codeVal}`, name: name || codeVal, morph: 'Equipment', gender: null, year: '',
-                forSale: true, stock: isNaN(stock) ? 0 : stock, price: isNaN(price) ? 0 : price, cost: isNaN(cost) ? 0 : cost, categoryId: equipCategory.id
+                code: finalCode,
+                name: name || codeVal || 'Unnamed Item',
+                species: 'Equipment',
+                morph: 'Equipment',
+                gender: null,
+                year: '',
+                forSale: true,
+                stock: isNaN(stock) ? 0 : stock,
+                price: isNaN(price) ? 0 : price,
+                cost: isNaN(cost) ? 0 : cost,
+                categoryId: equipCategory.id
             });
         });
     }
