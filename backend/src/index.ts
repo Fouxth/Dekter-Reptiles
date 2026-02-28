@@ -54,13 +54,6 @@ const allowedOrigins = [
 // ใช้ Set เพื่อกรองตัวซ้ำ (กรณีที่ใน .env กับที่เขียนไว้ตรงกัน)
 const uniqueOrigins = Array.from(new Set(allowedOrigins));
 
-// เรียกใช้ CORS Middleware (ต้องวางก่อน Route ต่างๆ)
-app.use(cors({
-    origin: uniqueOrigins,
-    credentials: true
-}));
-// -----------------------
-
 app.use(cors({
     origin: function (origin, callback) {
         // Allow requests with no origin, or if they match allowedOrigins
