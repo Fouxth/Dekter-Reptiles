@@ -44,6 +44,7 @@ const allowedOrigins = [
     'https://admin-dexter.vercel.app', // Admin Production
     process.env.ADMIN_URL || 'https://admin-dexter.vercel.app',
     process.env.WEB_URL || 'https://dexterball.com',
+    'https://www.dexterball.com',
     'https://dekter-reptiles-landingpage.vercel.app'
 ];
 
