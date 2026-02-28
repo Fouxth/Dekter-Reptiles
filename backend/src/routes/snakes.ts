@@ -63,6 +63,17 @@ router.post('/', authenticate, requireAdmin, async (req: Request, res: Response)
         const prisma: PrismaClient = (req as any).prisma;
         const { name, description, price, cost, stock, adminImage, customerImage, color, dateOfBirth, genetics, gender, categoryId, code, species, morph, year, feedSize, forSale } = req.body;
 
+        // Validation - map frontend field names to backend
+        const birthDate = dateOfBirth; // Map birthDate to dateOfBirth
+        const sex = gender; // Map sex to gender
+
+        // Check required fields
+        if (!name || !price) {
+            return res.status(400).json({ 
+                error: 'Missing required fields: name, price' 
+            });
+        }
+
         const snake = await prisma.$transaction(async (tx) => {
             const newSnake = await tx.snake.create({
                 data: {
@@ -172,6 +183,17 @@ router.put('/:id', authenticate, requireAdmin, async (req: Request, res: Respons
     try {
         const prisma: PrismaClient = (req as any).prisma;
         const { name, description, price, cost, stock, adminImage, customerImage, color, dateOfBirth, genetics, gender, categoryId, code, species, morph, year, feedSize, forSale } = req.body;
+
+        // Validation - map frontend field names to backend
+        const birthDate = dateOfBirth; // Map birthDate to dateOfBirth
+        const sex = gender; // Map sex to gender
+
+        // Check required fields
+        if (!name || !price) {
+            return res.status(400).json({ 
+                error: 'Missing required fields: name, price' 
+            });
+        }
 
         const snake = await prisma.snake.update({
             where: { id: Number(req.params.id) },
