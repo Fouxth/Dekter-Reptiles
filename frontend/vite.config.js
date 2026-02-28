@@ -10,11 +10,11 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'https://concluded-upgrades-movement-occurrence.trycloudflare.com',
+        target: 'https://sufficiently-cooperation-harder-product.trycloudflare.com',
         changeOrigin: true,
       },
       '/uploads': {
-        target: 'https://concluded-upgrades-movement-occurrence.trycloudflare.com',
+        target: 'https://sufficiently-cooperation-harder-product.trycloudflare.com',
         changeOrigin: true,
       },
     },
