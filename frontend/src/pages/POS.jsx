@@ -71,13 +71,7 @@ export default function POS() {
                 setCategories(await categoriesRes.json());
 
                 const settingsData = await settingsRes.json();
-                const parsedSettings = {};
-                if (Array.isArray(settingsData)) {
-                    settingsData.forEach(item => {
-                        parsedSettings[item.key] = item.value;
-                    });
-                }
-                setSettings(parsedSettings);
+                setSettings(settingsData);
             }
         } catch (error) {
             console.error('Failed to fetch data:', error);

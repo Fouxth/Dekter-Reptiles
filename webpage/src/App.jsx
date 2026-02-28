@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
 import Home from './pages/Home';
@@ -16,7 +16,18 @@ import { CustomerAuthProvider } from './contexts/CustomerAuthContext';
 
 function App() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [cart, setCart] = useState([]);
+  const [cart, setCart] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('dexter_cart');
+      return saved ? JSON.parse(saved) : [];
+    }
+    return [];
+  });
+
+  // Persist cart to localStorage
+  useEffect(() => {
+    localStorage.setItem('dexter_cart', JSON.stringify(cart));
+  }, [cart]);
   const [searchQuery, setSearchQuery] = useState('');
   const [toast, setToast] = useState(null);
 

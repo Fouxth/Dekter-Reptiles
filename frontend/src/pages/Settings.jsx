@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import {
     Save, Building, Phone, Monitor, CreditCard, Bell, Database,
     CheckCircle2, AlertCircle, Clock, Banknote, ArrowLeftRight,
-    MessageSquare, Store, Settings as SettingsIcon, Youtube
+    MessageSquare, Store, Settings as SettingsIcon, Youtube, ChevronDown, Package, User, History
 } from 'lucide-react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '../context/AuthContext';
 import BankBadge, { THAI_BANKS } from '../components/BankBadge';
 
@@ -67,16 +68,83 @@ const TABS = [
     { key: 'data', label: 'จัดการข้อมูล', icon: Database },
 ];
 
+/* ── Reset Modal Component ────────────────────────────────────── */
+function ResetModal({ isOpen, onClose, onConfirm }) {
+    const [selected, setSelected] = useState([]);
+    const [confirmText, setConfirmText] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    if (!isOpen) return null;
+
+    const options = [
+        { id: 'orders', label: 'รายการขายและวอเดอร์ (Orders & Items)', icon: CreditCard },
+        { id: 'inventory', label: 'ข้อมูลสินค้าและหมวดหมู่ (Snakes & Categories)', icon: Package },
+        { id: 'customers', label: 'ข้อมูลลูกค้า (Customers)', icon: User },
+        { id: 'expenses', label: 'ข้อมูลรายจ่าย (Expenses)', icon: Banknote },
+        { id: 'records', label: 'บันทึกทางชีวภาพ (Breeding, Feeding, Health, etc.)', icon: History },
+    ];
+
+    const toggle = (id) => {
+        setSelected(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+    };
+
+    const handleConfirm = async () => {
+        if (confirmText !== 'RESET') return;
+        setLoading(true);
+        await onConfirm(selected);
+        setLoading(false);
+        onClose();
+    };
+
+    return createPortal(
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-fade-in">
+            <div className="bg-slate-900 border border-white/10 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-scale-in">
+                <div className="p-6 border-b border-white/5 bg-white/[0.02]">
+                    <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                        <Database className="text-red-400" size={24} /> รีเซ็ตข้อมูลระบบ
+                    </h3>
+                    <p className="text-slate-400 text-sm mt-1 text-pretty">เลือกข้อมูลที่ต้องการลบออกจากระบบอย่างถาวร (ไม่รวมบัญชีผู้ใช้และการตั้งค่า)</p>
+                </div>
+
+                <div className="p-6 space-y-3">
+                    {options.map(opt => (
+                        <label key={opt.id} className={`flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer ${selected.includes(opt.id) ? 'bg-red-500/10 border-red-500/30' : 'bg-white/5 border-white/5 hover:border-white/10'}`}>
+                            <input type="checkbox" checked={selected.includes(opt.id)} onChange={() => toggle(opt.id)} className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-red-500 focus:ring-red-500/50" />
+                            <div className="flex items-center gap-2">
+                                <opt.icon size={16} className={selected.includes(opt.id) ? 'text-red-400' : 'text-slate-400'} />
+                                <span className={`text-sm font-medium ${selected.includes(opt.id) ? 'text-white' : 'text-slate-300'}`}>{opt.label}</span>
+                            </div>
+                        </label>
+                    ))}
+
+                    <div className="mt-6 pt-6 border-t border-white/5">
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">พิมพ์ "RESET" เพื่อยืนยันการทำรายการ</label>
+                        <input value={confirmText} onChange={e => setConfirmText(e.target.value)} placeholder="RESET" className="w-full bg-slate-800 border-white/10 text-center font-bold tracking-widest text-red-400 focus:border-red-500/50" />
+                    </div>
+                </div>
+
+                <div className="p-6 bg-white/[0.02] flex gap-3">
+                    <button onClick={onClose} className="flex-1 py-3 rounded-xl bg-white/5 text-slate-300 font-bold hover:bg-white/10 transition-all">ยกเลิก</button>
+                    <button disabled={confirmText !== 'RESET' || selected.length === 0 || loading} onClick={handleConfirm} className="flex-2 py-3 px-8 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-lg shadow-red-500/20">
+                        {loading ? 'กำลังรีเซ็ต...' : 'ยืนยันการรีเซ็ต'}
+                    </button>
+                </div>
+            </div>
+        </div>,
+        document.body
+    );
+}
+
 /* ── Main Component ────────────────────────────────────────────── */
 export default function Settings() {
     const [activeTab, setActiveTab] = useState('store');
+    const [showBankDropdown, setShowBankDropdown] = useState(false);
     const [settings, setSettings] = useState({
         // Store
         store_name: '',
         tax_id: '', receipt_footer: '', reset_time: '00:00',
         // POS
         receipt_prefix: 'POS', tax_rate: 7, enable_vat: true,
-        max_discount_cashier: 10, max_discount_manager: 30,
         show_cost_price: true, auto_print_receipt: true,
         shipping_fee: 0, free_shipping_min: 1000,
         // Payment
@@ -98,7 +166,7 @@ export default function Settings() {
         notify_low_stock: true, notify_sales_target: true,
         daily_target: 10000, notify_sound: false,
         // Data
-        currency_symbol: '฿',
+        tax_id: '',
         // TikTok
         tiktok_urls: '[]',
         // Social Links
@@ -110,34 +178,69 @@ export default function Settings() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [status, setStatus] = useState(null);
+    const [isResetModalOpen, setIsResetModalOpen] = useState(false);
 
     const { getToken } = useAuth();
 
     async function loadSettings() {
         setLoading(true);
+        console.log('--- LOADING SETTINGS ---');
+        console.log('API URL:', `${API}/settings`);
         try {
             const token = getToken();
             const res = await fetch(`${API}/settings`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
+            console.log('Response Status:', res.status);
             if (res.ok) {
                 const data = await res.json();
-                // Backend stores all values as strings — parse them back to correct types
+                console.log('Raw Data from Backend:', data);
+                // Backend returns a flat object: { key: value }
+                // Parse strings back to correct types
                 const parsed = {};
                 for (const [key, val] of Object.entries(data)) {
                     if (val === 'true') parsed[key] = true;
                     else if (val === 'false') parsed[key] = false;
                     else if (val !== null && val !== '' && !isNaN(Number(val)) && typeof val === 'string' && val.trim() !== '') {
-                        // Check if the key is expected to be a number
-                        const numericKeys = ['tax_rate', 'max_discount_cashier', 'max_discount_manager', 'daily_target', 'shipping_fee', 'free_shipping_min'];
+                        // Numeric conversion for specific fields
+                        const numericKeys = ['tax_rate', 'daily_target', 'shipping_fee', 'free_shipping_min'];
                         parsed[key] = numericKeys.includes(key) ? Number(val) : val;
                     }
                     else parsed[key] = val;
                 }
+                console.log('Parsed Settings State:', parsed);
                 setSettings(prev => ({ ...prev, ...parsed }));
+            } else {
+                console.error('Failed to load settings: res not ok');
             }
-        } catch (e) { console.error(e); }
-        finally { setLoading(false); }
+        } catch (e) {
+            console.error('Failed to load settings error:', e);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    async function handleReset(targets) {
+        try {
+            const token = getToken();
+            const res = await fetch(`${API}/settings/reset`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ targets })
+            });
+            if (res.ok) {
+                setStatus({ type: 'success', message: 'รีเซ็ตข้อมูลที่เลือกเรียบร้อยแล้ว' });
+                setTimeout(() => setStatus(null), 5000);
+            } else {
+                const data = await res.json();
+                throw new Error(data.error || 'รีเซ็ตไม่สำเร็จ');
+            }
+        } catch (e) {
+            setStatus({ type: 'error', message: e.message || 'เกิดข้อผิดพลาดในการรีเซ็ต' });
+        }
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -172,7 +275,6 @@ export default function Settings() {
 
     return (
         <div className="space-y-4 sm:space-y-6 animate-fade-in p-1 sm:p-2">
-            {/* Header */}
             <div>
                 <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight flex items-center gap-2">
                     <SettingsIcon size={24} className="text-emerald-400" /> ตั้งค่าระบบ
@@ -193,7 +295,7 @@ export default function Settings() {
             </div>
 
             {/* Tab Content */}
-            <form onSubmit={handleSave} style={{ maxWidth: 960 }}>
+            <form onSubmit={handleSave}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
 
                     {/* ─── STORE TAB ─── */}
@@ -283,18 +385,6 @@ export default function Settings() {
                                 </div>
                             </Section>
 
-                            <Section title="การให้ส่วนลด">
-                                <div style={{ display: 'grid', gap: '1rem' }} className="form-grid">
-                                    <div className="form-group">
-                                        <label>ส่วนลดสูงสุด (%) สำหรับ Cashier</label>
-                                        <input type="number" value={settings.max_discount_cashier} onChange={e => set('max_discount_cashier', Number(e.target.value))} min={0} max={100} />
-                                    </div>
-                                    <div className="form-group">
-                                        <label>ส่วนลดสูงสุด (%) สำหรับ Manager</label>
-                                        <input type="number" value={settings.max_discount_manager} onChange={e => set('max_discount_manager', Number(e.target.value))} min={0} max={100} />
-                                    </div>
-                                </div>
-                            </Section>
 
                             <Section>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -320,27 +410,52 @@ export default function Settings() {
                                     <ToggleRow icon={Banknote} iconColor="#10b981" title="เงินสด" desc="รับชำระด้วยเงินสด" checked={settings.accept_cash} onChange={v => set('accept_cash', v)} />
                                     <ToggleRow icon={ArrowLeftRight} iconColor="#3b82f6" title="โอนเงิน" desc="รับโอนเงินผ่านธนาคาร" checked={settings.accept_transfer} onChange={v => set('accept_transfer', v)} />
                                     <ToggleRow icon={CreditCard} iconColor="#6366f1" title="PromptPay QR" desc="รับชำระผ่าน PromptPay QR" checked={settings.promptpay_enabled} onChange={v => set('promptpay_enabled', v)} />
+                                    <ToggleRow icon={Banknote} iconColor="#f59e0b" title="เก็บเงินปลายทาง (COD)" desc="เปิดให้ลูกค้าเลือกชำระเงินเมื่อได้รับสินค้า" checked={settings.accept_cod} onChange={v => set('accept_cod', v)} />
                                 </div>
                             </Section>
                             <Section title="ข้อมูลบัญชีธนาคาร">
-                                <div className="form-group">
-                                    <label>ธนาคารทื่ใช้รับเงิน</label>
-                                    <div className="flex gap-2">
-                                        <select
-                                            value={settings.bank_name}
-                                            onChange={e => set('bank_name', e.target.value)}
-                                            className="flex-1 input-field"
-                                            style={{ appearance: 'none' }}
+                                <div className="form-group pb-2">
+                                    <label>ธนาคารที่ใช้รับเงิน</label>
+                                    <div className="relative">
+                                        <div
+                                            className="w-full flex items-center justify-between gap-3 px-4 py-3 bg-white/5 border border-white/10 rounded-xl cursor-pointer hover:bg-white/10 transition-all group"
+                                            onClick={() => setShowBankDropdown(!showBankDropdown)}
                                         >
-                                            <option value="">เลือกธนาคาร...</option>
-                                            {THAI_BANKS.map(bank => (
-                                                <option key={bank.id} value={bank.name}>{bank.name}</option>
-                                            ))}
-                                        </select>
-                                        {settings.bank_name && (
-                                            <div className="flex items-center justify-center p-2 bg-white/5 rounded-xl border border-white/10">
-                                                <BankBadge bankName={settings.bank_name} size={28} />
+                                            <div className="flex items-center gap-3 overflow-hidden">
+                                                {settings.bank_name ? (
+                                                    <>
+                                                        <BankBadge bankName={settings.bank_name} size={22} />
+                                                        <span className="text-white font-medium truncate">{settings.bank_name}</span>
+                                                    </>
+                                                ) : (
+                                                    <span className="text-slate-500 italic">เลือกธนาคาร...</span>
+                                                )}
                                             </div>
+                                            <ChevronDown size={18} className={`text-slate-500 transition-transform duration-300 ${showBankDropdown ? 'rotate-180' : ''}`} />
+                                        </div>
+
+                                        {showBankDropdown && (
+                                            <>
+                                                <div className="fixed inset-0 z-[60]" onClick={() => setShowBankDropdown(false)} />
+                                                <div className="absolute top-full left-0 right-0 mt-2 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl z-[70] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                                                    <div className="max-h-[320px] overflow-y-auto custom-scrollbar p-1.5">
+                                                        {THAI_BANKS.map(bank => (
+                                                            <div
+                                                                key={bank.id}
+                                                                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all ${settings.bank_name === bank.name ? 'bg-emerald-500/10 text-emerald-400' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}
+                                                                onClick={() => {
+                                                                    set('bank_name', bank.name);
+                                                                    setShowBankDropdown(false);
+                                                                }}
+                                                            >
+                                                                <BankBadge bankName={bank.name} size={22} />
+                                                                <span className="text-sm font-medium">{bank.name}</span>
+                                                                {settings.bank_name === bank.name && <CheckCircle2 size={14} className="ml-auto" />}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </>
                                         )}
                                     </div>
                                 </div>
@@ -382,6 +497,18 @@ export default function Settings() {
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                                     <ToggleRow icon={AlertCircle} iconColor="#f59e0b" title="แจ้งเตือนสินค้าใกล้หมด" desc="แสดงการแจ้งเตือนเมื่อสินค้ามีจำนวนต่ำกว่าขั้นต่ำ" checked={settings.notify_low_stock} onChange={v => set('notify_low_stock', v)} />
                                     <ToggleRow icon={CheckCircle2} iconColor="#10b981" title="แจ้งเตือนยอดขายถึงเป้า" desc="แสดงการแจ้งเตือนเมื่อยอดขายถึงเป้าหมาย" checked={settings.notify_sales_target} onChange={v => set('notify_sales_target', v)} />
+                                    <div className="pl-12 pr-4 pb-2">
+                                        <div className="flex items-center gap-3">
+                                            <label className="text-xs text-slate-500 whitespace-nowrap">เป้าหมายยอดขาย (บาท):</label>
+                                            <input
+                                                type="number"
+                                                value={settings.daily_target}
+                                                onChange={e => set('daily_target', e.target.value)}
+                                                className="h-8 py-1 text-xs"
+                                                style={{ maxWidth: '120px' }}
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
                             </Section>
 
@@ -398,20 +525,27 @@ export default function Settings() {
                     {activeTab === 'data' && (
                         <Section title="จัดการข้อมูล" subtitle="สำรองและรีเซ็ตข้อมูลระบบ">
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                <div className="form-group">
-                                    <label>สัญลักษณ์สกุลเงิน</label>
-                                    <input value={settings.currency_symbol} onChange={e => set('currency_symbol', e.target.value)} style={{ maxWidth: 120 }} />
-                                </div>
-                                <div className="form-group">
+                                <div className="form-group" style={{ gridColumn: 'span 2' }}>
                                     <label>เลขที่ผู้เสียภาษี</label>
                                     <input value={settings.tax_id} onChange={e => set('tax_id', e.target.value)} placeholder="1234567890123" />
                                 </div>
-                                <div style={{ background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: 14, padding: '1rem' }}>
-                                    <h4 style={{ color: '#fca5a5', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>⚠️ โซนอันตราย</h4>
-                                    <p style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.75rem' }}>การรีเซ็ตข้อมูลจะลบข้อมูลทั้งหมดออกจากระบบอย่างถาวร ไม่สามารถกู้คืนได้</p>
-                                    <button type="button" className="btn btn-danger btn-sm" onClick={() => alert('ฟังก์ชันนี้ยังไม่เปิดใช้งาน')}>
-                                        รีเซ็ตข้อมูลทั้งหมด
-                                    </button>
+                                <div style={{ background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: 14, padding: '1.25rem' }}>
+                                    <div className="flex items-start gap-4">
+                                        <div className="p-3 bg-red-500/10 rounded-xl shrink-0">
+                                            <AlertCircle className="text-red-400" size={24} />
+                                        </div>
+                                        <div className="flex-1">
+                                            <h4 style={{ color: '#fca5a5', fontSize: '1rem', fontWeight: 700, marginBottom: '0.25rem' }}>โซนอันตราย</h4>
+                                            <p style={{ fontSize: '0.85rem', color: '#94a3b8', marginBottom: '1rem', lineHeight: 1.5 }}>
+                                                การรีเซ็ตข้อมูลจะลบข้อมูลที่เลือกออกจากระบบอย่างถาวร <b>ไม่สามารถกู้คืนได้</b> กรุณาตรวจสอบให้แน่ใจก่อนดำเนินการ
+                                            </p>
+                                            <button type="button" className="group relative overflow-hidden px-6 py-3 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white border border-red-500/30 transition-all font-bold text-sm flex items-center gap-2"
+                                                onClick={() => setIsResetModalOpen(true)}>
+                                                <Database size={16} /> รีเซ็ตข้อมูล...
+                                                <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </Section>
@@ -599,7 +733,18 @@ export default function Settings() {
                     .form-grid { grid-template-columns: 1fr !important; }
                     .form-grid [style*="grid-column: span 2"] { grid-column: span 1 !important; }
                 }
+                @keyframes scale-in {
+                    from { transform: scale(0.95); opacity: 0; }
+                    to { transform: scale(1); opacity: 1; }
+                }
+                .animate-scale-in { animation: scale-in 0.2s ease-out forwards; }
             `}</style>
+
+            <ResetModal
+                isOpen={isResetModalOpen}
+                onClose={() => setIsResetModalOpen(false)}
+                onConfirm={handleReset}
+            />
         </div>
     );
 }

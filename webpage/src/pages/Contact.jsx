@@ -18,7 +18,7 @@ const Contact = () => {
         const fetchSettings = async () => {
             try {
                 const settings = await getSystemSettings();
-                const getSet = (key, fallback) => settings.find(s => s.key === key)?.value || fallback;
+                const getSet = (key, fallback) => settings[key] ? settings[key] : fallback;
 
                 let facebook = getSet('contact_facebook', '');
 

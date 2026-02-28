@@ -22,6 +22,7 @@ import feedingLogRoutes from './routes/feeding-logs';
 import incubationRecordRoutes from './routes/incubation-records';
 import customerAuthRoutes from './routes/customer-auth';
 import expenseRoutes from './routes/expenses';
+import notificationRoutes from './routes/notifications';
 
 dotenv.config();
 
@@ -40,6 +41,7 @@ const allowedOrigins = [
     'http://43.229.149.151:5173', // IP Admin Dev
     'http://43.229.149.151:5174', // IP Customer Dev
     'http://43.229.149.151', // IP Prod
+    'https://admin-dexter.vercel.app', // Admin Production
     process.env.ADMIN_URL || 'https://admin-dexter.vercel.app',
     process.env.WEB_URL || 'https://dexterball.com',
     'https://dekter-reptiles-landingpage.vercel.app'
@@ -61,6 +63,7 @@ app.use(cors({
     },
     credentials: true
 }));
+app.set('trust proxy', 2); // Trust first proxy (e.g., Cloudflare)
 app.use(express.json());
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
@@ -89,6 +92,7 @@ app.use('/api/settings', settingRoutes);
 app.use('/api/feeding-logs', feedingLogRoutes);
 app.use('/api/incubation-records', incubationRecordRoutes);
 app.use('/api/expenses', expenseRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

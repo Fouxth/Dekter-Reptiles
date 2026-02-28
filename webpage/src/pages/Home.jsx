@@ -37,9 +37,9 @@ const Home = ({ addToCart }) => {
 
                 // Fetch system settings for contact phone
                 const settingsInfo = await getSystemSettings();
-                const phoneSetting = settingsInfo.find(s => s.key === 'contact_phone');
-                if (phoneSetting && phoneSetting.value) {
-                    setContactPhone(phoneSetting.value);
+                const phoneSettingValue = settingsInfo['contact_phone'];
+                if (phoneSettingValue) {
+                    setContactPhone(phoneSettingValue);
                 }
             } catch (error) {
                 console.error("Failed to load home data:", error);

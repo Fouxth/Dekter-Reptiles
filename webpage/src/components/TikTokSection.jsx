@@ -17,27 +17,27 @@ const TikTokSection = () => {
                 const settings = await getSystemSettings();
 
                 // TikTok URLs
-                const tiktokSetting = settings.find(s => s.key === 'tiktok_urls');
-                if (tiktokSetting && tiktokSetting.value) {
+                const tiktokSettingValue = settings['tiktok_urls'];
+                if (tiktokSettingValue) {
                     try {
-                        const urls = JSON.parse(tiktokSetting.value);
+                        const urls = JSON.parse(tiktokSettingValue);
                         if (Array.isArray(urls)) {
                             setVideos(urls);
                         }
                     } catch {
-                        if (tiktokSetting.value.startsWith('http')) setVideos([tiktokSetting.value]);
+                        if (tiktokSettingValue.startsWith('http')) setVideos([tiktokSettingValue]);
                     }
                 }
 
                 // Other Social Links
                 const parseSocial = (key) => {
-                    const s = settings.find(sm => sm.key === key);
-                    if (!s || !s.value) return [];
+                    const value = settings[key];
+                    if (!value) return [];
                     try {
-                        const parsed = JSON.parse(s.value);
-                        return Array.isArray(parsed) ? parsed : [s.value];
+                        const parsed = JSON.parse(value);
+                        return Array.isArray(parsed) ? parsed : [value];
                     } catch {
-                        return s.value.startsWith('http') || s.value.length > 3 ? [s.value] : [];
+                        return value.startsWith('http') || value.length > 3 ? [value] : [];
                     }
                 };
 
@@ -114,16 +114,30 @@ const TikTokSection = () => {
                                 const videoId = url.split('/video/')[1]?.split('?')[0];
                                 return (
                                     <div key={index} className="group relative">
-                                        <div className="rounded-3xl overflow-hidden glass-card border-white/10 hover:border-sky-500/30 transition-all duration-500 shadow-2xl bg-black">
+                                        {/* Container with overflow: hidden to clip the social sidebar */}
+                                        <div className="rounded-3xl overflow-hidden glass-card border-white/10 hover:border-sky-500/30 transition-all duration-500 shadow-2xl bg-black aspect-[9/16] relative">
                                             {videoId ? (
-                                                <iframe
-                                                    src={`https://www.tiktok.com/embed/v2/${videoId}`}
-                                                    className="w-full aspect-[9/16] border-none"
-                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                                    allowFullScreen
-                                                    title={`TikTok Video ${index}`}
-                                                    loading="lazy"
-                                                ></iframe>
+                                                <div className="absolute inset-0 w-full h-full overflow-hidden flex items-center justify-center bg-black">
+                                                    <iframe
+                                                        // Using player/v1 to prevent scrolling to next videos and related videos grid
+                                                        src={`https://www.tiktok.com/player/v1/${videoId}?&music_info=0&description=0&autoplay=0&loop=1&rel=0`}
+                                                        className="w-full h-full"
+                                                        style={{
+                                                            border: 'none',
+                                                            transform: 'scale(1.05)', // Uniformly scale slightly to eliminate letterboxing/black bars
+                                                            transformOrigin: 'center center'
+                                                        }}
+                                                        scrolling="no"
+                                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                                        allowFullScreen
+                                                        title={`TikTok Video ${index}`}
+                                                        loading="lazy"
+                                                    ></iframe>
+
+                                                    {/* Invisible overlays to capture scrolling attempts on the top and bottom edges while keeping center playable */}
+                                                    <div className="absolute top-0 left-0 w-full h-[15%] z-10" onWheel={(e) => e.stopPropagation()} onTouchMove={(e) => e.stopPropagation()}></div>
+                                                    <div className="absolute bottom-0 left-0 w-full h-[15%] z-10" onWheel={(e) => e.stopPropagation()} onTouchMove={(e) => e.stopPropagation()}></div>
+                                                </div>
                                             ) : (
                                                 <div className="aspect-[9/16] flex flex-col items-center justify-center gap-4 p-8 text-center bg-stone-900/50 h-full w-full">
                                                     <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center">

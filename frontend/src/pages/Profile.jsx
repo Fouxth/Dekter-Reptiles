@@ -60,7 +60,7 @@ const Profile = () => {
     };
 
     return (
-        <div className="max-w-2xl mx-auto py-8 px-4">
+        <div className="max-w-5xl mx-auto py-8 px-4">
             <div className="flex items-center gap-4 mb-8">
                 <div className="w-12 h-12 bg-sky-500/10 rounded-2xl flex items-center justify-center border border-sky-500/20 shadow-lg shadow-sky-500/5">
                     <User className="text-sky-400" size={24} />

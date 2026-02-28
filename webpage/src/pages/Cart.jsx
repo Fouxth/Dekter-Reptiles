@@ -47,12 +47,10 @@ const Cart = ({ cart, setCart, updateQuantity, removeFromCart, cartTotal, cartIt
             try {
                 const data = await getSystemSettings();
                 const getBool = (key, fallback) => {
-                    const s = data.find(item => item.key === key);
-                    return s ? s.value === 'true' : fallback;
+                    return data[key] ? data[key] === 'true' : fallback;
                 };
                 const getText = (key, fallback) => {
-                    const s = data.find(item => item.key === key);
-                    return s ? s.value : fallback;
+                    return data[key] ? data[key] : fallback;
                 };
 
                 const s = {
@@ -68,7 +66,8 @@ const Cart = ({ cart, setCart, updateQuantity, removeFromCart, cartTotal, cartIt
                     enable_vat: getBool('enable_vat', false),
                     tax_rate: parseFloat(getText('tax_rate', '7')) || 7,
                     shipping_fee: parseFloat(getText('shipping_fee', '0')) || 0,
-                    free_shipping_min: parseFloat(getText('free_shipping_min', '1000')) || 1000
+                    free_shipping_min: parseFloat(getText('free_shipping_min', '1000')) || 1000,
+                    accept_cod: getBool('accept_cod', false)
                 };
 
                 setSettings(s);
@@ -76,7 +75,7 @@ const Cart = ({ cart, setCart, updateQuantity, removeFromCart, cartTotal, cartIt
                 // Default payment method if transfer is disabled
                 if (!s.accept_transfer && paymentMethod === 'transfer') {
                     if (s.promptpay_enabled) setPaymentMethod('qr');
-                    else if (s.accept_cash) setPaymentMethod('cash');
+                    else if (s.accept_cod) setPaymentMethod('cash');
                 }
             } catch (err) {
                 console.error("Failed to fetch settings:", err);
@@ -209,7 +208,7 @@ const Cart = ({ cart, setCart, updateQuantity, removeFromCart, cartTotal, cartIt
                     {/* Cart Items */}
                     <div className="lg:col-span-7 space-y-4">
                         {cart.map(item => {
-                            const API = import.meta.env.VITE_API_URL;
+                            const API = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
                             const BASE_URL = API.replace('/api', '');
                             const imageUrl = item.customerImage
                                 ? (item.customerImage.startsWith('http') ? item.customerImage : `${BASE_URL}${item.customerImage}`)
@@ -399,19 +398,30 @@ const Cart = ({ cart, setCart, updateQuantity, removeFromCart, cartTotal, cartIt
                                                         <span className="text-[9px] font-bold uppercase tracking-wider">QR Code</span>
                                                     </button>
                                                 )}
-                                                {settings.accept_cash && (
+                                                {settings.accept_cod && (
                                                     <button
                                                         type="button"
                                                         onClick={() => setPaymentMethod('cash')}
                                                         className={`flex-1 p-2.5 rounded-xl border transition-all flex flex-col items-center gap-1.5 ${paymentMethod === 'cash' ? 'bg-amber-500/10 border-amber-500 text-amber-400' : 'bg-stone-950/40 border-white/5 text-stone-500 hover:border-white/10'}`}
                                                     >
                                                         <div className={`p-1.5 rounded-lg ${paymentMethod === 'cash' ? 'bg-amber-500/20' : 'bg-white/5'}`}>
-                                                            <User size={14} />
+                                                            <MapPin size={14} />
                                                         </div>
-                                                        <span className="text-[9px] font-bold uppercase tracking-wider">ปลายทาง</span>
+                                                        <span className="text-[9px] font-bold uppercase tracking-wider">เก็บเงินปลายทาง</span>
                                                     </button>
                                                 )}
                                             </div>
+
+                                            {paymentMethod === 'cash' && settings.accept_cod && (
+                                                <div className="mb-5 p-4 rounded-xl bg-white/5 border border-white/10 animate-fade-in text-center">
+                                                    <div className="text-[10px] font-bold text-amber-400 uppercase tracking-widest mb-2 flex items-center justify-center gap-2">
+                                                        <MapPin size={14} />
+                                                        CASH ON DELIVERY
+                                                    </div>
+                                                    <p className="text-xs text-stone-300">ชำระเงินกับพนักงานขนส่งเมื่อได้รับสินค้า</p>
+                                                    <p className="text-[10px] text-stone-500 mt-1">กรุณาเตรียมเงินสดให้พอดีกับยอดสั่งซื้อ</p>
+                                                </div>
+                                            )}
 
                                             {paymentMethod === 'transfer' && settings.accept_transfer && (
                                                 <div className="mb-5 p-4 rounded-xl bg-white/5 border border-white/10 animate-fade-in">

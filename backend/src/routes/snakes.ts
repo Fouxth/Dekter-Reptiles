@@ -63,6 +63,17 @@ router.post('/', authenticate, requireAdmin, async (req: Request, res: Response)
         const prisma: PrismaClient = (req as any).prisma;
         const { name, description, price, cost, stock, adminImage, customerImage, color, dateOfBirth, genetics, gender, categoryId, code, species, morph, year, feedSize, forSale } = req.body;
 
+        // Validation - map frontend field names to backend
+        const birthDate = dateOfBirth; // Map birthDate to dateOfBirth
+        const sex = gender; // Map sex to gender
+
+        // Check required fields
+        if (!name || !price) {
+            return res.status(400).json({ 
+                error: 'Missing required fields: name, price' 
+            });
+        }
+
         const snake = await prisma.$transaction(async (tx) => {
             const newSnake = await tx.snake.create({
                 data: {
@@ -173,6 +184,17 @@ router.put('/:id', authenticate, requireAdmin, async (req: Request, res: Respons
         const prisma: PrismaClient = (req as any).prisma;
         const { name, description, price, cost, stock, adminImage, customerImage, color, dateOfBirth, genetics, gender, categoryId, code, species, morph, year, feedSize, forSale } = req.body;
 
+        // Validation - map frontend field names to backend
+        const birthDate = dateOfBirth; // Map birthDate to dateOfBirth
+        const sex = gender; // Map sex to gender
+
+        // Check required fields
+        if (!name || !price) {
+            return res.status(400).json({ 
+                error: 'Missing required fields: name, price' 
+            });
+        }
+
         const snake = await prisma.snake.update({
             where: { id: Number(req.params.id) },
             data: {
@@ -198,13 +220,24 @@ router.put('/:id', authenticate, requireAdmin, async (req: Request, res: Respons
             include: { category: true },
         });
 
-        // Emit low stock alert if applicable
+        // Emit low stock alert if applicable and save to DB
         if (snake.stock !== undefined && snake.stock <= 2) {
             try {
                 const settings = await prisma.systemSetting.findUnique({
                     where: { key: 'notify_low_stock' }
                 });
                 if (settings?.value === 'true') {
+                    const stockMsg = `${snake.name} เหลือสต็อกเพียง ${snake.stock} ตัว`;
+
+                    await prisma.notification.create({
+                        data: {
+                            type: 'low_stock',
+                            title: '⚠️ สต็อกต่ำ',
+                            message: stockMsg,
+                            link: `/inventory?id=${snake.id}`
+                        }
+                    });
+
                     getIO().emit('low_stock_alert', {
                         snakeId: snake.id,
                         name: snake.name,
@@ -222,7 +255,7 @@ router.put('/:id', authenticate, requireAdmin, async (req: Request, res: Respons
 });
 
 // Upload snake image
-router.post('/upload', authenticate, requireAdmin, snakeUpload.single('image'), async (req: Request, res: Response) => {
+router.post('/upload', authenticate, requireAdmin, ...snakeUpload.single('image'), async (req: Request, res: Response) => {
     try {
         const type = req.query.type === 'admin' ? 'admin' : 'customer';
         if (!req.file) {

@@ -9,17 +9,19 @@ export const THAI_BANKS = [
     { id: 'ttb', name: 'ทหารไทยธนชาต (ttb)', abbr: 'ttb', color: '#005da4', textColor: '#fff' },
     { id: 'gsb', name: 'ออมสิน (GSB)', abbr: 'GSB', color: '#eb198d', textColor: '#fff' },
     { id: 'baac', name: 'ธ.ก.ส. (BAAC)', abbr: 'ก.ส', color: '#006a35', textColor: '#fff' },
+    { id: 'ghb', name: 'ธนาคารอาคารสงเคราะห์ (GH Bank)', abbr: 'GHB', color: '#f37021', textColor: '#fff' },
     { id: 'uob', name: 'ยูโอบี (UOB)', abbr: 'UOB', color: '#003d79', textColor: '#fff' },
     { id: 'cimb', name: 'ซีไอเอ็มบี (CIMB)', abbr: 'CIMB', color: '#7e2f36', textColor: '#fff' },
     { id: 'tisco', name: 'ทิสโก้ (TISCO)', abbr: 'TIS', color: '#115da8', textColor: '#fff' },
     { id: 'kkp', name: 'เกียรตินาคินภัทร (KKP)', abbr: 'KKP', color: '#222666', textColor: '#fff' },
     { id: 'lhbank', name: 'แลนด์ แอนด์ เฮ้าส์ (LH Bank)', abbr: 'LH', color: '#6e2c91', textColor: '#fff' },
+    { id: 'icbc', name: 'ไอซีบีซี (ICBC)', abbr: 'ICBC', color: '#c70e30', textColor: '#fff' },
     { id: 'other', name: 'อื่นๆ', abbr: '?', color: '#475569', textColor: '#fff' },
 ];
 
 /**
  * BankBadge — colored square badge with bank abbreviation.
- * No external URLs. Works offline.
+ * Styled with a subtle gradient and shadow for a premium feel.
  */
 export default function BankBadge({ bankName, size = 24 }) {
     const bank = THAI_BANKS.find(b => b.name === bankName);
@@ -32,8 +34,8 @@ export default function BankBadge({ bankName, size = 24 }) {
             style={{
                 width: size,
                 height: size,
-                background: bank.color,
-                borderRadius: Math.round(size * 0.22),
+                background: `linear-gradient(135deg, ${bank.color}, ${bank.color}ee)`,
+                borderRadius: Math.round(size * 0.25),
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -41,10 +43,12 @@ export default function BankBadge({ bankName, size = 24 }) {
                 fontWeight: 900,
                 fontSize: fontSize,
                 color: bank.textColor,
-                letterSpacing: '-0.03em',
+                letterSpacing: '-0.02em',
                 lineHeight: 1,
-                fontFamily: 'sans-serif',
+                fontFamily: 'system-ui, -apple-system, sans-serif',
                 userSelect: 'none',
+                boxShadow: `0 2px 4px ${bank.color}44`,
+                border: '1px solid rgba(255,255,255,0.1)',
             }}
         >
             {bank.abbr}

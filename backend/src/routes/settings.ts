@@ -4,14 +4,24 @@ import { authenticate, requireAdmin } from '../middleware/auth';
 import { getIO } from '../socket';
 
 const router = Router();
-const prisma = new PrismaClient();
 
-// Get all system settings
+// Get all system settings as a flat object
 router.get('/', async (req, res) => {
     try {
+        const prisma = (req as any).prisma;
+        console.log('--- FETCHING SETTINGS ---');
         const settings = await prisma.systemSetting.findMany();
-        res.json(settings);
+        console.log(`Found ${settings.length} settings in DB`);
+
+        const settingsObject = settings.reduce((acc: any, item: any) => {
+            acc[item.key] = item.value;
+            return acc;
+        }, {});
+
+        console.log('Settings Object:', JSON.stringify(settingsObject, null, 2));
+        res.json(settingsObject);
     } catch (error) {
+        console.error('Failed to fetch settings:', error);
         res.status(500).json({ error: 'Failed to fetch settings' });
     }
 });
@@ -35,7 +45,7 @@ router.patch('/', authenticate, requireAdmin, async (req, res) => {
             if (stringValue === '[object Object]') continue;
 
             updates.push(
-                prisma.systemSetting.upsert({
+                (req as any).prisma.systemSetting.upsert({
                     where: { key },
                     update: { value: String(value) },
                     create: { key, value: String(value) },
@@ -62,19 +72,19 @@ router.get('/backup', authenticate, requireAdmin, async (req, res) => {
             orderItems, stockLogs, healthRecords, feedingLogs,
             breedingRecords, incubationRecords, systemSettings, expenses
         ] = await Promise.all([
-            prisma.user.findMany(),
-            prisma.category.findMany(),
-            prisma.snake.findMany(),
-            prisma.customer.findMany(),
-            prisma.order.findMany(),
-            prisma.orderItem.findMany(),
-            prisma.stockLog.findMany(),
-            prisma.healthRecord.findMany(),
-            prisma.feedingLog.findMany(),
-            prisma.breedingRecord.findMany(),
-            prisma.incubationRecord.findMany(),
-            prisma.systemSetting.findMany(),
-            prisma.expense.findMany(),
+            (req as any).prisma.user.findMany(),
+            (req as any).prisma.category.findMany(),
+            (req as any).prisma.snake.findMany(),
+            (req as any).prisma.customer.findMany(),
+            (req as any).prisma.order.findMany(),
+            (req as any).prisma.orderItem.findMany(),
+            (req as any).prisma.stockLog.findMany(),
+            (req as any).prisma.healthRecord.findMany(),
+            (req as any).prisma.feedingLog.findMany(),
+            (req as any).prisma.breedingRecord.findMany(),
+            (req as any).prisma.incubationRecord.findMany(),
+            (req as any).prisma.systemSetting.findMany(),
+            (req as any).prisma.expense.findMany(),
         ]);
 
         const backupData = {
@@ -99,20 +109,55 @@ router.get('/backup', authenticate, requireAdmin, async (req, res) => {
 // Reset: Delete all clinical/transactional data but keep SystemSettings and Users
 router.delete('/reset', authenticate, requireAdmin, async (req, res) => {
     try {
-        await prisma.$transaction([
-            prisma.stockLog.deleteMany(),
-            prisma.healthRecord.deleteMany(),
-            prisma.feedingLog.deleteMany(),
-            prisma.incubationRecord.deleteMany(),
-            prisma.breedingRecord.deleteMany(),
-            prisma.orderItem.deleteMany(),
-            prisma.order.deleteMany(),
-            prisma.snake.deleteMany(),
-            prisma.category.deleteMany(),
-            prisma.customer.deleteMany(),
-            prisma.expense.deleteMany(),
-        ]);
-        res.json({ message: 'Database reset successfully. Users and settings were preserved.' });
+        const { targets } = req.body; // Array of strings: 'orders', 'inventory', 'customers', 'expenses', 'records'
+        const prisma = (req as any).prisma;
+
+        const deleteOps: any[] = [];
+
+        if (!targets || targets.length === 0 || targets.includes('all')) {
+            // Default: Full reset (excluding users and settings)
+            deleteOps.push(
+                prisma.stockLog.deleteMany(),
+                prisma.healthRecord.deleteMany(),
+                prisma.feedingLog.deleteMany(),
+                prisma.incubationRecord.deleteMany(),
+                prisma.breedingRecord.deleteMany(),
+                prisma.orderItem.deleteMany(),
+                prisma.order.deleteMany(),
+                prisma.snake.deleteMany(),
+                prisma.category.deleteMany(),
+                prisma.customer.deleteMany(),
+                prisma.expense.deleteMany(),
+            );
+        } else {
+            if (targets.includes('orders')) {
+                deleteOps.push(prisma.orderItem.deleteMany(), prisma.order.deleteMany());
+            }
+            if (targets.includes('inventory')) {
+                deleteOps.push(prisma.snake.deleteMany(), prisma.category.deleteMany());
+            }
+            if (targets.includes('customers')) {
+                deleteOps.push(prisma.customer.deleteMany());
+            }
+            if (targets.includes('expenses')) {
+                deleteOps.push(prisma.expense.deleteMany());
+            }
+            if (targets.includes('records')) {
+                deleteOps.push(
+                    prisma.stockLog.deleteMany(),
+                    prisma.healthRecord.deleteMany(),
+                    prisma.feedingLog.deleteMany(),
+                    prisma.incubationRecord.deleteMany(),
+                    prisma.breedingRecord.deleteMany(),
+                );
+            }
+        }
+
+        if (deleteOps.length > 0) {
+            await prisma.$transaction(deleteOps);
+        }
+
+        res.json({ message: 'Selected data reset successfully.' });
     } catch (error) {
         console.error('Reset failed:', error);
         res.status(500).json({ error: 'Failed to reset database' });
@@ -125,7 +170,7 @@ router.post('/', authenticate, requireAdmin, async (req, res) => {
     if (!key) return res.status(400).json({ error: 'Key is required' });
 
     try {
-        const setting = await prisma.systemSetting.upsert({
+        const setting = await (req as any).prisma.systemSetting.upsert({
             where: { key },
             update: { value: String(value), description },
             create: { key, value: String(value), description },
