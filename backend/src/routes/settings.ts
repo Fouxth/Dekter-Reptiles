@@ -21,8 +21,19 @@ router.patch('/', authenticate, requireAdmin, async (req, res) => {
     const settings = req.body;
     const updates = [];
 
+    if (!settings || typeof settings !== 'object' || Array.isArray(settings)) {
+        return res.status(400).json({ error: 'Settings must be a flat object of key-value pairs.' });
+    }
+
     try {
         for (const [key, value] of Object.entries(settings)) {
+            // Ignore numeric keys which usually come from passing an array to the API
+            if (/^\d+$/.test(key)) continue;
+
+            // Ignore [object Object] values which usually come from stringifying objects incorrectly
+            const stringValue = String(value);
+            if (stringValue === '[object Object]') continue;
+
             updates.push(
                 prisma.systemSetting.upsert({
                     where: { key },

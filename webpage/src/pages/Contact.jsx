@@ -120,11 +120,31 @@ const Contact = () => {
                                 </div>
                                 <div>
                                     <h3 className="font-bold text-stone-200 uppercase tracking-widest text-sm mb-1">อีเมล & Social</h3>
-                                    {contactInfo.email && <p className="text-stone-400 text-sm font-light mb-1">{contactInfo.email}</p>}
-                                    {contactInfo.line && <p className="text-stone-400 text-sm font-light mb-1">Line: <span className="text-cyan-400 font-bold">{contactInfo.line}</span></p>}
+                                    {contactInfo.email && (
+                                        <p className="text-stone-400 text-sm font-light mb-1">
+                                            Email: <a href={`mailto:${contactInfo.email}`} className="text-sky-400 hover:underline">{contactInfo.email}</a>
+                                        </p>
+                                    )}
+                                    {contactInfo.line && (
+                                        <p className="text-stone-400 text-sm font-light mb-1">
+                                            Line: <a
+                                                href={`https://line.me/R/ti/p/${contactInfo.line.startsWith('@') ? contactInfo.line : '@' + contactInfo.line}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-emerald-400 font-bold hover:underline"
+                                            >
+                                                {contactInfo.line}
+                                            </a>
+                                        </p>
+                                    )}
                                     {contactInfo.facebook && (
                                         <p className="text-stone-400 text-sm font-light">
-                                            Facebook: <a href={contactInfo.facebook} target="_blank" rel="noopener noreferrer" className="text-blue-400 font-bold hover:underline">
+                                            Facebook: <a
+                                                href={contactInfo.facebook.startsWith('http') ? contactInfo.facebook : `https://facebook.com/${contactInfo.facebook}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-blue-400 font-bold hover:underline"
+                                            >
                                                 {contactInfo.facebook.replace(/https?:\/\/(www\.)?facebook\.com\//, '').split('/')[0].split('?')[0] || 'Facebook Page'}
                                             </a>
                                         </p>

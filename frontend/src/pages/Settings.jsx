@@ -72,7 +72,7 @@ export default function Settings() {
     const [activeTab, setActiveTab] = useState('store');
     const [settings, setSettings] = useState({
         // Store
-        store_name: '', store_phone: '', store_email: '', store_address: '',
+        store_name: '',
         tax_id: '', receipt_footer: '', reset_time: '00:00',
         // POS
         receipt_prefix: 'POS', tax_rate: 7, enable_vat: true,
@@ -91,6 +91,7 @@ export default function Settings() {
         contact_phone: '',
         contact_email: '',
         contact_line: '',
+        contact_facebook: '',
         contact_address: '',
         opening_hours: '',
         // Notifications
@@ -216,6 +217,10 @@ export default function Settings() {
                                         <label>Line</label>
                                         <input value={settings.contact_line} onChange={e => set('contact_line', e.target.value)} placeholder="@snakeparadise" />
                                     </div>
+                                    <div className="form-group">
+                                        <label>Facebook</label>
+                                        <input value={settings.contact_facebook} onChange={e => set('contact_facebook', e.target.value)} placeholder="Facebook Page Name / URL" />
+                                    </div>
                                     <div className="form-group" style={{ gridColumn: 'span 2' }}>
                                         <label>ที่อยู่</label>
                                         <textarea rows={3} value={settings.contact_address} onChange={e => set('contact_address', e.target.value)} placeholder="ที่อยู่ที่แสดงบนใบเสร็จ" style={{ resize: 'none' }} />
@@ -226,8 +231,22 @@ export default function Settings() {
                                     </div>
                                     <div className="form-group" style={{ gridColumn: 'span 2' }}>
                                         <label>ลิงก์ Google Map (Embed)</label>
-                                        <input value={settings.google_map_url} onChange={e => set('google_map_url', e.target.value)} placeholder="https://www.google.com/maps/embed?pb=..." />
-                                        <p style={{ fontSize: '0.7rem', color: '#64748b', marginTop: 4 }}>ใช้ลิงก์จาก Google Maps &gt; Share &gt; Embed a map &gt; คัดลอกค่าใน src="..."</p>
+                                        <input
+                                            value={settings.google_map_url}
+                                            onChange={e => {
+                                                let val = e.target.value;
+                                                // Auto-extract src from iframe tag if pasted
+                                                if (val.includes('<iframe')) {
+                                                    const match = val.match(/src="([^"]+)"/);
+                                                    if (match) val = match[1];
+                                                }
+                                                set('google_map_url', val);
+                                            }}
+                                            placeholder="https://www.google.com/maps/embed?pb=..."
+                                        />
+                                        <p style={{ fontSize: '0.7rem', color: '#64748b', marginTop: 4 }}>
+                                            ⚠️ <b>ต้องใช้ลิงก์สำหรับการ Embed เท่านั้น:</b> เข้า Google Maps &gt; Share &gt; Embed a map &gt; คัดลอกค่าใน src="..." มาวาง
+                                        </p>
                                     </div>
                                 </div>
                             </Section>
