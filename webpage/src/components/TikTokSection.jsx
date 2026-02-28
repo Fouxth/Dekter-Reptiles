@@ -86,7 +86,7 @@ const TikTokSection = () => {
                     <div className="text-sky-500 font-bold tracking-widest uppercase text-sm mb-2 flex items-center justify-center gap-2">
                         <Play size={14} fill="currentColor" /> Dexter Reptiles Social
                     </div>
-                    <h2 className="text-4xl md:text-5xl font-light text-stone-100 mb-4 text-balance">ติดตามความเคลื่อนไหว<span className="font-bold">หน้าฟาร์ม</span></h2>
+                    <h2 className="text-4xl md:text-5xl font-light text-stone-100 mb-4 text-balance">ติดตามความเคลื่อนไหว<span className="font-bold">หน้าบ้าน</span></h2>
                     <p className="text-stone-400 max-w-2xl mx-auto">อัปเดตเทคนิคการเลี้ยงและบรรยากาศในฟาร์มผ่านโซเชียลมีเดียของเรา</p>
 
                     {/* Social Icons Row */}

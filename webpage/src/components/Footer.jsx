@@ -65,8 +65,8 @@ const Footer = () => {
                             <span className="text-stone-950 font-bold text-2xl">DR</span>
                         </div>
                         <div className="ml-4">
-                            <h1 className="text-2xl font-bold text-stone-100 tracking-tight group-hover:text-sky-400 transition-colors">Dexter Reptiles</h1>
-                            <p className="text-xs text-sky-400/80 uppercase tracking-widest font-semibold">Premium Reptiles</p>
+                            <h1 className="text-2xl font-bold text-stone-100 tracking-tight group-hover:text-sky-400 transition-colors">DEXTER</h1>
+                            <p className="text-xs text-sky-400/80 uppercase tracking-widest font-semibold">24/7 Reptiles Shop</p>
                         </div>
                     </div>
                     <p className="mb-4 max-w-sm">ร้านจำหน่ายงูสวยงามนำเข้า เพาะพันธุ์เอง และอุปกรณ์การเลี้ยงครบวงจร ซื้อขายมั่นใจ</p>

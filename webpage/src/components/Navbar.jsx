@@ -45,8 +45,8 @@ const Navbar = ({ cartItemCount, isMobileMenuOpen, setIsMobileMenuOpen, searchQu
                             <span className="text-stone-950 font-bold text-2xl">DR</span>
                         </div>
                         <div className="ml-3">
-                            <h1 className="text-xl md:text-2xl font-bold text-stone-100 tracking-tight group-hover:text-sky-400 transition-colors">Dexter Reptiles</h1>
-                            <p className="text-[0.65rem] md:text-xs text-sky-400/80 uppercase tracking-widest font-semibold">Premium Reptiles</p>
+                            <h1 className="text-xl md:text-2xl font-bold text-stone-100 tracking-tight group-hover:text-sky-400 transition-colors">DEXTER</h1>
+                            <p className="text-[0.65rem] md:text-xs text-sky-400/80 uppercase tracking-widest font-semibold">24/7 Reptiles Shop</p>
                         </div>
                     </div>
 
@@ -66,6 +66,9 @@ const Navbar = ({ cartItemCount, isMobileMenuOpen, setIsMobileMenuOpen, searchQu
                                 placeholder="ค้นหางูสายพันธุ์ต่างๆ..."
                                 value={searchQuery}
                                 onChange={handleSearch}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') navigate('/shop');
+                                }}
                                 className="pl-10 pr-4 py-2 rounded-full border border-white/10 glass text-sm focus:outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/50 w-64 text-stone-200 placeholder-stone-500 transition-all"
                             />
                             <Search className="absolute left-3 top-2.5 text-stone-400 group-focus-within:text-sky-400 transition-colors" size={18} />
@@ -120,6 +123,12 @@ const Navbar = ({ cartItemCount, isMobileMenuOpen, setIsMobileMenuOpen, searchQu
                             placeholder="ค้นหางูสายพันธุ์ต่างๆ..."
                             value={searchQuery}
                             onChange={handleSearch}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    navigate('/shop');
+                                    setIsMobileMenuOpen(false);
+                                }
+                            }}
                             className="w-full pl-10 pr-4 py-3 rounded-xl border border-white/10 bg-white/5 text-stone-200 focus:outline-none focus:border-sky-500 placeholder-stone-500"
                         />
                         <Search className="absolute left-3 top-3.5 text-stone-400" size={20} />

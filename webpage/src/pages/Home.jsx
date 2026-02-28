@@ -77,15 +77,15 @@ const Home = ({ addToCart }) => {
                     <div className="w-full lg:w-2/3">
                         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-sky-500/30 bg-stone-950/80 backdrop-blur-md text-sky-400 text-xs uppercase tracking-widest font-bold mb-8 shadow-lg shadow-sky-500/5">
                             <span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse"></span>
-                            Premium Exotic Pets
+                            Ball Python/Exotic pet
                         </div>
                         <h1 className="text-4xl sm:text-6xl xl:text-7xl font-light tracking-tight mb-8 leading-[1.2] drop-shadow-lg">
-                            ค้นพบเพื่อนร่วมโลก<br />
-                            <span className="font-bold text-gradient pb-2 block mt-2 drop-shadow-md">สายพันธุ์พิเศษ</span>
+                            เจองูเปรต<br />
+                            <span className="font-bold text-gradient pb-2 block mt-2 drop-shadow-md">ที่ถูกใจหรือยังคะ</span>
                         </h1>
                         <p className="text-lg md:text-xl text-stone-200 mb-10 max-w-xl font-light leading-relaxed drop-shadow-md">
-                            Dexter Reptiles คัดสรรงูสายพันธุ์สวยงาม สุขภาพดี
-                            พร้อมให้คำปรึกษาการเลี้ยงดูอย่างถูกวิธีโดยผู้เชี่ยวชาญ
+                            อยากได้น้องงูสีไหนหรือตามหา Morph ไหนอยู่
+                            สามารถแจ้งทางร้านได้เลยค่ะ ยินดีให้คำปรึกษาเกี่ยวกับน้องงูตลอด 24 ชม. ค่ะ
                         </p>
                         <div className="flex flex-col sm:flex-row gap-4">
                             <button
@@ -139,7 +139,7 @@ const Home = ({ addToCart }) => {
             <section className="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
                 <div className="flex justify-between items-end mb-12">
                     <div>
-                        <div className="text-sky-500 font-bold tracking-widest uppercase text-sm mb-2">Premium Selection</div>
+                        <div className="text-sky-500 font-bold tracking-widest uppercase text-sm mb-2">Ball Python</div>
                         <h2 className="text-4xl font-light text-stone-100 mb-2">งูแนะนำ<span className="font-bold">คัดพิเศษ</span></h2>
                         <p className="text-stone-400">คัดสรรเฉพาะตัวที่สวยและโดดเด่นที่สุด</p>
                     </div>

@@ -269,6 +269,15 @@ export default function SnakeDetail() {
                     </div>
                 </div>
             )}
+            {/* Confirm Modal */}
+            <ConfirmModal
+                isOpen={!!itemToDelete}
+                onClose={() => setItemToDelete(null)}
+                onConfirm={confirmDeleteHealth}
+                title="ยืนยันการลบบันทึก"
+                message="คุณต้องการลบบันทึกสุขภาพนี้ใช่หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้"
+                itemName={itemToDelete ? formatDate(itemToDelete.recordDate) : ''}
+            />
         </div>
     );
 }

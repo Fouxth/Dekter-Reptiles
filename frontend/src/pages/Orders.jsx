@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL;
+const BASE_URL = API.replace('/api', '');
 
 const capitalize = (str) => {
     if (!str) return str;
@@ -126,7 +127,10 @@ export default function Orders() {
 
     const filteredOrders = orders.filter(order => {
         const matchesSearch = order.orderNo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            order.items?.some(item => item.snake?.name.toLowerCase().includes(searchTerm.toLowerCase()));
+            order.items?.some(item =>
+                item.snake?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                item.snake?.code?.toLowerCase().includes(searchTerm.toLowerCase())
+            );
         const matchesStatus = !statusFilter || order.status === statusFilter;
         return matchesSearch && matchesStatus;
     });
@@ -545,10 +549,10 @@ export default function Orders() {
                                     <h3 className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 pl-1">หลักฐานการชำระเงิน</h3>
                                     <div className="rounded-xl overflow-hidden border border-white/10 mb-4 bg-black/40">
                                         <img
-                                            src={selectedOrder.paymentSlip}
+                                            src={selectedOrder.paymentSlip.startsWith('http') ? selectedOrder.paymentSlip : `${BASE_URL}${selectedOrder.paymentSlip}`}
                                             alt="Payment Slip"
                                             className="w-full h-auto max-h-[400px] object-contain cursor-zoom-in"
-                                            onClick={() => window.open(selectedOrder.paymentSlip, '_blank')}
+                                            onClick={() => window.open(selectedOrder.paymentSlip.startsWith('http') ? selectedOrder.paymentSlip : `${BASE_URL}${selectedOrder.paymentSlip}`, '_blank')}
                                         />
                                     </div>
 

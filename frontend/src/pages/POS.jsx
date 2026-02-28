@@ -122,7 +122,8 @@ export default function POS() {
 
     const filteredSnakes = snakes.filter(snake => {
         const matchesSearch = snake.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            snake.description?.toLowerCase().includes(searchTerm.toLowerCase());
+            snake.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            snake.code?.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesCategory = !selectedCategory || snake.categoryId === selectedCategory;
         return matchesSearch && matchesCategory && snake.stock > 0;
     });
