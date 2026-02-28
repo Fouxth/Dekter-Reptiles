@@ -514,8 +514,33 @@ export default function Orders() {
                                 <span className="font-bold text-xl sm:text-2xl text-emerald-400">{formatCurrency(selectedOrder.total)}</span>
                             </div>
 
-                            {/* Payment Slip & Actions */}
-                            {selectedOrder.paymentSlip && (
+                            {/* Order Actions (Approve/Cancel) */}
+                            <div className="mb-6 space-y-3">
+                                {selectedOrder.status === 'pending_payment' && (
+                                    <button
+                                        onClick={() => updateOrderStatus(selectedOrder.id, 'completed')}
+                                        className="w-full bg-emerald-500 hover:bg-emerald-400 text-emerald-950 font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all text-sm shadow-lg shadow-emerald-500/20"
+                                    >
+                                        <CheckCircle size={18} /> อนุมัติการชำระเงิน (สำเร็จ)
+                                    </button>
+                                )}
+
+                                {selectedOrder.status !== 'completed' && selectedOrder.status !== 'cancelled' && (
+                                    <button
+                                        onClick={() => {
+                                            if (window.confirm('คุณต้องการยกเลิกออเดอร์นี้ใช่หรือไม่? คืนสต็อกสินค้าอัตโนมัติ')) {
+                                                updateOrderStatus(selectedOrder.id, 'cancelled');
+                                            }
+                                        }}
+                                        className="w-full bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/10 py-3 rounded-xl flex items-center justify-center gap-2 transition-all text-sm"
+                                    >
+                                        <XCircle size={18} /> ยกเลิกออเดอร์นี้
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Payment Slip & Slip Actions */}
+                            {selectedOrder.paymentSlip ? (
                                 <div className="mb-6">
                                     <h3 className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 pl-1">หลักฐานการชำระเงิน</h3>
                                     <div className="rounded-xl overflow-hidden border border-white/10 mb-4 bg-black/40">
@@ -539,11 +564,17 @@ export default function Orders() {
                                                 onClick={() => updateOrderStatus(selectedOrder.id, 'rejected')}
                                                 className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all text-sm"
                                             >
-                                                <XCircle size={18} /> ปฏิเสธ
+                                                <XCircle size={18} /> สลิปไม่ถูกต้อง
                                             </button>
                                         </div>
                                     )}
                                 </div>
+                            ) : (
+                                selectedOrder.status === 'awaiting_verification' && (
+                                    <div className="mb-6 p-4 bg-amber-500/5 border border-amber-500/10 rounded-xl text-center">
+                                        <p className="text-amber-400 text-xs font-medium">รอการอัปโหลดสลิปจากลูกค้า</p>
+                                    </div>
+                                )
                             )}
 
                             {/* Shipping Information & Tracking */}

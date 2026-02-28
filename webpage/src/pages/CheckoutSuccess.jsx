@@ -48,8 +48,7 @@ const CheckoutSuccess = () => {
             try {
                 const data = await getSystemSettings();
                 const getText = (key, fallback) => {
-                    const s = data.find(item => item.key === key);
-                    return s ? s.value : fallback;
+                    return data[key] ? data[key] : fallback;
                 };
                 setSettings({
                     bank_name: getText('bank_name', 'กสิกรไทย (K-Bank)'),

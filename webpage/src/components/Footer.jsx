@@ -16,8 +16,7 @@ const Footer = () => {
             try {
                 const data = await getSystemSettings();
                 const getText = (key, fallback) => {
-                    const s = data.find(item => item.key === key);
-                    return s ? s.value : fallback;
+                    return data[key] ? data[key] : fallback;
                 };
 
                 let fbUrl = getText('contact_facebook', '#');

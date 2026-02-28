@@ -22,6 +22,7 @@ import {
     Settings,
     DollarSign
 } from 'lucide-react';
+import NotificationDropdown from './NotificationDropdown';
 
 const navItems = [
     { path: '/', icon: LayoutDashboard, label: 'แดชบอร์ด' },
@@ -46,10 +47,11 @@ const adminNavItems = [
 export default function Layout() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
+    const [showNotifications, setShowNotifications] = useState(false);
     const location = useLocation();
     const navigate = useNavigate();
     const { user, logout } = useAuth();
-    const { unreadCount, clearUnread } = useSocket();
+    const { unreadCount, notifications, markRead, markAllRead, clearAll } = useSocket();
 
     const allNavItems = user?.role === 'admin' ? [...navItems, ...adminNavItems] : navItems;
 
@@ -74,20 +76,26 @@ export default function Layout() {
         return () => window.removeEventListener('resize', checkScreenSize);
     }, []);
 
-    // Close sidebar on route change (mobile)
+    // Close sidebar or notifications on route change
     useEffect(() => {
         if (isMobile) {
-            // eslint-disable-next-line
             setSidebarOpen(false);
         }
+        setShowNotifications(false);
     }, [location.pathname, isMobile]);
 
     const toggleSidebar = () => {
         setSidebarOpen(!sidebarOpen);
+        if (showNotifications) setShowNotifications(false);
+    };
+
+    const toggleNotifications = (e) => {
+        e.stopPropagation();
+        setShowNotifications(!showNotifications);
     };
 
     return (
-        <>
+        <div onClick={() => setShowNotifications(false)}>
             <div className="flex flex-col lg:flex-row h-screen bg-transparent overflow-hidden selection:bg-emerald-500/30">
                 {/* Mobile Header */}
                 <header className="lg:hidden flex items-center justify-between p-4 bg-slate-900/60 backdrop-blur-xl border-b border-white/5 sticky top-0 z-30">
@@ -106,10 +114,10 @@ export default function Layout() {
                         <h1 className="text-lg font-bold text-white tracking-tight">Snake POS</h1>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 relative">
                         <button
-                            onClick={clearUnread}
-                            className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors relative"
+                            onClick={toggleNotifications}
+                            className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all relative ${showNotifications ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10'}`}
                         >
                             <Bell size={20} />
                             {unreadCount > 0 && (
@@ -118,6 +126,18 @@ export default function Layout() {
                                 </span>
                             )}
                         </button>
+
+                        {showNotifications && (
+                            <div className="absolute top-full right-0 mt-2 z-50 origin-top-right" onClick={(e) => e.stopPropagation()}>
+                                <NotificationDropdown
+                                    notifications={notifications}
+                                    onMarkRead={markRead}
+                                    onMarkAllRead={markAllRead}
+                                    onClearAll={clearAll}
+                                    onClose={() => setShowNotifications(false)}
+                                />
+                            </div>
+                        )}
                     </div>
                 </header>
 
@@ -227,10 +247,10 @@ export default function Layout() {
                                 {allNavItems.find(item => item.path === location.pathname)?.label || 'Dashboard'}
                             </h2>
                         </div>
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-4 relative">
                             <button
-                                onClick={clearUnread}
-                                className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors relative"
+                                onClick={toggleNotifications}
+                                className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all relative ${showNotifications ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10'}`}
                             >
                                 <Bell size={20} />
                                 {unreadCount > 0 && (
@@ -239,6 +259,18 @@ export default function Layout() {
                                     </span>
                                 )}
                             </button>
+
+                            {showNotifications && (
+                                <div className="absolute top-full right-0 mt-2 z-50 origin-top-right" onClick={(e) => e.stopPropagation()}>
+                                    <NotificationDropdown
+                                        notifications={notifications}
+                                        onMarkRead={markRead}
+                                        onMarkAllRead={markAllRead}
+                                        onClearAll={clearAll}
+                                        onClose={() => setShowNotifications(false)}
+                                    />
+                                </div>
+                            )}
                         </div>
                     </header>
 
@@ -281,6 +313,6 @@ export default function Layout() {
                     </nav>
                 </main>
             </div>
-        </>
+        </div>
     );
 }

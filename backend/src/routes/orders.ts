@@ -264,6 +264,16 @@ router.post('/', async (req: Request, res: Response) => {
 
                 // If this order pushed it over the limit
                 if (totalSalesForToday >= dailyTarget && (totalSalesForToday - order.total) < dailyTarget) {
+                    const targetMsg = `ยอดขายวันนี้ถึงเป้า ฿${Number(dailyTarget).toLocaleString('th-TH')} แล้ว (ปัจจุบัน ฿${Number(totalSalesForToday).toLocaleString('th-TH')})`;
+
+                    await prisma.notification.create({
+                        data: {
+                            type: 'sales_target',
+                            title: '🎉 เป้าหมายยอดขาย',
+                            message: targetMsg,
+                        }
+                    });
+
                     getIO().emit('sales_target_reached', {
                         target: dailyTarget,
                         total: totalSalesForToday,
@@ -274,8 +284,20 @@ router.post('/', async (req: Request, res: Response) => {
             }
         }
 
-        // Emit socket event for new order
+        // Emit socket event for new order and save to DB
         try {
+            const payLabel = order.paymentMethod === 'transfer' ? '💳 โอนเงิน' : '💵 เงินสด';
+            const orderMsg = `ออเดอร์ใหม่ #${order.orderNo?.slice(-8)} — ฿${Number(order.total).toLocaleString('th-TH')} (${payLabel})`;
+
+            await prisma.notification.create({
+                data: {
+                    type: 'new_order',
+                    title: '🛒 ออเดอร์ใหม่',
+                    message: orderMsg,
+                    link: `/orders?id=${order.id}`
+                }
+            });
+
             getIO().emit('new_order', {
                 orderId: order.id,
                 orderNo: order.orderNo,
@@ -331,7 +353,7 @@ async function authorizeSlipUpload(req: Request, res: Response, next: NextFuncti
 }
 
 // Upload payment slip
-router.post('/:id/slip', authorizeSlipUpload, slipUpload.single('slip'), async (req: Request, res: Response) => {
+router.post('/:id/slip', authorizeSlipUpload, ...slipUpload.single('slip'), async (req: Request, res: Response) => {
     try {
         const prisma: PrismaClient = (req as any).prisma;
         const orderId = Number((res.locals as any).orderId || req.params.id);
@@ -396,8 +418,30 @@ router.patch('/:id/status', authenticate, requireAdmin, async (req: Request, res
             include: { items: { include: { snake: true } } },
         });
 
-        // Emit socket event for status change
+        // Emit socket event for status change and save to DB
         try {
+            const STATUS_LABELS: Record<string, string> = {
+                completed: 'สำเร็จ',
+                pending_payment: 'รอชำระเงิน',
+                awaiting_verification: 'รอตรวจสอบ',
+                processing: 'กำลังเตรียมของ',
+                shipping: 'กำลังจัดส่ง',
+                cancelled: 'ยกเลิก',
+                rejected: 'สลิปไม่ถูกต้อง',
+            };
+            const prev = STATUS_LABELS[currentOrder?.status || ''] || currentOrder?.status;
+            const curr = STATUS_LABELS[order.status] || order.status;
+            const statusMsg = `ออเดอร์ #${order.orderNo?.slice(-8)}: ${prev} → ${curr}`;
+
+            await prisma.notification.create({
+                data: {
+                    type: 'order_status',
+                    title: '🔄 อัปเดตสถานะ',
+                    message: statusMsg,
+                    link: `/orders?id=${order.id}`
+                }
+            });
+
             getIO().emit('order_status_changed', {
                 orderId: order.id,
                 orderNo: order.orderNo,

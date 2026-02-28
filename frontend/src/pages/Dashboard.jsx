@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../context/SocketContext';
 import {
     TrendingUp, Package, ShoppingCart, DollarSign,
     AlertTriangle, ArrowUpRight, ArrowDownRight,
     Clock, Activity, Users, BarChart2, FileText,
-    Zap, Egg
+    Zap, Egg, RefreshCw, Plus, Minus
 } from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL;
@@ -127,23 +128,27 @@ function PieChart({ data = [], size = 160 }) {
 export default function Dashboard() {
     const navigate = useNavigate();
     const { getToken } = useAuth();
+    const { socket } = useSocket();
     const [stats, setStats] = useState(null);
     const [recentOrders, setRecentOrders] = useState([]);
     const [topSelling, setTopSelling] = useState([]);
     const [chartData, setChartData] = useState([]);
     const [chartDays, setChartDays] = useState(7);
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const [settings, setSettings] = useState({});
 
     const authHeaders = () => ({ Authorization: `Bearer ${getToken()}` });
 
-    async function loadChart(days) {
+    const loadChart = useCallback(async (days) => {
         const res = await fetch(`${API}/dashboard/sales-chart?days=${days}`, { headers: authHeaders() });
         if (res.ok) setChartData(await res.json());
-    }
+    }, []);
 
-    async function fetchDashboardData() {
-        setLoading(true);
+    const fetchDashboardData = useCallback(async (showLoading = true) => {
+        if (showLoading) setLoading(true);
+        else setRefreshing(true);
+
         try {
             const [statsRes, ordersRes, topRes, settingsRes] = await Promise.all([
                 fetch(`${API}/dashboard/stats`, { headers: authHeaders() }),
@@ -155,16 +160,40 @@ export default function Dashboard() {
             if (ordersRes.ok) setRecentOrders(await ordersRes.json());
             if (topRes.ok) setTopSelling(await topRes.json());
             if (settingsRes.ok) setSettings(await settingsRes.json());
-            await loadChart(7);
+            await loadChart(chartDays);
         } catch (e) {
             console.error(e);
         } finally {
             setLoading(false);
+            setRefreshing(false);
         }
-    }
+    }, [chartDays, loadChart]);
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    useEffect(() => { fetchDashboardData(); }, []);
+    useEffect(() => {
+        fetchDashboardData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    // Socket Integration for Real-time Refresh
+    useEffect(() => {
+        if (!socket) return;
+
+        const handleUpdate = () => {
+            fetchDashboardData(false); // Refresh silently
+        };
+
+        socket.on('new_order', handleUpdate);
+        socket.on('order_status_changed', handleUpdate);
+        socket.on('low_stock_alert', handleUpdate);
+        socket.on('sales_target_reached', handleUpdate);
+
+        return () => {
+            socket.off('new_order', handleUpdate);
+            socket.off('order_status_changed', handleUpdate);
+            socket.off('low_stock_alert', handleUpdate);
+            socket.off('sales_target_reached', handleUpdate);
+        };
+    }, [socket, fetchDashboardData]);
 
     async function handleChangeDays(d) {
         setChartDays(d);
@@ -193,12 +222,12 @@ export default function Dashboard() {
             progress: progressPercent
         },
         {
-            title: 'กำไรวันนี้',
-            value: stats?.todayProfit || 0,
+            title: 'กำไรสุทธิเดือนนี้',
+            value: stats?.monthNetProfit || 0,
             format: 'currency',
             icon: TrendingUp,
             color: 'blue',
-            sub: `ยอดขายเดือนนี้ ${formatCurrency(stats?.monthSales, settings.currency_symbol)}`
+            sub: `รายได้เดือนนี้ ${formatCurrency(stats?.monthSales, settings.currency_symbol)}`
         },
         {
             title: 'งูในสต็อก',
@@ -218,13 +247,21 @@ export default function Dashboard() {
             suffix: ' รายการ',
             sub: stats?.lowStock > 0 ? '⚠️ ควรเติมเร็วๆ นี้' : '✅ ปกติ'
         },
+        {
+            title: 'รายจ่ายเดือนนี้',
+            value: stats?.monthExpenses || 0,
+            format: 'currency',
+            icon: DollarSign,
+            color: 'red',
+            sub: `รวมรายจ่ายในเดือน ${new Date().toLocaleDateString('th-TH', { month: 'long' })}`
+        },
     ];
 
     if (loading) {
         return (
             <div className="page" style={{ paddingTop: '2rem' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(200px, 100%),1fr))', gap: '1rem', marginBottom: '1rem' }}>
-                    {[1, 2, 3, 4].map(i => <div key={i} className="card" style={{ height: 100, background: 'rgba(255,255,255,0.03)' }} />)}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(240px, 100%),1fr))', gap: '1rem', marginBottom: '1rem' }}>
+                    {[1, 2, 3, 4, 5].map(i => <div key={i} className="card" style={{ height: 100, background: 'rgba(255,255,255,0.03)' }} />)}
                 </div>
                 <div className="loading-center" style={{ padding: '4rem' }}><div className="spinner" /></div>
             </div>
@@ -233,10 +270,11 @@ export default function Dashboard() {
 
     const gradients = {
         emerald: 'rgba(16,185,129,0.08)', blue: 'rgba(59,130,246,0.08)',
-        violet: 'rgba(139,92,246,0.08)', amber: 'rgba(245,158,11,0.08)'
+        violet: 'rgba(139,92,246,0.08)', amber: 'rgba(245,158,11,0.08)',
+        red: 'rgba(239,68,68,0.08)'
     };
     const iconColors = {
-        emerald: '#10b981', blue: '#3b82f6', violet: '#8b5cf6', amber: '#f59e0b'
+        emerald: '#10b981', blue: '#3b82f6', violet: '#8b5cf6', amber: '#f59e0b', red: '#ef4444'
     };
 
     const maxSold = Math.max(...topSelling.map(s => s.totalSold || 0), 1);
@@ -244,22 +282,52 @@ export default function Dashboard() {
     return (
         <div className="page" style={{ paddingBottom: '3rem' }}>
 
-            {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-                <div>
-                    <h1 style={{ color: '#f8fafc', fontSize: '1.5rem', fontWeight: 700, margin: 0 }}>แดชบอร์ด</h1>
-                    <p style={{ color: '#64748b', fontSize: '0.875rem', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
-                        <Activity size={13} style={{ color: '#10b981' }} />
-                        {new Date().toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-                    </p>
+            {/* Header & Quick Actions */}
+            <div style={{
+                background: 'linear-gradient(135deg, rgba(16,185,129,0.1) 0%, rgba(59,130,246,0.1) 100%)',
+                borderRadius: '1.5rem',
+                padding: '1.5rem',
+                marginBottom: '1.5rem',
+                border: '1px solid rgba(255,255,255,0.05)',
+                position: 'relative',
+                overflow: 'hidden'
+            }}>
+                <div style={{ position: 'absolute', top: '-10%', right: '-5%', opacity: 0.1 }}>
+                    <Activity size={200} />
                 </div>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button className="btn btn-outline btn-sm" onClick={() => navigate('/inventory')} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <Package size={14} /> ดูสต็อก
-                    </button>
-                    <button className="btn btn-primary btn-sm" onClick={() => navigate('/reports')} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <FileText size={14} /> ออกรายงาน
-                    </button>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1.5rem', position: 'relative', zIndex: 1 }}>
+                    <div style={{ minWidth: '240px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+                            <h1 style={{ color: '#f8fafc', fontSize: '1.75rem', fontWeight: 800, margin: 0 }}>สวัสดี, คุณ{getToken() ? 'แอดมิน' : 'พนักงาน'} 👋</h1>
+                        </div>
+                        <p style={{ color: '#94a3b8', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
+                            <Clock size={14} className="text-emerald-500" />
+                            {new Date().toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                            <span style={{ color: '#475569' }}>•</span>
+                            <span>เริ่มรอบขาย {settings.reset_time || '00:00'}</span>
+                        </p>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                        <button onClick={() => navigate('/pos')} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.75rem 1.25rem', borderRadius: '12px', boxShadow: '0 4px 12px rgba(16,185,129,0.2)' }}>
+                            <ShoppingCart size={18} /> เปิดการขาย (POS)
+                        </button>
+                        <button onClick={() => navigate('/inventory')} className="btn btn-emerald" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.75rem 1.25rem', borderRadius: '12px', background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)', color: '#10b981' }}>
+                            <Plus size={18} /> เพิ่มงูใหม่
+                        </button>
+                        <button onClick={() => navigate('/expenses')} className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.75rem 1.25rem', borderRadius: '12px', color: '#f8fafc' }}>
+                            <Minus size={18} /> บันทึกรายจ่าย
+                        </button>
+                        <button
+                            onClick={() => fetchDashboardData(false)}
+                            className={`btn btn-icon ${refreshing ? 'loading' : ''}`}
+                            style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                            title="รีเฟรชข้อมูล"
+                        >
+                            <RefreshCw size={20} style={{ color: '#94a3b8' }} className={refreshing ? 'animate-spin' : ''} />
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -271,7 +339,7 @@ export default function Dashboard() {
             }}>
                 <style>{`
                     .stats-grid { 
-                        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
+                        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); 
                     }
                     
                     .dashboard-grid { grid-template-columns: 2fr 1fr; }
@@ -378,6 +446,7 @@ export default function Dashboard() {
                                         <thead>
                                             <tr>
                                                 <th>ออเดอร์</th>
+                                                <th>ลูกค้า</th>
                                                 <th>งู</th>
                                                 <th>ยอดรวม</th>
                                                 <th>สถานะ</th>
@@ -387,6 +456,9 @@ export default function Dashboard() {
                                             {recentOrders.slice(0, 5).map(o => (
                                                 <tr key={o.id} onClick={() => navigate(`/orders/${o.id}`)} style={{ cursor: 'pointer' }}>
                                                     <td style={{ fontWeight: 600, color: '#10b981', fontSize: '0.8rem' }}>#{o.orderNo?.slice(-6) || o.id.slice(0, 6)}</td>
+                                                    <td style={{ fontSize: '0.8rem', color: '#f8fafc' }}>
+                                                        {o.customer?.name || (o.customerId ? 'ลูกค้าทั่วไป' : 'วอล์คอิน')}
+                                                    </td>
                                                     <td style={{ maxWidth: '200px' }}>
                                                         <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '0.75rem' }}>
                                                             {o.items?.map(i => i.snake?.name).join(', ') || '-'}
@@ -428,6 +500,27 @@ export default function Dashboard() {
                             </p>
                         </div>
                     </div>
+
+                    {stats?.lowStock > 0 && (
+                        <div className="card" style={{ padding: '1.25rem', border: '1px solid rgba(245,158,11,0.2)' }}>
+                            <h2 style={{ color: '#f8fafc', fontWeight: 600, fontSize: '0.95rem', margin: '0 0 0.875rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                <AlertTriangle size={16} style={{ color: '#f59e0b' }} /> รายการสินค้าใกล้หมด
+                            </h2>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                                {stats?.lowStockList?.map(s => (
+                                    <div key={s.id} onClick={() => navigate(`/snakes/${s.id}`)} style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0.75rem', borderRadius: '6px', background: 'rgba(245,158,11,0.05)', border: '1px solid rgba(245,158,11,0.1)' }}>
+                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                            <div style={{ fontSize: '0.8rem', color: '#f8fafc', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</div>
+                                        </div>
+                                        <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#f59e0b', background: 'rgba(245,158,11,0.1)', padding: '2px 8px', borderRadius: '10px' }}>
+                                            เหลือ {s.stock}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                            <button onClick={() => navigate('/inventory')} className="btn btn-outline btn-xs" style={{ width: '100%', marginTop: '0.75rem', fontSize: '0.7rem' }}>จัดการสต็อก</button>
+                        </div>
+                    )}
 
                     <div className="card" style={{ padding: '1.25rem' }}>
                         <h2 style={{ color: '#f8fafc', fontWeight: 600, fontSize: '0.95rem', margin: '0 0 0.875rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>

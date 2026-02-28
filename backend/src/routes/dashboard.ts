@@ -169,8 +169,8 @@ router.get('/stats', authenticate, requireAdmin, async (req: Request, res: Respo
 
         const geneticsDistMap = (geneticsRaw || []).map((g: any) => ({
             name: g.genetics || 'Normal',
-            count: g._count.id
-        })).sort((a: any, b: any) => b.count - a.count).slice(0, 6);
+            value: g._count.id
+        })).sort((a: any, b: any) => b.value - a.value).slice(0, 6);
 
         // Month Financials
         const monthRevenue = monthOrders.reduce((s, o) => s + o.total, 0);
@@ -200,7 +200,12 @@ router.get('/stats', authenticate, requireAdmin, async (req: Request, res: Respo
             breedingSummary,
             dailyTasks,
             geneticStats: geneticsDistMap,
-            overdueFeeding
+            overdueFeeding,
+            lowStockList: await prisma.snake.findMany({
+                where: { stock: { lt: 3, gt: 0 } },
+                select: { id: true, name: true, stock: true },
+                take: 5
+            })
         });
     } catch (error) {
         console.error(error);
