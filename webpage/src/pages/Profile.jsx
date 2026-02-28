@@ -153,7 +153,7 @@ const Profile = () => {
                                                 </div>
                                                 <div>
                                                     <div className="text-stone-200 font-bold text-md flex flex-wrap items-center gap-2">
-                                                        #{order.orderNo}
+                                                        #{order.orderNo?.slice(-8) || order.id}
                                                         {(() => {
                                                             const config = getStatusConfig(order.status);
                                                             const StatusIcon = config.icon;

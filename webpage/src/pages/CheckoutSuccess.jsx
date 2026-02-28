@@ -161,7 +161,7 @@ const CheckoutSuccess = () => {
                         <Receipt className="text-sky-500" size={20} />
                         <div>
                             <span className="block text-[8px] font-bold tracking-[0.15em] uppercase text-stone-500">Order Reference</span>
-                            <span className="font-mono text-lg text-sky-400 font-bold">#{orderNo}</span>
+                            <span className="font-mono text-lg text-sky-400 font-bold">#{orderNo?.slice(-8) || orderId}</span>
                         </div>
                     </div>
                     {total !== undefined && (
