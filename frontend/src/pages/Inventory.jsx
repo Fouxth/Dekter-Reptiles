@@ -182,9 +182,9 @@ export default function Inventory() {
                 },
                 body: JSON.stringify({
                     ...formData,
-                    price: parseFloat(formData.price),
-                    cost: formData.cost ? parseFloat(formData.cost) : undefined,
-                    stock: parseInt(formData.stock),
+                    price: formData.price !== '' ? parseFloat(formData.price) : undefined,
+                    cost: formData.cost !== '' ? parseFloat(formData.cost) : undefined,
+                    stock: formData.stock !== '' ? parseInt(formData.stock) : 0,
                     categoryId: parseInt(formData.categoryId),
                     code: formData.code || undefined,
                 })
@@ -601,58 +601,11 @@ export default function Inventory() {
                                     <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">ชื่อสินค้า *</label>
                                     <input
                                         type="text"
-                                        value={formData.name}
+                                        value={formData.name || ''}
                                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                         className="input-field"
                                         placeholder="ระบุชื่อสินค้า (เช่น Corn Snake - Snow)"
                                         required
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">รหัส (Code)</label>
-                                    <input
-                                        type="text"
-                                        value={formData.code}
-                                        onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                                        className="input-field"
-                                        placeholder="เช่น MDT0001, FS0001"
-                                    />
-                                </div>
-
-                                {isSnakeCategory && (
-                                    <>
-                                        <div>
-                                            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">สายพันธุ์ (Species)</label>
-                                            <input
-                                                type="text"
-                                                value={formData.species}
-                                                onChange={(e) => setFormData({ ...formData, species: e.target.value })}
-                                                className="input-field"
-                                                placeholder="เช่น Ball Python, Hognose"
-                                            />
-                                        </div>
-
-                                        <div className="col-span-1 sm:col-span-2">
-                                            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Morph</label>
-                                            <input
-                                                type="text"
-                                                value={formData.morph}
-                                                onChange={(e) => setFormData({ ...formData, morph: e.target.value })}
-                                                className="input-field"
-                                                placeholder="เช่น Pastel Pied, Spider Cinnamon Pastel Clown"
-                                            />
-                                        </div>
-                                    </>
-                                )}
-
-                                <div className="col-span-1 sm:col-span-2">
-                                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">รายละเอียด</label>
-                                    <textarea
-                                        value={formData.description}
-                                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                        className="input-field h-20 sm:h-24 resize-none"
-                                        placeholder="รายละเอียดเพิ่มเติมของสินค้า..."
                                     />
                                 </div>
 
@@ -662,7 +615,7 @@ export default function Inventory() {
                                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">฿</span>
                                         <input
                                             type="number"
-                                            value={formData.price}
+                                            value={formData.price || ''}
                                             onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                                             className="input-field"
                                             style={{ paddingLeft: '44px' }}
@@ -677,7 +630,7 @@ export default function Inventory() {
                                     <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">จำนวนสต็อก *</label>
                                     <input
                                         type="number"
-                                        value={formData.stock}
+                                        value={formData.stock || ''}
                                         onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
                                         className="input-field"
                                         min="0"
@@ -688,7 +641,7 @@ export default function Inventory() {
                                 <div>
                                     <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">หมวดหมู่ *</label>
                                     <select
-                                        value={formData.categoryId}
+                                        value={formData.categoryId || ''}
                                         onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
                                         className="input-field appearance-none"
                                         required
@@ -700,33 +653,16 @@ export default function Inventory() {
                                     </select>
                                 </div>
 
-                                {isSnakeCategory && (
-                                    <div>
-                                        <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">เพศ</label>
-                                        <div className="flex gap-2">
-                                            <button
-                                                type="button"
-                                                onClick={() => setFormData({ ...formData, gender: 'male' })}
-                                                className={`flex-1 py-2.5 rounded-xl text-sm font-medium border transition-all ${formData.gender === 'male'
-                                                    ? 'bg-blue-500/20 border-blue-500/50 text-blue-400'
-                                                    : 'bg-slate-800 border-white/5 text-slate-400 hover:bg-slate-700'
-                                                    }`}
-                                            >
-                                                ตัวผู้ ♂
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => setFormData({ ...formData, gender: 'female' })}
-                                                className={`flex-1 py-2.5 rounded-xl text-sm font-medium border transition-all ${formData.gender === 'female'
-                                                    ? 'bg-pink-500/20 border-pink-500/50 text-pink-400'
-                                                    : 'bg-slate-800 border-white/5 text-slate-400 hover:bg-slate-700'
-                                                    }`}
-                                            >
-                                                ตัวเมีย ♀
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
+                                <div>
+                                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">รหัส (Code)</label>
+                                    <input
+                                        type="text"
+                                        value={formData.code || ''}
+                                        onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                                        className="input-field"
+                                        placeholder="เช่น MDT0001"
+                                    />
+                                </div>
 
                                 <div>
                                     <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">ราคาทุน (บาท)</label>
@@ -734,7 +670,7 @@ export default function Inventory() {
                                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">฿</span>
                                         <input
                                             type="number"
-                                            value={formData.cost}
+                                            value={formData.cost || ''}
                                             onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
                                             className="input-field"
                                             style={{ paddingLeft: '44px' }}
@@ -747,38 +683,110 @@ export default function Inventory() {
                                 {isSnakeCategory && (
                                     <>
                                         <div>
+                                            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">สายพันธุ์ (Species)</label>
+                                            <input
+                                                type="text"
+                                                value={formData.species || ''}
+                                                onChange={(e) => setFormData({ ...formData, species: e.target.value })}
+                                                className="input-field"
+                                                placeholder="เช่น Ball Python, Hognose"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Morph</label>
+                                            <input
+                                                type="text"
+                                                value={formData.morph || ''}
+                                                onChange={(e) => setFormData({ ...formData, morph: e.target.value })}
+                                                className="input-field"
+                                                placeholder="เช่น Pastel Pied"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">เพศ</label>
+                                            <div className="flex gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setFormData({ ...formData, gender: 'male' })}
+                                                    className={`flex-1 py-1.5 rounded-lg text-sm font-medium border transition-all ${formData.gender === 'male'
+                                                        ? 'bg-blue-500/20 border-blue-500/50 text-blue-400'
+                                                        : 'bg-slate-800 border-white/5 text-slate-400'
+                                                        }`}
+                                                >
+                                                    ผู้
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setFormData({ ...formData, gender: 'female' })}
+                                                    className={`flex-1 py-1.5 rounded-lg text-sm font-medium border transition-all ${formData.gender === 'female'
+                                                        ? 'bg-pink-500/20 border-pink-500/50 text-pink-400'
+                                                        : 'bg-slate-800 border-white/5 text-slate-400'
+                                                        }`}
+                                                >
+                                                    เมีย
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">ปีเกิด (Year)</label>
+                                            <input
+                                                type="text"
+                                                value={formData.year || ''}
+                                                onChange={(e) => setFormData({ ...formData, year: e.target.value })}
+                                                className="input-field"
+                                                placeholder="เช่น 25, 26"
+                                            />
+                                        </div>
+
+                                        <div>
                                             <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">วันเกิด</label>
                                             <input
                                                 type="date"
-                                                value={formData.dateOfBirth}
+                                                value={formData.dateOfBirth || ''}
                                                 onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
                                                 className="input-field"
                                             />
                                         </div>
 
                                         <div>
-                                            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">สี / ลวดลาย</label>
-                                            <input
-                                                type="text"
-                                                value={formData.color}
-                                                onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                                                className="input-field"
-                                                placeholder="เช่น เหลืองทอง, Albino"
-                                            />
+                                            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">ขนาดอาหาร (Feed Size)</label>
+                                            <select
+                                                value={formData.feedSize || ''}
+                                                onChange={(e) => setFormData({ ...formData, feedSize: e.target.value })}
+                                                className="input-field appearance-none"
+                                            >
+                                                <option value="">ไม่ระบุ</option>
+                                                {feedSizes.map(size => (
+                                                    <option key={size} value={size}>{size}</option>
+                                                ))}
+                                            </select>
                                         </div>
 
-                                        <div>
+                                        <div className="col-span-1 sm:col-span-2">
                                             <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Genetics</label>
                                             <input
                                                 type="text"
-                                                value={formData.genetics}
+                                                value={formData.genetics || ''}
                                                 onChange={(e) => setFormData({ ...formData, genetics: e.target.value })}
                                                 className="input-field"
-                                                placeholder="เช่น het Albino, Spider Ball Python"
+                                                placeholder="พันธุกรรม..."
                                             />
                                         </div>
                                     </>
                                 )}
+
+                                <div className="col-span-1 sm:col-span-2">
+                                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">รายละเอียด</label>
+                                    <textarea
+                                        value={formData.description || ''}
+                                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                        className="input-field h-20 resize-none"
+                                        placeholder="รายละเอียดเพิ่มเติมของสินค้า..."
+                                    />
+                                </div>
 
                                 <div className="col-span-1 sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <ImageUpload
@@ -795,41 +803,12 @@ export default function Inventory() {
                                     />
                                 </div>
 
-                                {isSnakeCategory && (
-                                    <>
-                                        <div>
-                                            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">ปีเกิด (Year)</label>
-                                            <input
-                                                type="text"
-                                                value={formData.year}
-                                                onChange={(e) => setFormData({ ...formData, year: e.target.value })}
-                                                className="input-field"
-                                                placeholder="เช่น 25, 26"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">ขนาดอาหาร (Feed Size)</label>
-                                            <select
-                                                value={formData.feedSize}
-                                                onChange={(e) => setFormData({ ...formData, feedSize: e.target.value })}
-                                                className="input-field appearance-none"
-                                            >
-                                                <option value="">ไม่ระบุ</option>
-                                                {feedSizes.map(size => (
-                                                    <option key={size} value={size}>{size}</option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                    </>
-                                )}
-
                                 <div className="col-span-1 sm:col-span-2">
                                     <label className="flex items-center gap-3 cursor-pointer py-2">
                                         <div className="relative">
                                             <input
                                                 type="checkbox"
-                                                checked={formData.forSale}
+                                                checked={formData.forSale || false}
                                                 onChange={(e) => setFormData({ ...formData, forSale: e.target.checked })}
                                                 className="sr-only peer"
                                             />
@@ -841,7 +820,7 @@ export default function Inventory() {
                                 </div>
                             </div>
 
-                            <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4 mt-2 border-t border-white/5">
+                            <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4 border-t border-white/5">
                                 <button
                                     type="button"
                                     onClick={() => setShowModal(false)}
@@ -849,7 +828,7 @@ export default function Inventory() {
                                 >
                                     ยกเลิก
                                 </button>
-                                <button type="submit" className="btn-primary flex-1 flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 py-3">
+                                <button type="submit" className="btn-primary flex-1 flex items-center justify-center gap-2 py-3">
                                     <Save size={18} />
                                     บันทึกข้อมูล
                                 </button>
@@ -858,7 +837,8 @@ export default function Inventory() {
                     </div>
                 </div>,
                 document.body
-            )}
+            )
+            }
 
             {/* Bulk Add Modal */}
             {
@@ -996,37 +976,40 @@ export default function Inventory() {
                         </div>
                     </div>,
                     document.body
-                )}
+                )
+            }
 
             {/* Custom Delete Confirmation Modal */}
-            {itemToDelete && createPortal(
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in p-4">
-                    <div className="glass-card w-full max-w-sm overflow-hidden shadow-2xl border border-white/10 scale-100 animate-slide-in p-6 text-center relative">
-                        <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4 relative">
-                            <div className="absolute inset-0 rounded-full border-2 border-red-500/20 animate-ping"></div>
-                            <Trash2 size={28} className="text-red-400" />
-                        </div>
-                        <h3 className="text-xl font-bold text-white mb-2">ยืนยันการลบสินค้า</h3>
-                        <p className="text-slate-400 text-sm mb-6">คุณต้องการลบ "<span className="text-white font-medium">{itemToDelete.name}</span>" ใช่หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้</p>
+            {
+                itemToDelete && createPortal(
+                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in p-4">
+                        <div className="glass-card w-full max-w-sm overflow-hidden shadow-2xl border border-white/10 scale-100 animate-slide-in p-6 text-center relative">
+                            <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4 relative">
+                                <div className="absolute inset-0 rounded-full border-2 border-red-500/20 animate-ping"></div>
+                                <Trash2 size={28} className="text-red-400" />
+                            </div>
+                            <h3 className="text-xl font-bold text-white mb-2">ยืนยันการลบสินค้า</h3>
+                            <p className="text-slate-400 text-sm mb-6">คุณต้องการลบ "<span className="text-white font-medium">{itemToDelete.name}</span>" ใช่หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้</p>
 
-                        <div className="flex gap-3 mt-6">
-                            <button
-                                onClick={() => setItemToDelete(null)}
-                                className="flex-1 py-2.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 font-medium transition-colors"
-                            >
-                                ยกเลิก
-                            </button>
-                            <button
-                                onClick={confirmDelete}
-                                className="flex-1 py-2.5 rounded-lg bg-red-500 hover:bg-red-400 text-white font-medium shadow-lg shadow-red-500/20 transition-all flex items-center justify-center gap-2"
-                            >
-                                <Trash2 size={16} /> ลบทันที
-                            </button>
+                            <div className="flex gap-3 mt-6">
+                                <button
+                                    onClick={() => setItemToDelete(null)}
+                                    className="flex-1 py-2.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 font-medium transition-colors"
+                                >
+                                    ยกเลิก
+                                </button>
+                                <button
+                                    onClick={confirmDelete}
+                                    className="flex-1 py-2.5 rounded-lg bg-red-500 hover:bg-red-400 text-white font-medium shadow-lg shadow-red-500/20 transition-all flex items-center justify-center gap-2"
+                                >
+                                    <Trash2 size={16} /> ลบทันที
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                </div>,
-                document.body
-            )}
-        </div>
+                    </div>,
+                    document.body
+                )
+            }
+        </div >
     );
 }
