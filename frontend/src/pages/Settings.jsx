@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import {
     Save, Building, Phone, Monitor, CreditCard, Bell, Database,
     CheckCircle2, AlertCircle, Clock, Banknote, ArrowLeftRight,
-    MessageSquare, Store, Settings as SettingsIcon, Youtube, ChevronDown, Package, User, History
+    MessageSquare, Store, Settings as SettingsIcon, Youtube, ChevronDown, Package, User, History, Trash2
 } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '../context/AuthContext';

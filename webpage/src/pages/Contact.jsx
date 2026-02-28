@@ -140,7 +140,7 @@ const Contact = () => {
                                     {contactInfo.facebook && (
                                         <p className="text-stone-400 text-sm font-light">
                                             Facebook: <a
-                                                href={contactInfo.facebook.startsWith('http') ? contactInfo.facebook : `https://facebook.com/${contactInfo.facebook}`}
+                                                href={contactInfo.facebook.startsWith('http') ? contactInfo.facebook : `https://facebook.com/${contactInfo.facebook.replace(/^@/, '')}`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="text-blue-400 font-bold hover:underline"

@@ -19,11 +19,18 @@ const Footer = () => {
                     return data[key] ? data[key] : fallback;
                 };
 
-                let fbUrl = getText('contact_facebook', '#');
+                let fbVal = getText('contact_facebook', '');
+                let fbUrl = fbVal;
                 let fbText = 'Dexter Reptiles';
 
-                if (fbUrl && fbUrl !== '#') {
-                    fbText = fbUrl.replace(/https?:\/\/(www\.)?facebook\.com\//, '').split('/')[0].split('?')[0] || 'Facebook Page';
+                if (fbVal && fbVal !== '' && fbVal !== '#') {
+                    // Prepend domain if it's just a username/ID
+                    if (!fbVal.startsWith('http')) {
+                        fbUrl = `https://www.facebook.com/${fbVal.replace(/^@/, '')}`;
+                    }
+                    fbText = fbVal.replace(/https?:\/\/(www\.)?facebook\.com\//, '').split('/')[0].split('?')[0] || 'Facebook Page';
+                } else {
+                    fbUrl = '#';
                 }
 
                 setSettings({
