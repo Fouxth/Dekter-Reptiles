@@ -140,7 +140,7 @@ const Home = ({ addToCart }) => {
                 <div className="flex justify-between items-end mb-12">
                     <div>
                         <div className="text-sky-500 font-bold tracking-widest uppercase text-sm mb-2">24/7 Reptiles</div>
-                        <h2 className="text-4xl font-light text-stone-100 mb-2">งูแนะนำ<span className="font-bold">คัดพิเศษ</span></h2>
+                        <h2 className="text-4xl font-light text-stone-100 mb-2">Ball Python/<span className="font-bold">งูบอลไพธอน</span></h2>
                         <p className="text-stone-400">คัดสรรเฉพาะตัวที่สวยและโดดเด่นที่สุด</p>
                     </div>
                     <button onClick={() => navigate('/shop')} className="hidden md:flex text-sky-400 font-medium hover:text-sky-300 items-center gap-1 uppercase tracking-wider text-sm transition-colors cursor-pointer group pb-2 border-b border-transparent hover:border-sky-400">
@@ -241,7 +241,7 @@ const Home = ({ addToCart }) => {
                 <div className="relative z-20 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center bg-stone-950/40 backdrop-blur-md p-12 md:p-20 rounded-[3rem] border border-white/10 shadow-2xl">
                     <h2 className="text-4xl md:text-5xl font-light mb-6 text-stone-100">มีข้อสงสัยเกี่ยวกับการ<span className="font-bold">เลี้ยงงู?</span></h2>
                     <p className="text-lg text-stone-400 mb-10 max-w-2xl mx-auto font-light leading-relaxed">
-                        ไม่ว่าคุณจะเป็นมือใหม่หรือผู้เชี่ยวชาญ ทีมงาน Dexter Reptilesพร้อมให้คำปรึกษา แนะนำการเลือกงูที่เหมาะกับไลฟ์สไตล์ของคุณ และวิธีดูแลอย่างถูกต้อง
+                        ไม่ว่าคุณจะเป็นมือใหม่หรือผู้เชี่ยวชาญ ทีมงาน Dexter Reptiles พร้อมให้คำปรึกษา แนะนำการเลือกงูที่เหมาะกับไลฟ์สไตล์ของคุณ และวิธีดูแลอย่างถูกต้อง
                     </p>
                     <div className="flex flex-col sm:flex-row gap-6 justify-center">
                         <button
