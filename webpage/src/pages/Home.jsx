@@ -139,7 +139,7 @@ const Home = ({ addToCart }) => {
             <section className="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
                 <div className="flex justify-between items-end mb-12">
                     <div>
-                        <div className="text-sky-500 font-bold tracking-widest uppercase text-sm mb-2">Ball Python</div>
+                        <div className="text-sky-500 font-bold tracking-widest uppercase text-sm mb-2">24/7 Reptiles</div>
                         <h2 className="text-4xl font-light text-stone-100 mb-2">งูแนะนำ<span className="font-bold">คัดพิเศษ</span></h2>
                         <p className="text-stone-400">คัดสรรเฉพาะตัวที่สวยและโดดเด่นที่สุด</p>
                     </div>
