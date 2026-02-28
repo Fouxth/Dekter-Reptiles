@@ -76,7 +76,6 @@ export default function Settings() {
         tax_id: '', receipt_footer: '', reset_time: '00:00',
         // POS
         receipt_prefix: 'POS', tax_rate: 7, enable_vat: true,
-        max_discount_cashier: 10, max_discount_manager: 30,
         show_cost_price: true, auto_print_receipt: true,
         shipping_fee: 0, free_shipping_min: 1000,
         // Payment
@@ -98,7 +97,7 @@ export default function Settings() {
         notify_low_stock: true, notify_sales_target: true,
         daily_target: 10000, notify_sound: false,
         // Data
-        currency_symbol: '฿',
+        tax_id: '',
         // TikTok
         tiktok_urls: '[]',
         // Social Links
@@ -129,7 +128,7 @@ export default function Settings() {
                     else if (val === 'false') parsed[key] = false;
                     else if (val !== null && val !== '' && !isNaN(Number(val)) && typeof val === 'string' && val.trim() !== '') {
                         // Check if the key is expected to be a number
-                        const numericKeys = ['tax_rate', 'max_discount_cashier', 'max_discount_manager', 'daily_target', 'shipping_fee', 'free_shipping_min'];
+                        const numericKeys = ['tax_rate', 'daily_target', 'shipping_fee', 'free_shipping_min'];
                         parsed[key] = numericKeys.includes(key) ? Number(val) : val;
                     }
                     else parsed[key] = val;
@@ -283,18 +282,6 @@ export default function Settings() {
                                 </div>
                             </Section>
 
-                            <Section title="การให้ส่วนลด">
-                                <div style={{ display: 'grid', gap: '1rem' }} className="form-grid">
-                                    <div className="form-group">
-                                        <label>ส่วนลดสูงสุด (%) สำหรับ Cashier</label>
-                                        <input type="number" value={settings.max_discount_cashier} onChange={e => set('max_discount_cashier', Number(e.target.value))} min={0} max={100} />
-                                    </div>
-                                    <div className="form-group">
-                                        <label>ส่วนลดสูงสุด (%) สำหรับ Manager</label>
-                                        <input type="number" value={settings.max_discount_manager} onChange={e => set('max_discount_manager', Number(e.target.value))} min={0} max={100} />
-                                    </div>
-                                </div>
-                            </Section>
 
                             <Section>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -398,10 +385,6 @@ export default function Settings() {
                     {activeTab === 'data' && (
                         <Section title="จัดการข้อมูล" subtitle="สำรองและรีเซ็ตข้อมูลระบบ">
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                <div className="form-group">
-                                    <label>สัญลักษณ์สกุลเงิน</label>
-                                    <input value={settings.currency_symbol} onChange={e => set('currency_symbol', e.target.value)} style={{ maxWidth: 120 }} />
-                                </div>
                                 <div className="form-group">
                                     <label>เลขที่ผู้เสียภาษี</label>
                                     <input value={settings.tax_id} onChange={e => set('tax_id', e.target.value)} placeholder="1234567890123" />

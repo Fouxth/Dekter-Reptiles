@@ -114,16 +114,30 @@ const TikTokSection = () => {
                                 const videoId = url.split('/video/')[1]?.split('?')[0];
                                 return (
                                     <div key={index} className="group relative">
-                                        <div className="rounded-3xl overflow-hidden glass-card border-white/10 hover:border-sky-500/30 transition-all duration-500 shadow-2xl bg-black">
+                                        {/* Container with overflow: hidden to clip the social sidebar */}
+                                        <div className="rounded-3xl overflow-hidden glass-card border-white/10 hover:border-sky-500/30 transition-all duration-500 shadow-2xl bg-black aspect-[9/16] relative">
                                             {videoId ? (
-                                                <iframe
-                                                    src={`https://www.tiktok.com/embed/v2/${videoId}`}
-                                                    className="w-full aspect-[9/16] border-none"
-                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                                    allowFullScreen
-                                                    title={`TikTok Video ${index}`}
-                                                    loading="lazy"
-                                                ></iframe>
+                                                <div className="absolute inset-0 w-full h-full overflow-hidden">
+                                                    <iframe
+                                                        // rel=0: only show videos from the same author
+                                                        // loop=1: enables looping (best way to hide related videos grid)
+                                                        // autoplay=0: ensure it doesn't start automatically
+                                                        src={`https://www.tiktok.com/embed/v2/${videoId}?rel=0&loop=1&autoplay=0&music_info=0&description=0&controls=1`}
+                                                        className="absolute top-0 left-0 h-full"
+                                                        style={{
+                                                            width: '120%', // Expand width to push social buttons off-screen
+                                                            border: 'none',
+                                                            maxWidth: 'none'
+                                                        }}
+                                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                                        allowFullScreen
+                                                        title={`TikTok Video ${index}`}
+                                                        loading="lazy"
+                                                    ></iframe>
+
+                                                    {/* Optional Overlay to catch clicks or just rely on the clipped iframe */}
+                                                    <div className="absolute inset-y-0 right-0 w-[20%] bg-black pointer-events-none z-10"></div>
+                                                </div>
                                             ) : (
                                                 <div className="aspect-[9/16] flex flex-col items-center justify-center gap-4 p-8 text-center bg-stone-900/50 h-full w-full">
                                                     <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center">
