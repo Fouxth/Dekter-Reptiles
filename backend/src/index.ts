@@ -35,18 +35,31 @@ const PORT = process.env.PORT || 5000;
 const io = initIO(httpServer);
 
 // CORS Configuration
+// 1. ดึงค่าจาก .env ออกมาเป็น Array (ถ้าไม่มีให้เป็น Array ว่าง)
+const envWebUrls = process.env.WEB_URL ? process.env.WEB_URL.split(',') : [];
+
+// 2. รวมค่าทั้งหมดเข้าด้วยกัน
 const allowedOrigins = [
-    'http://localhost:5173', // Admin Dev
-    'http://localhost:5174', // Customer Dev
-    'http://43.229.149.151:5173', // IP Admin Dev
-    'http://43.229.149.151:5174', // IP Customer Dev
-    'http://43.229.149.151', // IP Prod
-    'https://admin-dexter.vercel.app', // Admin Production
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'http://43.229.149.151:5173',
+    'http://43.229.149.151:5174',
+    'http://43.229.149.151',
+    'https://admin-dexter.vercel.app',
     process.env.ADMIN_URL || 'https://admin-dexter.vercel.app',
-    process.env.WEB_URL || 'https://dexterball.com',
-    'https://www.dexterball.com',
-    'https://dekter-reptiles-landingpage.vercel.app'
+    'https://dekter-reptiles-landingpage.vercel.app',
+    ...envWebUrls // ใช้ Spread Operator (...) เพื่อกระจายค่าจาก Array ที่แยกได้
 ];
+
+// ใช้ Set เพื่อกรองตัวซ้ำ (กรณีที่ใน .env กับที่เขียนไว้ตรงกัน)
+const uniqueOrigins = Array.from(new Set(allowedOrigins));
+
+// เรียกใช้ CORS Middleware (ต้องวางก่อน Route ต่างๆ)
+app.use(cors({
+    origin: uniqueOrigins,
+    credentials: true
+}));
+// -----------------------
 
 app.use(cors({
     origin: function (origin, callback) {
