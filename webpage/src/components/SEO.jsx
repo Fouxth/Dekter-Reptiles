@@ -5,7 +5,7 @@ export default function SEO({ title, description, image, url, type = 'website', 
         const siteUrl = import.meta.env.VITE_SITE_URL || window.location.origin;
         const currentUrl = url ? `${siteUrl}${url}` : window.location.href;
         const finalTitle = title ? `${title} | Dexter 24/7` : 'Dexter Reptiles | Dexter ร้านขายงูออนไลน์';
-        const finalDesc = description || 'Dexter ร้านขายงูออนไลน์ นำเข้าและเพาะพันธุ์ Ball Python, Corn Snake, Hognose คุณภาพดี และให้คำปรึกษาการเลี้ยง';
+        const finalDesc = description || 'Dexter ร้านขายงูออนไลน์ เพาะพันธุ์ Ball Python, Corn Snake, Hognose คุณภาพดี และให้คำปรึกษาการเลี้ยง';
         const finalImage = image ? (image.startsWith('http') ? image : `${siteUrl}${image}`) : `${siteUrl}/vite.svg`; // Fallback to vite logo if no OG image
 
         document.title = finalTitle;
