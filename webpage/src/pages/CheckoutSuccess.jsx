@@ -14,7 +14,7 @@ const formatPrice = (price) => {
     return new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', minimumFractionDigits: 0 }).format(price);
 };
 
-const API = import.meta.env.VITE_API_URL || 'http://103.142.150.196:5000/api';
+const API = import.meta.env.VITE_API_URL || 'http://43.229.149.151:5000/api';
 
 const CheckoutSuccess = () => {
     const navigate = useNavigate();

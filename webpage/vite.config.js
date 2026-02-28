@@ -10,11 +10,11 @@ export default defineConfig({
     port: 5174,
     proxy: {
       '/api': {
-        target: 'http://103.142.150.196:5000',
+        target: 'http://43.229.149.151:5000',
         changeOrigin: true,
       },
       '/uploads': {
-        target: 'http://103.142.150.196:5000',
+        target: 'http://43.229.149.151:5000',
         changeOrigin: true,
       },
     },

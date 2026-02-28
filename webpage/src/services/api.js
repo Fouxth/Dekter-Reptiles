@@ -2,7 +2,7 @@ import axios from "axios";
 
 // Create an Axios instance pointing to the existing POS backend
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || "http://103.142.150.196:5000/api",
+    baseURL: import.meta.env.VITE_API_URL || "http://43.229.149.151:5000/api",
     headers: {
         "Content-Type": "application/json",
     },

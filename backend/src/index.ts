@@ -37,9 +37,9 @@ const io = initIO(httpServer);
 const allowedOrigins = [
     'http://localhost:5173', // Admin Dev
     'http://localhost:5174', // Customer Dev
-    'http://103.142.150.196:5173', // IP Admin Dev
-    'http://103.142.150.196:5174', // IP Customer Dev
-    'http://103.142.150.196', // IP Prod
+    'http://43.229.149.151:5173', // IP Admin Dev
+    'http://43.229.149.151:5174', // IP Customer Dev
+    'http://43.229.149.151', // IP Prod
     process.env.ADMIN_URL || 'https://admin-siamreptiles.com',
     process.env.WEB_URL || 'https://siamreptiles.com'
 ];
@@ -50,7 +50,7 @@ app.use(cors({
         if (!origin) return callback(null, true);
         if (allowedOrigins.indexOf(origin) === -1) {
             // Temporary fallback for testing - allow if it contains the IP
-            if (origin.includes('103.142.150.196') || origin.includes('localhost') || origin.includes('127.0.0.1')) {
+            if (origin.includes('43.229.149.151') || origin.includes('localhost') || origin.includes('127.0.0.1')) {
                 return callback(null, true);
             }
             const msg = 'The CORS policy for this site does not allow access from the specified Origin.';

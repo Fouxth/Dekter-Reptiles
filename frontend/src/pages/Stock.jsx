@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
-const API = import.meta.env.VITE_API_URL || 'http://103.142.150.196:5000/api';
+const API = import.meta.env.VITE_API_URL || 'http://43.229.149.151:5000/api';
 
 const capitalize = (str) => {
     if (!str) return str;

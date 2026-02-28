@@ -19,7 +19,7 @@ import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import { toast } from 'react-hot-toast';
 
-const API = import.meta.env.VITE_API_URL || 'http://103.142.150.196:5000/api';
+const API = import.meta.env.VITE_API_URL || 'http://43.229.149.151:5000/api';
 
 // Sound effect for successful checkout (Temporarily disabled to prevent 403 error)
 const successSound = { volume: 0.5, play: async () => { } };

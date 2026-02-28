@@ -7,7 +7,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import BankBadge, { THAI_BANKS } from '../components/BankBadge';
 
-const API = import.meta.env.VITE_API_URL || 'http://103.142.150.196:5000/api';
+const API = import.meta.env.VITE_API_URL || 'http://43.229.149.151:5000/api';
 
 /* ── Toggle Switch Component ───────────────────────────────────── */
 function Toggle({ checked, onChange, disabled }) {

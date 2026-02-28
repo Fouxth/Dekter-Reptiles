@@ -8,7 +8,7 @@ import {
     Zap, Egg
 } from 'lucide-react';
 
-const API = import.meta.env.VITE_API_URL || 'http://103.142.150.196:5000/api';
+const API = import.meta.env.VITE_API_URL || 'http://43.229.149.151:5000/api';
 
 function formatCurrency(n, currencySymbol = '฿') {
     return `${currencySymbol}${new Intl.NumberFormat('th-TH', {
