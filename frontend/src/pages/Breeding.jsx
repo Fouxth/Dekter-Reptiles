@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
 import ConfirmModal from '../components/ConfirmModal';
 
-const API = import.meta.env.VITE_API_URL || 'http://43.229.149.151:5000/api';
+const API = import.meta.env.VITE_API_URL;
 
 function fmtDate(d) {
     if (!d) return '-';

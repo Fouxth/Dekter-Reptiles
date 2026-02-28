@@ -207,7 +207,7 @@ const Profile = () => {
                                         <div className="bg-stone-950/30 rounded-2xl p-4 border border-white/5">
                                             <div className="flex flex-wrap gap-3">
                                                 {order.items.map(item => {
-                                                    const API = import.meta.env.VITE_API_URL || 'http://43.229.149.151:5000/api';
+                                                    const API = import.meta.env.VITE_API_URL;
                                                     const BASE_URL = API.replace('/api', '');
                                                     const imageUrl = item.snake?.customerImage
                                                         ? (item.snake.customerImage.startsWith('http') ? item.snake.customerImage : `${BASE_URL}${item.snake.customerImage}`)

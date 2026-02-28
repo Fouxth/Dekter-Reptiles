@@ -13,7 +13,7 @@ const Profile = () => {
         confirmPassword: ''
     });
 
-    const API_URL = import.meta.env.VITE_API_URL || 'http://43.229.149.151:5000/api';
+    const API_URL = import.meta.env.VITE_API_URL;
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });

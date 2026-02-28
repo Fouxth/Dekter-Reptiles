@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Upload, X, Loader2, Image as ImageIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-const API = import.meta.env.VITE_API_URL || 'http://43.229.149.151:5000/api';
+const API = import.meta.env.VITE_API_URL;
 const BASE_URL = API.replace('/api', '');
 
 export default function ImageUpload({ value, onChange, label, type = 'admin' }) {

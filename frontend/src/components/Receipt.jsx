@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Printer, X, Check } from 'lucide-react';
 
-const API = import.meta.env.VITE_API_URL || 'http://43.229.149.151:5000/api';
+const API = import.meta.env.VITE_API_URL;
 
 function formatCurrency(n, currencySymbol = '฿') {
     return `${currencySymbol}${n?.toLocaleString('th-TH', {

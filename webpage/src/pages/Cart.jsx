@@ -209,7 +209,7 @@ const Cart = ({ cart, setCart, updateQuantity, removeFromCart, cartTotal, cartIt
                     {/* Cart Items */}
                     <div className="lg:col-span-7 space-y-4">
                         {cart.map(item => {
-                            const API = import.meta.env.VITE_API_URL || 'http://43.229.149.151:5000/api';
+                            const API = import.meta.env.VITE_API_URL;
                             const BASE_URL = API.replace('/api', '');
                             const imageUrl = item.customerImage
                                 ? (item.customerImage.startsWith('http') ? item.customerImage : `${BASE_URL}${item.customerImage}`)

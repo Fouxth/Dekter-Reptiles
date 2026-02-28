@@ -40,8 +40,8 @@ const allowedOrigins = [
     'http://43.229.149.151:5173', // IP Admin Dev
     'http://43.229.149.151:5174', // IP Customer Dev
     'http://43.229.149.151', // IP Prod
-    process.env.ADMIN_URL || 'https://admin-siamreptiles.com',
-    process.env.WEB_URL || 'https://siamreptiles.com'
+    process.env.ADMIN_URL || 'https://admin-dexter.vercel.app',
+    process.env.WEB_URL || 'https://dexterball.com'
 ];
 
 app.use(cors({
