@@ -42,7 +42,7 @@ export default function Login() {
                             type="email"
                             value={email}
                             onChange={e => setEmail(e.target.value)}
-                            placeholder="admin@snakestore.com"
+                            placeholder="admin@dexter.com"
                             required
                             autoFocus
                         />
@@ -65,7 +65,7 @@ export default function Login() {
                 </form>
 
                 <p className="login-hint">
-                    Demo: admin@snakestore.com / admin1234
+                    Demo: admin@dexter.com / ติดต่อ Dev4TH
                 </p>
             </div>
         </div>
