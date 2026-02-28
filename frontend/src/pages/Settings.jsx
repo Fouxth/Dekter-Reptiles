@@ -104,6 +104,7 @@ export default function Settings() {
         social_fb: '[]',
         social_ig: '[]',
         social_yt: '[]',
+        google_map_url: '',
     });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -222,6 +223,11 @@ export default function Settings() {
                                     <div className="form-group">
                                         <label>เวลาทำการ</label>
                                         <input value={settings.opening_hours} onChange={e => set('opening_hours', e.target.value)} placeholder="10:00 - 20:00" />
+                                    </div>
+                                    <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                                        <label>ลิงก์ Google Map (Embed)</label>
+                                        <input value={settings.google_map_url} onChange={e => set('google_map_url', e.target.value)} placeholder="https://www.google.com/maps/embed?pb=..." />
+                                        <p style={{ fontSize: '0.7rem', color: '#64748b', marginTop: 4 }}>ใช้ลิงก์จาก Google Maps &gt; Share &gt; Embed a map &gt; คัดลอกค่าใน src="..."</p>
                                     </div>
                                 </div>
                             </Section>

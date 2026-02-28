@@ -10,7 +10,8 @@ const Contact = () => {
         email: 'hello@siamreptiles.com',
         line: '@siamreptiles',
         facebook: '',
-        hours: 'เปิดให้บริการทุกวัน 10:00 - 20:00 น.'
+        hours: 'เปิดให้บริการทุกวัน 10:00 - 20:00 น.',
+        googleMapUrl: ''
     });
 
     useEffect(() => {
@@ -27,7 +28,8 @@ const Contact = () => {
                     email: getSet('contact_email', 'hello@siamreptiles.com'),
                     line: getSet('contact_line', '@siamreptiles'),
                     facebook,
-                    hours: getSet('opening_hours', '10:00 - 20:00')
+                    hours: getSet('opening_hours', '10:00 - 20:00'),
+                    googleMapUrl: getSet('google_map_url', '')
                 });
             } catch (error) {
                 console.error("Failed to fetch contact settings:", error);
@@ -72,17 +74,31 @@ const Contact = () => {
                                         {/* Embedded Google Map */}
                                         <div className="w-full h-64 rounded-xl overflow-hidden border border-white/10 relative group shadow-lg">
                                             <div className="absolute inset-0 bg-sky-500/10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10"></div>
-                                            <iframe
-                                                src="https://maps.google.com/maps?q=DEXTER+Reptiles,+%E0%B8%8B.+%E0%B8%A7%E0%B8%B1%E0%B8%94%E0%B8%AB%E0%B8%99%E0%B8%AD%E0%B8%87%E0%B8%9B%E0%B8%A3%E0%B8%87+Tambon+Bang+Dua,+Amphoe+Mueang+Pathum+Thani,+Pathum+Thani+12000&t=&z=15&ie=UTF8&iwloc=&output=embed"
-                                                width="100%"
-                                                height="100%"
-                                                style={{ border: 0 }}
-                                                allowFullScreen=""
-                                                loading="lazy"
-                                                referrerPolicy="no-referrer-when-downgrade"
-                                                title="Dexter Reptiles Location"
-                                                className="grayscale-[30%] contrast-[1.1] invert-[90%] hue-rotate-180"
-                                            ></iframe>
+                                            {contactInfo.googleMapUrl ? (
+                                                <iframe
+                                                    src={contactInfo.googleMapUrl}
+                                                    width="100%"
+                                                    height="100%"
+                                                    style={{ border: 0 }}
+                                                    allowFullScreen=""
+                                                    loading="lazy"
+                                                    referrerPolicy="no-referrer-when-downgrade"
+                                                    title="Dexter Reptiles Location"
+                                                    className="grayscale-[30%] contrast-[1.1] invert-[90%] hue-rotate-180"
+                                                ></iframe>
+                                            ) : (
+                                                <iframe
+                                                    src="https://maps.google.com/maps?q=DEXTER+Reptiles,+%E0%B8%8B.+%E0%B8%A7%E0%B8%B1%E0%B8%94%E0%B8%AB%E0%B8%99%E0%B8%AD%E0%B8%87%E0%B8%9B%E0%B8%A3%E0%B8%87+Tambon+Bang+Dua,+Amphoe+Mueang+Pathum+Thani,+Pathum+Thani+12000&t=&z=15&ie=UTF8&iwloc=&output=embed"
+                                                    width="100%"
+                                                    height="100%"
+                                                    style={{ border: 0 }}
+                                                    allowFullScreen=""
+                                                    loading="lazy"
+                                                    referrerPolicy="no-referrer-when-downgrade"
+                                                    title="Dexter Reptiles Location (Default)"
+                                                    className="grayscale-[30%] contrast-[1.1] invert-[90%] hue-rotate-180"
+                                                ></iframe>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
