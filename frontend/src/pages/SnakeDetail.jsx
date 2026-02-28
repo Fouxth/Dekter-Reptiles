@@ -43,6 +43,7 @@ export default function SnakeDetail() {
     const [healthForm, setHealthForm] = useState({ recordDate: localDate, weight: '', length: '', fed: false, feedItem: '', shed: false, note: '' });
     const [saving, setSaving] = useState(false);
     const [itemToDelete, setItemToDelete] = useState(null);
+    const [feedSizes, setFeedSizes] = useState(["Pinky", "Fuzzy", "Hopper", "S", "M", "L", "XL", "RXL"]);
 
     const headers = () => ({ 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` });
 
@@ -58,6 +59,18 @@ export default function SnakeDetail() {
         if (healthRes.ok) setHealthRecords(await healthRes.json());
         if (breedingRes.ok) setBreedingRecords(await breedingRes.json());
         if (stockRes.ok) setStockLogs(await stockRes.json());
+
+        // Fetch settings for feed sizes
+        const settingsRes = await fetch(`${API}/settings`, { headers: headers() });
+        if (settingsRes.ok) {
+            const settings = await settingsRes.json();
+            if (settings.feed_sizes) {
+                try {
+                    const parsed = JSON.parse(settings.feed_sizes);
+                    if (Array.isArray(parsed)) setFeedSizes(parsed);
+                } catch (e) { console.error('Error parsing feed_sizes:', e); }
+            }
+        }
         setLoading(false);
     }
 
@@ -178,7 +191,15 @@ export default function SnakeDetail() {
                                     <div className="form-group"><label>วันที่</label><input type="date" value={healthForm.recordDate} onChange={e => setHealthForm({ ...healthForm, recordDate: e.target.value })} /></div>
                                     <div className="form-group"><label>น้ำหนัก (กรัม)</label><input type="number" step="0.1" value={healthForm.weight} onChange={e => setHealthForm({ ...healthForm, weight: e.target.value })} placeholder="เช่น 320.5" /></div>
                                     <div className="form-group"><label>ความยาว (ซม.)</label><input type="number" step="0.1" value={healthForm.length} onChange={e => setHealthForm({ ...healthForm, length: e.target.value })} placeholder="เช่น 85" /></div>
-                                    <div className="form-group"><label>อาหารที่ให้</label><input value={healthForm.feedItem} onChange={e => setHealthForm({ ...healthForm, feedItem: e.target.value })} placeholder="เช่น หนูแรกเกิด" /></div>
+                                    <div className="form-group">
+                                        <label>อาหารที่ให้</label>
+                                        <select value={healthForm.feedItem} onChange={e => setHealthForm({ ...healthForm, feedItem: e.target.value })}>
+                                            <option value="">ไม่ระบุ</option>
+                                            {feedSizes.map(size => (
+                                                <option key={size} value={size}>{size}</option>
+                                            ))}
+                                        </select>
+                                    </div>
                                 </div>
                                 <div style={{ display: 'flex', gap: '1.5rem', margin: '0.5rem 0 0.75rem' }}>
                                     <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', color: '#94a3b8', fontSize: '0.875rem' }}>

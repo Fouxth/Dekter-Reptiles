@@ -61,6 +61,7 @@ export default function Inventory() {
         feedSize: '',
         forSale: false
     });
+    const [feedSizes, setFeedSizes] = useState(["Pinky(แรกเกิด)", "หนูแช่แข็ง", "Fuzzy", "Hopper", "S", "M", "L", "XL", "RXL"]);
 
     useEffect(() => {
         fetchData();
@@ -79,6 +80,22 @@ export default function Inventory() {
             if (snakesRes.ok && categoriesRes.ok) {
                 setSnakes(await snakesRes.json());
                 setCategories(await categoriesRes.json());
+            }
+
+            // Fetch settings for feed sizes
+            const settingsRes = await fetch(`${API}/settings`, {
+                headers: { Authorization: `Bearer ${getToken()}` }
+            });
+            if (settingsRes.ok) {
+                const settings = await settingsRes.json();
+                if (settings.feed_sizes) {
+                    try {
+                        const parsed = JSON.parse(settings.feed_sizes);
+                        if (Array.isArray(parsed)) setFeedSizes(parsed);
+                    } catch (e) {
+                        console.error('Error parsing feed_sizes:', e);
+                    }
+                }
             }
         } catch (error) {
             console.error('Failed to fetch data:', error);
@@ -799,14 +816,9 @@ export default function Inventory() {
                                                 className="input-field appearance-none"
                                             >
                                                 <option value="">ไม่ระบุ</option>
-                                                <option value="Pinky">Pinky (แรกเกิด)</option>
-                                                <option value="Fuzzy">Fuzzy</option>
-                                                <option value="Hopper">Hopper</option>
-                                                <option value="S">S</option>
-                                                <option value="M">M</option>
-                                                <option value="L">L</option>
-                                                <option value="XL">XL</option>
-                                                <option value="RXL">RXL</option>
+                                                {feedSizes.map(size => (
+                                                    <option key={size} value={size}>{size}</option>
+                                                ))}
                                             </select>
                                         </div>
                                     </>

@@ -174,6 +174,7 @@ export default function Settings() {
         social_ig: '[]',
         social_yt: '[]',
         google_map_url: '',
+        feed_sizes: '["Pinky", "Fuzzy", "Hopper", "S", "M", "L", "XL", "RXL"]',
     });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -360,6 +361,72 @@ export default function Settings() {
                                         <input type="time" value={settings.reset_time} onChange={e => set('reset_time', e.target.value)} className="input-field pl-icon" />
                                     </div>
                                     <p style={{ fontSize: '0.7rem', color: '#64748b', marginTop: 4 }}>ระบบจะเริ่มวันขายใหม่ ณ เวลานี้ เหมาะสำหรับร้านเปิดข้ามวัน</p>
+                                </div>
+                            </Section>
+
+                            <Section title="จัดการชนิดอาหาร (Feed Sizes)" subtitle="ตั้งค่ารายการอาหารสำหรับงู">
+                                <div className="space-y-4">
+                                    <div className="p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-xl mb-4">
+                                        <p className="text-xs text-slate-400">รายการเหล่านี้จะไปปรากฏในช่อง "ขนาดอาหาร" ในหน้าสินค้าและบันทึกสุขภาพครับ</p>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        {(() => {
+                                            let sizes = [];
+                                            try {
+                                                sizes = typeof settings.feed_sizes === 'string' ? JSON.parse(settings.feed_sizes) : (settings.feed_sizes || []);
+                                            } catch { sizes = ["Pinky", "Fuzzy", "Hopper", "S", "M", "L", "XL", "RXL"]; }
+
+                                            if (!Array.isArray(sizes)) sizes = [];
+
+                                            const handleSizeChange = (index, value) => {
+                                                const newSizes = [...sizes];
+                                                newSizes[index] = value;
+                                                set('feed_sizes', JSON.stringify(newSizes.filter(s => s !== '')));
+                                            };
+
+                                            const addSizeField = () => {
+                                                const newSizes = [...sizes, ''];
+                                                set('feed_sizes', JSON.stringify(newSizes));
+                                            };
+
+                                            const removeSizeField = (index) => {
+                                                const newSizes = sizes.filter((_, i) => i !== index);
+                                                set('feed_sizes', JSON.stringify(newSizes));
+                                            };
+
+                                            return (
+                                                <>
+                                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                                        {sizes.map((size, index) => (
+                                                            <div key={index} className="flex gap-2">
+                                                                <input
+                                                                    value={size}
+                                                                    onChange={e => handleSizeChange(index, e.target.value)}
+                                                                    placeholder="เช่น หนูแดง, ไก่"
+                                                                    className="flex-1 text-sm h-10"
+                                                                />
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => removeSizeField(index)}
+                                                                    className="w-10 h-10 rounded-lg bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-colors flex items-center justify-center"
+                                                                >
+                                                                    <Trash2 size={14} />
+                                                                </button>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={addSizeField}
+                                                        className="w-full py-2.5 rounded-xl border border-dashed border-white/10 text-slate-400 text-xs font-bold hover:border-emerald-500/30 hover:text-emerald-400 transition-all flex items-center justify-center gap-2"
+                                                    >
+                                                        + เพิ่มชนิดอาหาร
+                                                    </button>
+                                                </>
+                                            );
+                                        })()}
+                                    </div>
                                 </div>
                             </Section>
                         </>

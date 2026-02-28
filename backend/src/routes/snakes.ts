@@ -68,9 +68,9 @@ router.post('/', authenticate, requireAdmin, async (req: Request, res: Response)
         const sex = gender; // Map sex to gender
 
         // Check required fields
-        if (!name || !price) {
-            return res.status(400).json({ 
-                error: 'Missing required fields: name, price' 
+        if (name === undefined || name === null || name === '' || price === undefined || price === null) {
+            return res.status(400).json({
+                error: 'Missing required fields: name, price'
             });
         }
 
@@ -189,9 +189,9 @@ router.put('/:id', authenticate, requireAdmin, async (req: Request, res: Respons
         const sex = gender; // Map sex to gender
 
         // Check required fields
-        if (!name || !price) {
-            return res.status(400).json({ 
-                error: 'Missing required fields: name, price' 
+        if (name === undefined || name === null || name === '' || price === undefined || price === null) {
+            return res.status(400).json({
+                error: 'Missing required fields: name, price'
             });
         }
 

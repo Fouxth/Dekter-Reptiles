@@ -10,11 +10,11 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'https://sells-tones-verde-protection.trycloudflare.com',
+        target: 'http://43.229.149.151:5000',
         changeOrigin: true,
       },
       '/uploads': {
-        target: 'https://sells-tones-verde-protection.trycloudflare.com',
+        target: 'http://43.229.149.151:5000',
         changeOrigin: true,
       },
     },
