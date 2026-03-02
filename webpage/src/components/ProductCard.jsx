@@ -19,8 +19,8 @@ const ProductCard = ({ product, addToCart }) => {
     const navigate = useNavigate();
 
     const imageUrl = product.customerImage
-        ? (product.customerImage.startsWith('http') ? product.customerImage : `${BASE_URL}${product.customerImage}`)
-        : (product.adminImage ? (product.adminImage.startsWith('http') ? product.adminImage : `${BASE_URL}${product.adminImage}`) : null);
+        ? (product.customerImage.startsWith('http') ? product.customerImage : product.customerImage)
+        : (product.adminImage ? (product.adminImage.startsWith('http') ? product.adminImage : product.adminImage) : null);
 
     return (
         <article className="glass-card rounded-2xl overflow-hidden group flex flex-col h-full cursor-pointer hover:border-sky-500/50 transition-all duration-300 transform hover:-translate-y-1" onClick={() => navigate(`/product/${product.id}`)}>

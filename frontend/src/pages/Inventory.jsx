@@ -394,7 +394,7 @@ export default function Inventory() {
                                 {/* Thumbnail */}
                                 <div className="w-16 h-16 rounded-lg bg-slate-800 overflow-hidden flex-shrink-0 border border-white/5">
                                     {snake.adminImage ? (
-                                        <img src={snake.adminImage.startsWith('http') ? snake.adminImage : `${BASE_URL}${snake.adminImage}`} alt={snake.name} className="w-full h-full object-cover" />
+                                        <img src={snake.adminImage.startsWith('http') ? snake.adminImage : snake.adminImage} alt={snake.name} className="w-full h-full object-cover" />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center text-xl">🐍</div>
                                     )}
@@ -498,7 +498,7 @@ export default function Inventory() {
                                             <div className="flex items-center gap-3 lg:gap-4">
                                                 <div className="w-12 h-12 lg:w-16 lg:h-12 rounded-lg bg-slate-800 overflow-hidden flex-shrink-0 border border-white/5 group-hover:border-emerald-500/30 transition-colors">
                                                     {snake.adminImage ? (
-                                                        <img src={snake.adminImage.startsWith('http') ? snake.adminImage : `${BASE_URL}${snake.adminImage}`} alt={snake.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                                        <img src={snake.adminImage.startsWith('http') ? snake.adminImage : snake.adminImage} alt={snake.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                                                     ) : (
                                                         <div className="w-full h-full flex items-center justify-center text-lg lg:text-xl">🐍</div>
                                                     )}
