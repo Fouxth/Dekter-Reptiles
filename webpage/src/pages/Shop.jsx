@@ -21,7 +21,13 @@ const Shop = ({ searchQuery, addToCart }) => {
                     getSnakes({ forSale: true }),
                     getCategories()
                 ]);
-                setProducts(snakesData);
+                // Sort by Recommended first
+                const sortedSnakes = snakesData.sort((a, b) => {
+                    if (a.isRecommended && !b.isRecommended) return -1;
+                    if (!a.isRecommended && b.isRecommended) return 1;
+                    return 0; // Keep existing order for others
+                });
+                setProducts(sortedSnakes);
                 setCategories(categoriesData);
             } catch (error) {
                 console.error("Error fetching shop data:", error);

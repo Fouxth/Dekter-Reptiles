@@ -49,6 +49,7 @@ model Snake {
   gender             String? // male, female  (1.0 = male, 0.1 = female)
   feedSize           String? // ขนาดหนู: S, M, L, XL, RXL
   forSale            Boolean            @default(false)
+  isRecommended     Boolean            @default(false)
   categoryId         Int
   category           Category           @relation(fields: [categoryId], references: [id])
   createdAt          DateTime           @default(now())
@@ -217,4 +218,17 @@ model Notification {
   isRead    Boolean  @default(false)
   link      String?
   createdAt DateTime @default(now())
+}
+
+model Article {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String   @db.Text
+  excerpt   String?  @db.Text
+  image     String?
+  category  String? // เช่น "การดูแล", "อาหาร", "ความรู้"
+  author    String?
+  published Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

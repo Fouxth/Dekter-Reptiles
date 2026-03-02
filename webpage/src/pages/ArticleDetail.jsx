@@ -1,13 +1,34 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import SEO from '../components/SEO';
-import { MOCK_ARTICLES } from '../data/mockData';
+import { getArticleById } from '../services/api';
 
 const ArticleDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const article = MOCK_ARTICLES.find(a => a.id === id);
+    const [article, setArticle] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchArticle = async () => {
+            try {
+                const data = await getArticleById(id);
+                setArticle(data);
+            } catch (error) {
+                console.error("Error fetching article:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchArticle();
+    }, [id]);
+
+    if (loading) return (
+        <div className="min-h-[60vh] flex items-center justify-center">
+            <div className="w-12 h-12 border-4 border-sky-500 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+    );
 
     if (!article) return (
         <div className="min-h-[60vh] flex items-center justify-center">
@@ -33,14 +54,14 @@ const ArticleDetail = () => {
                 <div className="h-72 md:h-[28rem] w-full relative group">
                     <div className="absolute inset-0 bg-stone-900/40 group-hover:bg-transparent transition-colors z-10"></div>
                     <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-transparent to-transparent opacity-80 z-10"></div>
-                    <img src={article.image} alt={article.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 mx-blend-luminosity group-hover:mix-blend-normal" />
+                    <img src={article.image?.startsWith('http') ? article.image : article.image} alt={article.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                     <div className="absolute top-8 left-8 bg-stone-950/80 backdrop-blur-md border border-white/10 text-sky-400 text-xs font-bold px-4 py-1.5 rounded-lg z-20 uppercase tracking-widest shadow-lg">
                         {article.category}
                     </div>
                 </div>
                 <div className="p-8 md:p-14 relative z-20 -mt-10 md:-mt-20">
                     <div className="glass bg-stone-950/80 rounded-3xl p-8 md:p-12 border border-white/10 relative">
-                        <div className="text-sky-500 text-sm mb-4 font-bold uppercase tracking-widest">{article.date}</div>
+                        <div className="text-sky-500 text-sm mb-4 font-bold uppercase tracking-widest">{new Date(article.createdAt).toLocaleDateString('th-TH')}</div>
                         <h1 className="text-3xl md:text-5xl font-light text-stone-100 mb-10 leading-tight">{article.title}</h1>
                         <div className="prose prose-invert prose-stone prose-lg max-w-none text-stone-400 leading-relaxed font-light whitespace-pre-line">
                             {article.content}

@@ -18,6 +18,7 @@ import Expenses from './pages/Expenses';
 import Login from './pages/Login';
 import Settings from './pages/Settings';
 import Profile from './pages/Profile';
+import Articles from './pages/Articles';
 import { Toaster } from 'react-hot-toast';
 import './App.css';
 
@@ -67,6 +68,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute adminOnly>
               <Settings />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="articles"
+          element={
+            <ProtectedRoute adminOnly>
+              <Articles />
             </ProtectedRoute>
           }
         />

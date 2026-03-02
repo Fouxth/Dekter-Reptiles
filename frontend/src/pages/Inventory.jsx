@@ -59,7 +59,8 @@ export default function Inventory() {
         morph: '',
         year: '',
         feedSize: '',
-        forSale: false
+        forSale: false,
+        isRecommended: false
     });
     const [feedSizes, setFeedSizes] = useState(["Pinky(แรกเกิด)", "หนูแช่แข็ง", "Fuzzy", "Hopper", "S", "M", "L", "XL", "RXL"]);
 
@@ -139,7 +140,8 @@ export default function Inventory() {
             morph: '',
             year: '',
             feedSize: '',
-            forSale: false
+            forSale: false,
+            isRecommended: false
         });
         setShowModal(true);
     };
@@ -164,7 +166,8 @@ export default function Inventory() {
             morph: snake.morph || '',
             year: snake.year || '',
             feedSize: snake.feedSize || '',
-            forSale: snake.forSale || false
+            forSale: snake.forSale || false,
+            isRecommended: snake.isRecommended || false
         });
         setShowModal(true);
     };
@@ -506,6 +509,7 @@ export default function Inventory() {
                                                         className="font-medium text-white group-hover:text-emerald-400 transition-colors text-sm lg:text-base truncate max-w-[120px] lg:max-w-none flex items-center gap-1 hover:underline"
                                                     >
                                                         {snake.name} <ExternalLink size={11} className="opacity-30 group-hover:opacity-100" />
+                                                        {snake.isRecommended && <span className="text-amber-400" title="สินค้าแนะนำ">⭐</span>}
                                                     </button>
                                                     {snake.morph && <span className="inline-flex text-[10px] text-purple-300 bg-purple-500/10 px-1.5 py-0.5 rounded mt-0.5">{capitalize(snake.morph)}</span>}
                                                     <p className="text-xs text-slate-400 line-clamp-1 mt-0.5 hidden lg:block">{snake.description || '-'}</p>
@@ -816,6 +820,20 @@ export default function Inventory() {
                                             <div className="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform peer-checked:translate-x-5"></div>
                                         </div>
                                         <span className="text-sm text-slate-300 font-medium">พร้อมขาย (For Sale)</span>
+                                    </label>
+
+                                    <label className="flex items-center gap-3 cursor-pointer py-2">
+                                        <div className="relative">
+                                            <input
+                                                type="checkbox"
+                                                checked={formData.isRecommended || false}
+                                                onChange={(e) => setFormData({ ...formData, isRecommended: e.target.checked })}
+                                                className="sr-only peer"
+                                            />
+                                            <div className="w-10 h-5 bg-slate-700 rounded-full peer-checked:bg-amber-500 transition-colors"></div>
+                                            <div className="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform peer-checked:translate-x-5"></div>
+                                        </div>
+                                        <span className="text-sm text-slate-300 font-medium text-amber-500">แนะนำ (Recommended)</span>
                                     </label>
                                 </div>
                             </div>

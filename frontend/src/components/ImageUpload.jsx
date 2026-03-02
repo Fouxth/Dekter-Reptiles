@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Upload, X, Loader2, Image as ImageIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-const API = import.meta.env.VITE_API_URL;
+const API = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 const BASE_URL = API.replace('/api', '');
 
 export default function ImageUpload({ value, onChange, label, type = 'admin' }) {
@@ -22,7 +22,8 @@ export default function ImageUpload({ value, onChange, label, type = 'admin' }) 
 
         setUploading(true);
         try {
-            const res = await fetch(`${API}/snakes/upload?type=${type}`, {
+            const uploadPath = type === 'article' ? '/articles/upload?type=article' : `/snakes/upload?type=${type}`;
+            const res = await fetch(`${API}${uploadPath}`, {
                 method: 'POST',
                 body: formData,
                 headers: {

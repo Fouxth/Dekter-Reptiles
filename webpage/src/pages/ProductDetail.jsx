@@ -93,7 +93,7 @@ const ProductDetail = ({ addToCart }) => {
                                 <img
                                     src={imageUrl}
                                     alt={`รูปภาพของงู ${product.name}`}
-                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-90"
+                                    className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700"
                                 />
                             );
                         })()}

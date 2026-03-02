@@ -23,6 +23,7 @@ import incubationRecordRoutes from './routes/incubation-records';
 import customerAuthRoutes from './routes/customer-auth';
 import expenseRoutes from './routes/expenses';
 import notificationRoutes from './routes/notifications';
+import articlesRouter from './routes/articles';
 
 dotenv.config();
 
@@ -100,6 +101,7 @@ app.use('/api/feeding-logs', feedingLogRoutes);
 app.use('/api/incubation-records', incubationRecordRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/articles', articlesRouter);
 
 // Health check
 app.get('/api/health', (req, res) => {

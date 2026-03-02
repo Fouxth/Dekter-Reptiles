@@ -11,10 +11,12 @@ export default defineConfig({
     proxy: {
       '/api': {
         target: 'http://43.229.149.151:5000',
+        // target: 'http://localhost:5000',
         changeOrigin: true,
       },
       '/uploads': {
         target: 'http://43.229.149.151:5000',
+        // target: 'http://localhost:5000',
         changeOrigin: true,
       },
     },

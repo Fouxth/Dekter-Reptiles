@@ -10,12 +10,13 @@ const router = Router();
 router.get('/', async (req: Request, res: Response) => {
     try {
         const prisma: PrismaClient = (req as any).prisma;
-        const { categoryId, search, forSale } = req.query;
+        const { categoryId, search, forSale, isRecommended } = req.query;
 
         const snakes = await prisma.snake.findMany({
             where: {
                 ...(categoryId && { categoryId: Number(categoryId) }),
                 ...(forSale !== undefined && { forSale: forSale === 'true' }),
+                ...(isRecommended !== undefined && { isRecommended: isRecommended === 'true' }),
                 ...(search && {
                     OR: [
                         { name: { contains: String(search), mode: 'insensitive' } },
@@ -61,7 +62,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 router.post('/', authenticate, requireAdmin, async (req: Request, res: Response) => {
     try {
         const prisma: PrismaClient = (req as any).prisma;
-        const { name, description, price, cost, stock, adminImage, customerImage, color, dateOfBirth, genetics, gender, categoryId, code, species, morph, year, feedSize, forSale } = req.body;
+        const { name, description, price, cost, stock, adminImage, customerImage, color, dateOfBirth, genetics, gender, categoryId, code, species, morph, year, feedSize, forSale, isRecommended } = req.body;
 
         // Validation - map frontend field names to backend
         const birthDate = dateOfBirth; // Map birthDate to dateOfBirth
@@ -95,6 +96,7 @@ router.post('/', authenticate, requireAdmin, async (req: Request, res: Response)
                     year,
                     feedSize,
                     forSale: forSale === true || forSale === 'true' ? true : false,
+                    isRecommended: isRecommended === true || isRecommended === 'true' ? true : false,
                 },
                 include: { category: true },
             });
@@ -153,6 +155,7 @@ router.post('/bulk', authenticate, requireAdmin, async (req: Request, res: Respo
                         year: s.year,
                         feedSize: s.feedSize,
                         forSale: s.forSale === true || s.forSale === 'true' ? true : false,
+                        isRecommended: s.isRecommended === true || s.isRecommended === 'true' ? true : false,
                     },
                     include: { category: true },
                 });
@@ -182,7 +185,7 @@ router.post('/bulk', authenticate, requireAdmin, async (req: Request, res: Respo
 router.put('/:id', authenticate, requireAdmin, async (req: Request, res: Response) => {
     try {
         const prisma: PrismaClient = (req as any).prisma;
-        const { name, description, price, cost, stock, adminImage, customerImage, color, dateOfBirth, genetics, gender, categoryId, code, species, morph, year, feedSize, forSale } = req.body;
+        const { name, description, price, cost, stock, adminImage, customerImage, color, dateOfBirth, genetics, gender, categoryId, code, species, morph, year, feedSize, forSale, isRecommended } = req.body;
 
         // Validation - map frontend field names to backend
         const birthDate = dateOfBirth; // Map birthDate to dateOfBirth
@@ -216,6 +219,7 @@ router.put('/:id', authenticate, requireAdmin, async (req: Request, res: Respons
                 year,
                 feedSize,
                 forSale: forSale !== undefined ? (forSale === true || forSale === 'true') : undefined,
+                isRecommended: isRecommended !== undefined ? (isRecommended === true || isRecommended === 'true') : undefined,
             },
             include: { category: true },
         });

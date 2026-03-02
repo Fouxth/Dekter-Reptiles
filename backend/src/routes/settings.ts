@@ -9,16 +9,13 @@ const router = Router();
 router.get('/', async (req, res) => {
     try {
         const prisma = (req as any).prisma;
-        console.log('--- FETCHING SETTINGS ---');
         const settings = await prisma.systemSetting.findMany();
-        console.log(`Found ${settings.length} settings in DB`);
 
         const settingsObject = settings.reduce((acc: any, item: any) => {
             acc[item.key] = item.value;
             return acc;
         }, {});
 
-        console.log('Settings Object:', JSON.stringify(settingsObject, null, 2));
         res.json(settingsObject);
     } catch (error) {
         console.error('Failed to fetch settings:', error);

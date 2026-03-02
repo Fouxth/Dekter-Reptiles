@@ -38,8 +38,15 @@ const ProductCard = ({ product, addToCart }) => {
                         <span className="border border-sky-500/50 text-sky-500 px-6 py-2 rounded-full font-bold shadow-lg uppercase tracking-widest text-sm bg-sky-500/10">Sold Out</span>
                     </div>
                 )}
-                <div className="absolute top-3 left-3 bg-stone-950/80 border border-white/10 backdrop-blur-md px-3 py-1 rounded-lg text-xs font-semibold text-sky-400 uppercase tracking-wider shadow-lg">
-                    {capitalize(product.species)}
+                <div className="absolute top-3 left-3 flex flex-col gap-2 z-20">
+                    <div className="bg-stone-950/80 border border-white/10 backdrop-blur-md px-3 py-1 rounded-lg text-xs font-semibold text-sky-400 uppercase tracking-wider shadow-lg">
+                        {capitalize(product.species)}
+                    </div>
+                    {product.isRecommended && (
+                        <div className="bg-amber-500/90 border border-amber-400/50 backdrop-blur-sm px-3 py-1 rounded-lg text-xs font-bold text-stone-950 uppercase tracking-wider shadow-lg flex items-center gap-1 animate-pulse">
+                            <span className="text-sm">⭐</span> แนะนำ
+                        </div>
+                    )}
                 </div>
             </div>
             <div className="p-5 flex flex-col flex-1 relative bg-gradient-to-b from-transparent to-stone-950/50">

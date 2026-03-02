@@ -40,6 +40,7 @@ const navItems = [
 ];
 
 const adminNavItems = [
+    { path: '/articles', icon: FileText, label: 'บทความ' },
     { path: '/users', icon: Users, label: 'พนักงาน' },
     { path: '/settings', icon: Settings, label: 'ตั้งค่าระบบ' },
 ];

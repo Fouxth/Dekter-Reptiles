@@ -2,7 +2,7 @@ import axios from "axios";
 
 // Create an Axios instance pointing to the existing POS backend
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || "http://43.229.149.151:5000/api",
+    baseURL: import.meta.env.VITE_API_URL,
     headers: {
         "Content-Type": "application/json",
     },
@@ -110,6 +110,26 @@ export const getSystemSettings = async () => {
         return response.data;
     } catch (error) {
         console.error("Error fetching settings:", error);
+        throw error;
+    }
+};
+
+export const getArticles = async (params = {}) => {
+    try {
+        const response = await api.get('/articles', { params: { ...params, published: true } });
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching articles:", error);
+        throw error;
+    }
+};
+
+export const getArticleById = async (id) => {
+    try {
+        const response = await api.get(`/articles/${id}`);
+        return response.data;
+    } catch (error) {
+        console.error(`Error fetching article ${id}:`, error);
         throw error;
     }
 };
