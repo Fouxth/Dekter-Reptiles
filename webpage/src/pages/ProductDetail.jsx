@@ -60,11 +60,9 @@ const ProductDetail = ({ addToCart }) => {
         </div>
     );
 
-    const API = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
-    const BASE_URL = API.replace('/api', '');
     const imageUrl = product.customerImage
-        ? (product.customerImage.startsWith('http') ? product.customerImage : `${BASE_URL}${product.customerImage}`)
-        : (product.adminImage ? (product.adminImage.startsWith('http') ? product.adminImage : `${BASE_URL}${product.adminImage}`) : null);
+        ? (product.customerImage.startsWith('http') ? product.customerImage : product.customerImage)
+        : (product.adminImage ? (product.adminImage.startsWith('http') ? product.adminImage : product.adminImage) : null);
 
     return (
         <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in relative">
