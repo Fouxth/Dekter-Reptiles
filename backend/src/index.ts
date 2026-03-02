@@ -47,9 +47,10 @@ const allowedOrigins = [
     'http://43.229.149.151:5174',
     'http://43.229.149.151',
     'https://admin-dexter.vercel.app',
-    process.env.ADMIN_URL || 'https://admin-dexter.vercel.app',
+    'https://dexterball.com',
+    'https://www.dexterball.com',
     'https://dekter-reptiles-landingpage.vercel.app',
-    ...envWebUrls // ใช้ Spread Operator (...) เพื่อกระจายค่าจาก Array ที่แยกได้
+    ...envWebUrls
 ];
 
 // ใช้ Set เพื่อกรองตัวซ้ำ (กรณีที่ใน .env กับที่เขียนไว้ตรงกัน)
@@ -57,19 +58,17 @@ const uniqueOrigins = Array.from(new Set(allowedOrigins));
 
 app.use(cors({
     origin: function (origin, callback) {
-        // Allow requests with no origin (like mobile apps or curl)
+        // Allow requests with no origin, or if they match allowedOrigins
         if (!origin) return callback(null, true);
-
-        if (allowedOrigins.indexOf(origin) !== -1 ||
-            origin.includes('43.229.149.151') ||
-            origin.includes('localhost') ||
-            origin.includes('127.0.0.1')) {
-            return callback(null, true);
-        } else {
-            console.log('🚫 CORS Rejected Origin:', origin);
-            const msg = `The CORS policy for this site does not allow access from the specified Origin: ${origin}`;
+        if (allowedOrigins.indexOf(origin) === -1) {
+            // Temporary fallback for testing - allow if it contains the IP
+            if (origin.includes('43.229.149.151') || origin.includes('localhost') || origin.includes('127.0.0.1')) {
+                return callback(null, true);
+            }
+            const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
             return callback(new Error(msg), false);
         }
+        return callback(null, true);
     },
     credentials: true
 }));
