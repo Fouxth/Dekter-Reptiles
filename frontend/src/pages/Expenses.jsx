@@ -18,16 +18,18 @@ export default function Expenses() {
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
     const [showModal, setShowModal] = useState(false);
+    const [showCategoryModal, setShowCategoryModal] = useState(false);
     const [itemToDelete, setItemToDelete] = useState(null);
+    const [categoryToDelete, setCategoryToDelete] = useState(null);
     const [editingExpense, setEditingExpense] = useState(null);
+    const [categories, setCategories] = useState([]);
+    const [newCategoryName, setNewCategoryName] = useState('');
     const [formData, setFormData] = useState({
         amount: '',
         description: '',
-        category: 'อื่นๆ',
+        category: '',
         date: new Date().toISOString().split('T')[0]
     });
-
-    const categories = ['หนูแช่แข็ง', 'อุปกรณ์เลี้ยง', 'ค่าไฟ/น้ำ', 'ค่าเช่าที่', 'เงินเดือนพนักงาน', 'การตลาด', 'อื่นๆ'];
 
     async function fetchExpenses() {
         setLoading(true);
@@ -44,8 +46,28 @@ export default function Expenses() {
         }
     }
 
+    async function fetchCategories() {
+        try {
+            const res = await fetch(`${API}/expense-categories`, {
+                headers: { Authorization: `Bearer ${getToken()}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setCategories(data);
+                if (data.length > 0 && !formData.category) {
+                    setFormData(prev => ({ ...prev, category: data[0].name }));
+                }
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    useEffect(() => { fetchExpenses(); }, [selectedMonth, selectedYear]);
+    useEffect(() => {
+        fetchExpenses();
+        fetchCategories();
+    }, [selectedMonth, selectedYear]);
 
     async function handleSubmit(e) {
         e.preventDefault();
@@ -94,6 +116,50 @@ export default function Expenses() {
         }
     }
 
+    async function handleAddCategory(e) {
+        e.preventDefault();
+        if (!newCategoryName.trim()) return;
+        try {
+            const res = await fetch(`${API}/expense-categories`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
+                body: JSON.stringify({ name: newCategoryName })
+            });
+            if (res.ok) {
+                toast.success('เพิ่มหมวดหมู่สำเร็จ');
+                setNewCategoryName('');
+                fetchCategories();
+            } else {
+                const data = await res.json();
+                toast.error(data.error || 'เกิดข้อผิดพลาด');
+            }
+        } catch (err) {
+            console.error(err);
+            toast.error('เกิดข้อผิดพลาด');
+        }
+    }
+
+    async function confirmDeleteCategory() {
+        if (!categoryToDelete) return;
+        try {
+            const res = await fetch(`${API}/expense-categories/${categoryToDelete.id}`, {
+                method: 'DELETE',
+                headers: { Authorization: `Bearer ${getToken()}` }
+            });
+            if (res.ok) {
+                toast.success('ลบหมวดหมู่สำเร็จ');
+                fetchCategories();
+            } else {
+                toast.error('เกิดข้อผิดพลาด');
+            }
+        } catch (err) {
+            console.error(err);
+            toast.error('เกิดข้อผิดพลาด');
+        } finally {
+            setCategoryToDelete(null);
+        }
+    }
+
     const filteredExpenses = expenses.filter(e =>
         e.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
         e.category.toLowerCase().includes(searchTerm.toLowerCase())
@@ -124,12 +190,20 @@ export default function Expenses() {
                     </h1>
                     <p className="text-slate-400 mt-1 text-sm sm:text-base">จัดการรายจ่ายประจำเดือน</p>
                 </div>
-                <button
-                    onClick={() => { setEditingExpense(null); setFormData({ amount: '', description: '', category: 'อื่นๆ', date: new Date().toISOString().split('T')[0] }); setShowModal(true); }}
-                    className="btn-primary flex items-center gap-2"
-                >
-                    <Plus size={18} /> บันทึกรายจ่าย
-                </button>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => setShowCategoryModal(true)}
+                        className="btn-secondary flex items-center gap-2"
+                    >
+                        <Tag size={18} /> จัดการหมวดหมู่
+                    </button>
+                    <button
+                        onClick={() => { setEditingExpense(null); setFormData({ amount: '', description: '', category: categories[0]?.name || '', date: new Date().toISOString().split('T')[0] }); setShowModal(true); }}
+                        className="btn-primary flex items-center gap-2"
+                    >
+                        <Plus size={18} /> บันทึกรายจ่าย
+                    </button>
+                </div>
             </div>
 
             {/* Filter & Summary */}
@@ -285,7 +359,7 @@ export default function Expenses() {
                                         className="input-field w-full appearance-none bg-slate-900"
                                         style={{ paddingLeft: '44px' }}
                                     >
-                                        {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                                        {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                                     </select>
                                 </div>
                             </div>
@@ -305,6 +379,57 @@ export default function Expenses() {
                 </div>
             )}
 
+            {/* Category Management Modal */}
+            {showCategoryModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="glass-card w-full max-w-md p-6 border border-white/10 animate-in zoom-in-95 duration-200 shadow-2xl">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                                <Tag size={20} className="text-emerald-400" /> จัดการหมวดหมู่รายจ่าย
+                            </h2>
+                            <button onClick={() => setShowCategoryModal(false)} className="text-slate-400 hover:text-white transition-colors">
+                                <Plus size={24} className="rotate-45" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleAddCategory} className="flex gap-2 mb-6">
+                            <input
+                                type="text"
+                                value={newCategoryName}
+                                onChange={e => setNewCategoryName(e.target.value)}
+                                placeholder="ชื่อหมวดหมู่ใหม่..."
+                                className="input-field flex-1"
+                            />
+                            <button type="submit" className="p-2.5 bg-emerald-500/20 text-emerald-400 rounded-xl hover:bg-emerald-500 hover:text-white transition-all">
+                                <Plus size={20} />
+                            </button>
+                        </form>
+
+                        <div className="space-y-2 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                            {categories.map(c => (
+                                <div key={c.id} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 group">
+                                    <span className="text-slate-200">{c.name}</span>
+                                    <button
+                                        onClick={() => setCategoryToDelete(c)}
+                                        className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-red-500/20 rounded-lg text-red-400 transition-all"
+                                    ><Trash2 size={16} /></button>
+                                </div>
+                            ))}
+                            {categories.length === 0 && (
+                                <p className="text-center py-4 text-slate-500 text-sm">ยังไม่มีหมวดหมู่</p>
+                            )}
+                        </div>
+
+                        <div className="mt-6">
+                            <button
+                                onClick={() => setShowCategoryModal(false)}
+                                className="w-full px-4 py-2.5 rounded-xl border border-white/10 text-slate-300 font-bold hover:bg-white/5 transition-all"
+                            >ปิด</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <ConfirmModal
                 isOpen={!!itemToDelete}
                 onClose={() => setItemToDelete(null)}
@@ -312,6 +437,15 @@ export default function Expenses() {
                 title="ยืนยันการลบรายจ่าย"
                 message="คุณต้องการลบรายการรายจ่ายนี้ใช่หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้"
                 itemName={itemToDelete?.description}
+            />
+
+            <ConfirmModal
+                isOpen={!!categoryToDelete}
+                onClose={() => setCategoryToDelete(null)}
+                onConfirm={confirmDeleteCategory}
+                title="ยืนยันการลบหมวดหมู่"
+                message="คุณต้องการลบหมวดหมู่นี้ใช่หรือไม่? รายการรายจ่ายที่ใช้หมวดหมู่นี้จะยังแสดงชื่อหมวดหมู่เดิมอยู่"
+                itemName={categoryToDelete?.name}
             />
         </div>
     );

@@ -317,7 +317,7 @@ export default function POS() {
                                 {/* Thumbnail */}
                                 <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg bg-slate-700 overflow-hidden flex-shrink-0 relative">
                                     {item.adminImage ? (
-                                        <img src={item.adminImage.startsWith('http') ? item.adminImage : `${API.replace('/api', '')}${item.adminImage}`} alt={item.name} className="w-full h-full object-cover" />
+                                        <img src={item.adminImage.startsWith('http') ? item.adminImage : item.adminImage} alt={item.name} className="w-full h-full object-cover" />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center text-lg">🐍</div>
                                     )}
@@ -480,7 +480,7 @@ export default function POS() {
                                         <div className="relative aspect-[4/3] bg-slate-900 overflow-hidden">
                                             {snake.adminImage ? (
                                                 <img
-                                                    src={snake.adminImage.startsWith('http') ? snake.adminImage : `${API.replace('/api', '')}${snake.adminImage}`}
+                                                    src={snake.adminImage.startsWith('http') ? snake.adminImage : snake.adminImage}
                                                     alt={snake.name}
                                                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                                                 />
@@ -509,7 +509,7 @@ export default function POS() {
                                         {/* Info Section */}
                                         <div className="p-2.5 sm:p-3 flex-1 flex flex-col justify-between bg-gradient-to-b from-white/[0.02] to-transparent">
                                             <div>
-                                                <p className="text-[9px] sm:text-[10px] uppercase tracking-wider text-slate-500 font-bold mb-0.5 sm:mb-1">{capitalize(snake.category?.name)}</p>
+                                                <p className="text-[9px] sm:text-[10px] uppercase tracking-wider text-slate-500 font-bold mb-0.5 sm:mb-1">{snake.code || 'NO CODE'}</p>
                                                 <h3 className="font-medium text-white text-xs sm:text-sm leading-snug line-clamp-2 mb-1.5 sm:mb-2 group-hover:text-emerald-400 transition-colors">{snake.name}</h3>
                                             </div>
 

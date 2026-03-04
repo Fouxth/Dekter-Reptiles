@@ -298,7 +298,8 @@ export default function Inventory() {
         const cat = categories.find(c => c.id.toString() === categoryId?.toString());
         if (!cat) return true; // Default to true if not selected
         const name = cat.name.toLowerCase();
-        return name.includes('งู') || name.includes('python') || name.includes('snake') || name.includes('hognose') || name.includes('boa');
+        // Show full form for all except Equipment/Accessories
+        return !name.includes('equipment') && !name.includes('accessories') && !name.includes('อุปกรณ์');
     };
 
     const isSnakeCategory = checkIsSnakeCategory(formData.categoryId);

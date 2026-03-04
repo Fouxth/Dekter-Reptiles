@@ -15,10 +15,9 @@ const capitalize = (str) => {
 
 const checkIsSnakeCategory = (product) => {
     const species = product.species?.toLowerCase();
-    if (species === 'equipment') return false;
-    if (species) return true;
+    if (species === 'equipment' || species === 'accessories') return false;
     const catName = product?.category?.name?.toLowerCase() || '';
-    return catName.includes('งู') || catName.includes('python') || catName.includes('snake') || catName.includes('hognose') || catName.includes('boa') || catName.includes('ball python');
+    return !catName.includes('equipment') && !catName.includes('accessories') && !catName.includes('อุปกรณ์');
 };
 
 const ProductDetail = ({ addToCart }) => {
