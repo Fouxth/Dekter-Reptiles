@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { createPortal } from 'react-dom';
 import {
@@ -18,6 +19,7 @@ const API = import.meta.env.VITE_API_URL;
 const BASE_URL = API.replace('/api', '');
 
 export default function Categories() {
+    const navigate = useNavigate();
     const { getToken } = useAuth();
     const [categories, setCategories] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -192,7 +194,11 @@ export default function Categories() {
                     </div>
                 ) : (
                     filteredCategories.map(category => (
-                        <div key={category.id} className="glass-card p-5 border border-white/5 hover:border-emerald-500/30 transition-all duration-300 group flex flex-col h-full bg-slate-900/40">
+                        <div
+                            key={category.id}
+                            onClick={() => navigate(`/inventory?category=${category.id}`)}
+                            className="glass-card p-5 border border-white/5 hover:border-emerald-500/30 transition-all duration-300 group flex flex-col h-full bg-slate-900/40 cursor-pointer"
+                        >
                             <div className="flex items-start gap-4 mb-4">
                                 <div className="w-16 h-16 rounded-xl bg-slate-800 border border-white/10 overflow-hidden shrink-0 flex items-center justify-center shadow-inner relative group-hover:shadow-emerald-500/10 transition-shadow">
                                     {category.image ? (
@@ -215,14 +221,20 @@ export default function Categories() {
 
                                 <div className="flex gap-2">
                                     <button
-                                        onClick={() => openEditModal(category)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            openEditModal(category);
+                                        }}
                                         className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-slate-300 hover:bg-blue-500 hover:text-white transition-all shadow-sm"
                                         title="แก้ไข"
                                     >
                                         <Edit size={14} />
                                     </button>
                                     <button
-                                        onClick={() => handleDelete(category)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDelete(category);
+                                        }}
                                         className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-slate-300 hover:bg-red-500 hover:text-white transition-all shadow-sm"
                                         title="ลบ"
                                     >

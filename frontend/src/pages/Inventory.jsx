@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
     Search,
@@ -29,6 +29,7 @@ const capitalize = (str) => {
 export default function Inventory() {
     const { getToken } = useAuth();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const [snakes, setSnakes] = useState([]);
     const [categories, setCategories] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -67,6 +68,13 @@ export default function Inventory() {
     useEffect(() => {
         fetchData();
     }, []);
+
+    useEffect(() => {
+        const categoryId = searchParams.get('category');
+        if (categoryId) {
+            setSelectedCategory(parseInt(categoryId));
+        }
+    }, [searchParams]);
 
     const fetchData = async () => {
         try {
