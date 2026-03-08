@@ -10,11 +10,12 @@ const getSocketUrl = () => {
     const apiUrl = import.meta.env.VITE_API_URL || '';
     if (apiUrl.startsWith('http')) return apiUrl.replace('/api', '');
 
-    // 3. Fallback: use VPS IP directly (api.dexterball.com DNS doesn't resolve from browsers)
-    return 'http://43.229.149.151:5000';
+    // 3. Vercel: use same-origin (Vercel proxies /socket.io/* to backend)
+    return undefined; // undefined = connect to same origin
 };
 
 const SOCKET_URL = getSocketUrl();
+const IS_VERCEL = !SOCKET_URL; // On Vercel, we use polling only (no WS upgrade)
 const API = import.meta.env.VITE_API_URL;
 
 const SocketContext = createContext(null);
@@ -109,13 +110,17 @@ export function SocketProvider({ children }) {
 
         fetchNotifications();
 
-        const socket = io(SOCKET_URL, {
-            transports: ['polling', 'websocket'],
+        const socketOptions = {
+            transports: IS_VERCEL ? ['polling'] : ['polling', 'websocket'],
             reconnectionAttempts: 10,
             reconnectionDelay: 3000,
             timeout: 10000,
-            upgrade: true,
-        });
+            upgrade: !IS_VERCEL,
+        };
+
+        const socket = SOCKET_URL
+            ? io(SOCKET_URL, socketOptions)
+            : io(socketOptions); // No URL = connect to same origin
 
         socketRef.current = socket;
 
