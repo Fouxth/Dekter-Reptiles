@@ -2,9 +2,19 @@ import { createContext, useContext, useEffect, useRef, useState, useCallback } f
 import { io } from 'socket.io-client';
 import toast from 'react-hot-toast';
 
-const SOCKET_URL = import.meta.env.VITE_API_URL
-    ? import.meta.env.VITE_API_URL.replace('/api', '')
-    : 'http://43.229.149.151:5000';
+const getSocketUrl = () => {
+    // 1. Use dedicated socket URL if set
+    if (import.meta.env.VITE_SOCKET_URL) return import.meta.env.VITE_SOCKET_URL;
+
+    // 2. If VITE_API_URL is a full URL, derive from it
+    const apiUrl = import.meta.env.VITE_API_URL || '';
+    if (apiUrl.startsWith('http')) return apiUrl.replace('/api', '');
+
+    // 3. Fallback for relative paths (Vercel proxy) or missing env
+    return 'https://api.dexterball.com';
+};
+
+const SOCKET_URL = getSocketUrl();
 const API = import.meta.env.VITE_API_URL;
 
 const SocketContext = createContext(null);

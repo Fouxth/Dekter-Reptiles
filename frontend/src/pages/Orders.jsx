@@ -23,7 +23,11 @@ import {
 } from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL;
-const BASE_URL = API.replace('/api', '');
+const BASE_URL = (() => {
+    if (import.meta.env.VITE_BACKEND_URL) return import.meta.env.VITE_BACKEND_URL;
+    if (API && API.startsWith('http')) return API.replace('/api', '');
+    return 'https://api.dexterball.com';
+})();
 
 const capitalize = (str) => {
     if (!str) return str;

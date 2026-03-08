@@ -3,7 +3,11 @@ import { Upload, X, Loader2, Image as ImageIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
-const BASE_URL = API.replace('/api', '');
+const BASE_URL = (() => {
+    if (import.meta.env.VITE_BACKEND_URL) return import.meta.env.VITE_BACKEND_URL;
+    if (API.startsWith('http')) return API.replace('/api', '');
+    return 'https://api.dexterball.com';
+})();
 
 export default function ImageUpload({ value, onChange, label, type = 'admin' }) {
     const [uploading, setUploading] = useState(false);
