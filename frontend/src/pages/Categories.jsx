@@ -10,7 +10,8 @@ import {
     Search,
     X,
     Save,
-    Image as ImageIcon
+    Image as ImageIcon,
+    Truck
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ConfirmModal from '../components/ConfirmModal';
@@ -33,7 +34,8 @@ export default function Categories() {
     const [formData, setFormData] = useState({
         name: '',
         description: '',
-        image: ''
+        image: '',
+        shippingFee: 0
     });
     const [itemToDelete, setItemToDelete] = useState(null);
 
@@ -66,7 +68,7 @@ export default function Categories() {
 
     const openAddModal = () => {
         setEditingCategory(null);
-        setFormData({ name: '', description: '', image: '' });
+        setFormData({ name: '', description: '', image: '', shippingFee: 0 });
         setShowModal(true);
     };
 
@@ -75,7 +77,8 @@ export default function Categories() {
         setFormData({
             name: category.name,
             description: category.description || '',
-            image: category.image || ''
+            image: category.image || '',
+            shippingFee: category.shippingFee || 0
         });
         setShowModal(true);
     };
@@ -222,6 +225,12 @@ export default function Categories() {
                                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
                                     {category._count?.snakes || 0} รายการ
                                 </div>
+                                {category.shippingFee > 0 && (
+                                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-sky-500/10 border border-sky-500/20 text-sky-400 text-xs font-semibold shadow-sm">
+                                        <Truck size={12} />
+                                        ค่าส่ง ฿{category.shippingFee.toLocaleString()}
+                                    </div>
+                                )}
 
                                 <div className="flex gap-2">
                                     <button
@@ -311,6 +320,24 @@ export default function Categories() {
                                         <img src={resolveImageUrl(formData.image)} alt="Preview" className="w-full h-full object-cover" onError={(e) => e.target.style.display = 'none'} />
                                     </div>
                                 )}
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">ค่าจัดส่ง (บาท)</label>
+                                <div className="relative">
+                                    <Truck className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="1"
+                                        value={formData.shippingFee}
+                                        onChange={(e) => setFormData({ ...formData, shippingFee: parseFloat(e.target.value) || 0 })}
+                                        className="input-field"
+                                        style={{ paddingLeft: '44px' }}
+                                        placeholder="0"
+                                    />
+                                </div>
+                                <p className="text-[10px] text-slate-500 mt-1">ค่าจัดส่งสำหรับสินค้าในหมวดหมู่นี้ (0 = ส่งฟรี)</p>
                             </div>
 
                             <div className="flex gap-3 pt-4 border-t border-white/5">

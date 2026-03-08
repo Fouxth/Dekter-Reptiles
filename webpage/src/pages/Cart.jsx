@@ -37,9 +37,7 @@ const Cart = ({ cart, setCart, updateQuantity, removeFromCart, cartTotal, cartIt
         bank_name: '',
         qr_expiry_minutes: 15,
         enable_vat: false,
-        tax_rate: 7,
-        shipping_fee: 0,
-        free_shipping_min: 1000
+        tax_rate: 7
     });
 
     useEffect(() => {
@@ -262,20 +260,18 @@ const Cart = ({ cart, setCart, updateQuantity, removeFromCart, cartTotal, cartIt
                                     )}
                                     <div className="flex justify-between items-center text-stone-400 text-sm">
                                         <span>ค่าจัดส่ง</span>
-                                        {cartTotal >= settings.free_shipping_min ? (
-                                            <div className="flex items-center gap-1.5">
-                                                <span className="text-[8px] uppercase font-bold tracking-wider text-emerald-400/80 border border-emerald-500/30 px-1.5 py-px rounded">Free</span>
-                                                <span className="text-emerald-400 font-semibold text-sm">ส่งฟรี</span>
-                                            </div>
-                                        ) : (
-                                            <span className="text-stone-100 font-medium">{formatPrice(settings.shipping_fee)}</span>
-                                        )}
+                                        {(() => {
+                                            const maxShipping = Math.max(0, ...cart.map(item => item.category?.shippingFee || 0));
+                                            return maxShipping > 0 ? (
+                                                <span className="text-stone-100 font-medium">{formatPrice(maxShipping)}</span>
+                                            ) : (
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className="text-[8px] uppercase font-bold tracking-wider text-emerald-400/80 border border-emerald-500/30 px-1.5 py-px rounded">Free</span>
+                                                    <span className="text-emerald-400 font-semibold text-sm">ส่งฟรี</span>
+                                                </div>
+                                            );
+                                        })()}
                                     </div>
-                                    {cartTotal < settings.free_shipping_min && settings.free_shipping_min > 0 && (
-                                        <div className="p-2 rounded-lg bg-emerald-500/5 border border-emerald-500/10 text-[10px] text-emerald-400/80 text-center animate-pulse">
-                                            ซื้ออีก {formatPrice(settings.free_shipping_min - cartTotal)} เพื่อรับสิทธิ์ส่งฟรี!
-                                        </div>
-                                    )}
                                 </div>
 
                                 {/* Customer Info */}
@@ -505,7 +501,7 @@ const Cart = ({ cart, setCart, updateQuantity, removeFromCart, cartTotal, cartIt
                                         {(() => {
                                             const subtotal = cartTotal;
                                             const tax = settings.enable_vat ? (subtotal * settings.tax_rate / 100) : 0;
-                                            const shipping = cartTotal >= settings.free_shipping_min ? 0 : settings.shipping_fee;
+                                            const shipping = Math.max(0, ...cart.map(item => item.category?.shippingFee || 0));
                                             return formatPrice(subtotal + tax + shipping);
                                         })()}
                                     </div>

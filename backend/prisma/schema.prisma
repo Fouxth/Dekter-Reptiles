@@ -25,6 +25,7 @@ model Category {
   name        String
   description String?
   image       String?
+  shippingFee Float    @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   snakes      Snake[]

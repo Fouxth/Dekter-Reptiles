@@ -46,10 +46,10 @@ router.get('/:id', async (req: Request, res: Response) => {
 router.post('/', authenticate, requireAdmin, async (req: Request, res: Response) => {
     try {
         const prisma: PrismaClient = (req as any).prisma;
-        const { name, description, image } = req.body;
+        const { name, description, image, shippingFee } = req.body;
 
         const category = await prisma.category.create({
-            data: { name, description, image },
+            data: { name, description, image, shippingFee: shippingFee ? parseFloat(shippingFee) : 0 },
         });
 
         res.status(201).json(category);
@@ -63,11 +63,11 @@ router.post('/', authenticate, requireAdmin, async (req: Request, res: Response)
 router.put('/:id', authenticate, requireAdmin, async (req: Request, res: Response) => {
     try {
         const prisma: PrismaClient = (req as any).prisma;
-        const { name, description, image } = req.body;
+        const { name, description, image, shippingFee } = req.body;
 
         const category = await prisma.category.update({
             where: { id: Number(req.params.id) },
-            data: { name, description, image },
+            data: { name, description, image, shippingFee: shippingFee !== undefined ? parseFloat(shippingFee) : undefined },
         });
 
         res.json(category);

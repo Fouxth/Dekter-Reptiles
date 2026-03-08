@@ -536,18 +536,7 @@ export default function Settings() {
                                 </div>
                             </Section>
 
-                            <Section title="การจัดส่ง" subtitle="ตั้งค่าค่าธรรมเนียมการจัดส่ง">
-                                <div style={{ display: 'grid', gap: '1rem' }} className="form-grid">
-                                    <div className="form-group">
-                                        <label>ค่าจัดส่ง (บาท)</label>
-                                        <input type="number" value={settings.shipping_fee} onChange={e => set('shipping_fee', Number(e.target.value))} min={0} />
-                                    </div>
-                                    <div className="form-group">
-                                        <label>ยอดขั้นต่ำส่งฟรี (บาท)</label>
-                                        <input type="number" value={settings.free_shipping_min} onChange={e => set('free_shipping_min', Number(e.target.value))} min={0} />
-                                    </div>
-                                </div>
-                            </Section>
+
                             <Section title="PromptPay QR">
                                 <div className="form-group">
                                     <label>PromptPay ID (เบอร์/เลขบัตรประชาชน)</label>
