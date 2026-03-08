@@ -17,3 +17,6 @@ prisma/seed.ts
 .idea/
 .DS_Store
 *.suo
+
+# File
+uploads/
