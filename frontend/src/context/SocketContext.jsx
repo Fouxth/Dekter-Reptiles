@@ -100,9 +100,11 @@ export function SocketProvider({ children }) {
         fetchNotifications();
 
         const socket = io(SOCKET_URL, {
-            transports: ['websocket', 'polling'],
-            reconnectionAttempts: 5,
-            reconnectionDelay: 2000,
+            transports: ['polling', 'websocket'],
+            reconnectionAttempts: 10,
+            reconnectionDelay: 3000,
+            timeout: 10000,
+            upgrade: true,
         });
 
         socketRef.current = socket;

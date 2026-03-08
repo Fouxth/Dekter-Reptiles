@@ -9,6 +9,10 @@ export function initIO(server: HttpServer): SocketIOServer {
             origin: '*',
             methods: ['GET', 'POST'],
         },
+        transports: ['polling', 'websocket'],
+        allowUpgrades: true,
+        pingTimeout: 30000,
+        pingInterval: 25000,
     });
 
     io.on('connection', (socket) => {

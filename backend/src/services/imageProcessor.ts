@@ -40,7 +40,7 @@ export class ImageProcessor {
         options: OptimizationOptions = {}
     ): Promise<OptimizationResult> {
         const opts = { ...DEFAULT_OPTIONS, ...options };
-        
+
         try {
             // Validate file exists
             const fileExists = await this.fileExists(filePath);
@@ -52,15 +52,22 @@ export class ImageProcessor {
             const originalStats = await fs.stat(filePath);
             const originalSize = originalStats.size;
 
-            // Validate it's an image
-            const isValidImage = await this.isValidImage(filePath);
-            if (!isValidImage) {
+            // Read file into buffer first to avoid Windows file locking issues
+            const fileBuffer = await fs.readFile(filePath);
+
+            // Validate it's an image by reading metadata from buffer
+            let metadata;
+            try {
+                metadata = await sharp(fileBuffer).metadata();
+                if (!metadata.format || !metadata.width || !metadata.height) {
+                    throw new Error('File is not a valid image');
+                }
+            } catch {
                 throw new Error('File is not a valid image');
             }
 
-            // Load image with sharp
-            let image = sharp(filePath);
-            const metadata = await image.metadata();
+            // Start processing from buffer (no file lock)
+            let image = sharp(fileBuffer);
 
             // Resize if needed (maintain aspect ratio)
             if (metadata.width && opts.maxWidth && metadata.width > opts.maxWidth) {
@@ -74,7 +81,7 @@ export class ImageProcessor {
             const ext = path.extname(filePath);
             const baseName = path.basename(filePath, ext);
             const dirName = path.dirname(filePath);
-            
+
             let outputPath: string;
             let outputFormat: string;
 
@@ -85,8 +92,7 @@ export class ImageProcessor {
             } else {
                 outputPath = filePath;
                 outputFormat = metadata.format || 'jpeg';
-                
-                // Apply format-specific optimization
+
                 switch (metadata.format) {
                     case 'jpeg':
                     case 'jpg':
@@ -99,31 +105,25 @@ export class ImageProcessor {
                         image = image.webp({ quality: opts.quality || 75 });
                         break;
                     default:
-                        // Convert unknown formats to JPEG
                         image = image.jpeg({ quality: opts.quality || 70 });
                         outputFormat = 'jpeg';
                 }
             }
 
-            // Save optimized image to temp location first
-            const tempPath = `${outputPath}.tmp`;
-            await image.toFile(tempPath);
-
-            // Check file size
-            let finalStats = await fs.stat(tempPath);
-            let finalSize = finalStats.size;
+            // Process to buffer first
+            let outputBuffer = await image.toBuffer();
+            let finalSize = outputBuffer.length;
 
             // If still too large, reduce quality iteratively
             if (opts.maxFileSize && finalSize > opts.maxFileSize) {
                 let quality = opts.quality || 75;
                 const minQuality = 40;
-                
+
                 while (finalSize > opts.maxFileSize && quality > minQuality) {
                     quality -= 10;
-                    
-                    // Reload and reprocess
-                    image = sharp(filePath);
-                    
+
+                    image = sharp(fileBuffer);
+
                     if (metadata.width && opts.maxWidth && metadata.width > opts.maxWidth) {
                         image = image.resize(opts.maxWidth, null, {
                             fit: 'inside',
@@ -140,7 +140,6 @@ export class ImageProcessor {
                                 image = image.jpeg({ quality, progressive: true });
                                 break;
                             case 'png':
-                                // PNG doesn't have quality, try converting to WebP
                                 image = image.webp({ quality });
                                 outputFormat = 'webp';
                                 outputPath = path.join(dirName, `${baseName}.webp`);
@@ -151,18 +150,21 @@ export class ImageProcessor {
                         }
                     }
 
-                    await image.toFile(tempPath);
-                    finalStats = await fs.stat(tempPath);
-                    finalSize = finalStats.size;
+                    outputBuffer = await image.toBuffer();
+                    finalSize = outputBuffer.length;
                 }
             }
 
-            // Move temp file to final location
-            await fs.rename(tempPath, outputPath);
+            // Write result directly to output path (no temp + rename)
+            await fs.writeFile(outputPath, outputBuffer);
 
             // Delete original file if it's different from output
             if (filePath !== outputPath) {
-                await fs.unlink(filePath);
+                try {
+                    await fs.unlink(filePath);
+                } catch {
+                    // Ignore cleanup errors
+                }
             }
 
             return {
@@ -194,10 +196,10 @@ export class ImageProcessor {
         filePaths: string[],
         options: OptimizationOptions = {}
     ): Promise<OptimizationResult[]> {
-        const promises = filePaths.map(filePath => 
+        const promises = filePaths.map(filePath =>
             this.optimizeImage(filePath, options)
         );
-        
+
         return Promise.all(promises);
     }
 
@@ -232,7 +234,7 @@ export class ImageProcessor {
         try {
             const metadata = await sharp(filePath).metadata();
             const stats = await fs.stat(filePath);
-            
+
             return {
                 format: metadata.format,
                 width: metadata.width,
