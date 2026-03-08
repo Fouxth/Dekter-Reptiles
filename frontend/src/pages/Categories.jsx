@@ -16,11 +16,11 @@ import toast from 'react-hot-toast';
 import ConfirmModal from '../components/ConfirmModal';
 
 const API = import.meta.env.VITE_API_URL;
-const BASE_URL = (() => {
-    if (import.meta.env.VITE_BACKEND_URL) return import.meta.env.VITE_BACKEND_URL;
-    if (API && API.startsWith('http')) return API.replace('/api', '');
-    return 'https://api.dexterball.com';
-})();
+const resolveImageUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    return url;
+};
 
 export default function Categories() {
     const navigate = useNavigate();
@@ -206,7 +206,7 @@ export default function Categories() {
                             <div className="flex items-start gap-4 mb-4">
                                 <div className="w-16 h-16 rounded-xl bg-slate-800 border border-white/10 overflow-hidden shrink-0 flex items-center justify-center shadow-inner relative group-hover:shadow-emerald-500/10 transition-shadow">
                                     {category.image ? (
-                                        <img src={category.image.startsWith('http') ? category.image : `${BASE_URL}${category.image}`} alt={category.name} className="w-full h-full object-cover" />
+                                        <img src={resolveImageUrl(category.image)} alt={category.name} className="w-full h-full object-cover" />
                                     ) : (
                                         <Folder size={24} className="text-slate-500 group-hover:scale-110 transition-transform" />
                                     )}
@@ -308,7 +308,7 @@ export default function Categories() {
                                 </div>
                                 {formData.image && (
                                     <div className="mt-3 w-16 h-16 shrink-0 rounded-xl overflow-hidden border border-white/10 bg-slate-800">
-                                        <img src={formData.image.startsWith('http') ? formData.image : `${BASE_URL}${formData.image}`} alt="Preview" className="w-full h-full object-cover" onError={(e) => e.target.style.display = 'none'} />
+                                        <img src={resolveImageUrl(formData.image)} alt="Preview" className="w-full h-full object-cover" onError={(e) => e.target.style.display = 'none'} />
                                     </div>
                                 )}
                             </div>

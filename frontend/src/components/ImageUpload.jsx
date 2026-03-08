@@ -3,11 +3,14 @@ import { Upload, X, Loader2, Image as ImageIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
-const BASE_URL = (() => {
-    if (import.meta.env.VITE_BACKEND_URL) return import.meta.env.VITE_BACKEND_URL;
-    if (API.startsWith('http')) return API.replace('/api', '');
-    return 'https://api.dexterball.com';
-})();
+
+// For image display: if the URL is absolute (http...), use as-is.
+// If relative (/uploads/...), use directly — Vercel rewrites /uploads/* to the backend.
+const resolveImageUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    return url; // Relative path — Vercel proxy handles it
+};
 
 export default function ImageUpload({ value, onChange, label, type = 'admin' }) {
     const [uploading, setUploading] = useState(false);
@@ -60,7 +63,7 @@ export default function ImageUpload({ value, onChange, label, type = 'admin' }) 
                 {value ? (
                     <div className="relative aspect-video rounded-xl overflow-hidden border border-white/10 glass-card bg-slate-900/50">
                         <img
-                            src={value.startsWith('http') ? value : `${BASE_URL}${value}`}
+                            src={resolveImageUrl(value)}
                             alt="Preview"
                             className="w-full h-full object-cover"
                         />

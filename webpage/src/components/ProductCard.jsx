@@ -13,7 +13,6 @@ const capitalize = (str) => {
 
 import api from '../services/api';
 const API = api.defaults.baseURL || "http://localhost:5000/api";
-const BASE_URL = API.replace('/api', '');
 
 const ProductCard = ({ product, addToCart }) => {
     const navigate = useNavigate();

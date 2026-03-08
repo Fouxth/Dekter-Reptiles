@@ -5,11 +5,11 @@ import { toast } from 'react-hot-toast';
 import ConfirmModal from '../components/ConfirmModal';
 
 const API = import.meta.env.VITE_API_URL;
-const BASE_URL = (() => {
-    if (import.meta.env.VITE_BACKEND_URL) return import.meta.env.VITE_BACKEND_URL;
-    if (API && API.startsWith('http')) return API.replace('/api', '');
-    return 'https://api.dexterball.com';
-})();
+const resolveImageUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    return url;
+};
 
 function calcAge(dob) {
     if (!dob) return '-';
@@ -131,7 +131,7 @@ export default function SnakeDetail() {
                     {(() => {
                         const img = snake.adminImage || snake.image; // Fallback to legacy field if present
                         return img ? (
-                            <img src={img.startsWith('http') ? img : `${BASE_URL}${img}`} alt={snake.name} style={{ width: '100%', maxWidth: 140, height: 'auto', aspectRatio: '1/1', objectFit: 'cover', borderRadius: 16 }} />
+                            <img src={resolveImageUrl(img)} alt={snake.name} style={{ width: '100%', maxWidth: 140, height: 'auto', aspectRatio: '1/1', objectFit: 'cover', borderRadius: 16 }} />
                         ) : (
                             <div style={{ width: '100%', maxWidth: 140, aspectRatio: '1/1', background: 'rgba(255,255,255,0.05)', borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '3rem' }}>🐍</div>
                         );

@@ -19,11 +19,11 @@ import toast from 'react-hot-toast';
 import ImageUpload from '../components/ImageUpload';
 
 const API = import.meta.env.VITE_API_URL;
-const BASE_URL = (() => {
-    if (import.meta.env.VITE_BACKEND_URL) return import.meta.env.VITE_BACKEND_URL;
-    if (API && API.startsWith('http')) return API.replace('/api', '');
-    return 'https://api.dexterball.com';
-})();
+const resolveImageUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    return url;
+};
 
 const capitalize = (str) => {
     if (!str) return str;

@@ -17,11 +17,11 @@ import toast from 'react-hot-toast';
 import ImageUpload from '../components/ImageUpload';
 
 const API = import.meta.env.VITE_API_URL;
-const BASE_URL = (() => {
-    if (import.meta.env.VITE_BACKEND_URL) return import.meta.env.VITE_BACKEND_URL;
-    if (API && API.startsWith('http')) return API.replace('/api', '');
-    return 'https://api.dexterball.com';
-})();
+const resolveImageUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    return url;
+};
 
 export default function Articles() {
     const { getToken } = useAuth();
@@ -204,7 +204,7 @@ export default function Articles() {
                                         <td className="py-4 px-6">
                                             <div className="w-16 h-10 rounded bg-slate-800 overflow-hidden border border-white/5">
                                                 {article.image ? (
-                                                    <img src={article.image.startsWith('http') ? article.image : `${BASE_URL}${article.image}`} className="w-full h-full object-cover" />
+                                                    <img src={resolveImageUrl(article.image)} className="w-full h-full object-cover" />
                                                 ) : (
                                                     <div className="w-full h-full flex items-center justify-center text-slate-600"><Image size={16} /></div>
                                                 )}

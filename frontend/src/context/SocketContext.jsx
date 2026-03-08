@@ -10,8 +10,8 @@ const getSocketUrl = () => {
     const apiUrl = import.meta.env.VITE_API_URL || '';
     if (apiUrl.startsWith('http')) return apiUrl.replace('/api', '');
 
-    // 3. Fallback for relative paths (Vercel proxy) or missing env
-    return 'https://api.dexterball.com';
+    // 3. Fallback: use VPS IP directly (api.dexterball.com DNS doesn't resolve from browsers)
+    return 'http://43.229.149.151:5000';
 };
 
 const SOCKET_URL = getSocketUrl();

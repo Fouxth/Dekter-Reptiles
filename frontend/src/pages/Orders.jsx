@@ -23,11 +23,11 @@ import {
 } from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL;
-const BASE_URL = (() => {
-    if (import.meta.env.VITE_BACKEND_URL) return import.meta.env.VITE_BACKEND_URL;
-    if (API && API.startsWith('http')) return API.replace('/api', '');
-    return 'https://api.dexterball.com';
-})();
+const resolveImageUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    return url;
+};
 
 const capitalize = (str) => {
     if (!str) return str;
@@ -553,10 +553,10 @@ export default function Orders() {
                                     <h3 className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 pl-1">หลักฐานการชำระเงิน</h3>
                                     <div className="rounded-xl overflow-hidden border border-white/10 mb-4 bg-black/40">
                                         <img
-                                            src={selectedOrder.paymentSlip.startsWith('http') ? selectedOrder.paymentSlip : `${BASE_URL}${selectedOrder.paymentSlip}`}
+                                            src={resolveImageUrl(selectedOrder.paymentSlip)}
                                             alt="Payment Slip"
                                             className="w-full h-auto max-h-[400px] object-contain cursor-zoom-in"
-                                            onClick={() => window.open(selectedOrder.paymentSlip.startsWith('http') ? selectedOrder.paymentSlip : `${BASE_URL}${selectedOrder.paymentSlip}`, '_blank')}
+                                            onClick={() => window.open(resolveImageUrl(selectedOrder.paymentSlip), '_blank')}
                                         />
                                     </div>
 

@@ -2,7 +2,12 @@ import axios from "axios";
 
 // Create an Axios instance pointing to the existing POS backend
 const API_URL = import.meta.env.VITE_API_URL;
-export const BASE_URL = API_URL.replace('/api', '');
+export const BASE_URL = ''; // Images use relative paths — Vercel rewrites /uploads/* to backend
+export const resolveImageUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    return url; // Relative path — Vercel proxy handles it
+};
 
 const api = axios.create({
     baseURL: API_URL,

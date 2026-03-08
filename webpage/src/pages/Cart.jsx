@@ -208,11 +208,7 @@ const Cart = ({ cart, setCart, updateQuantity, removeFromCart, cartTotal, cartIt
                     {/* Cart Items */}
                     <div className="lg:col-span-7 space-y-4">
                         {cart.map(item => {
-                            const API = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
-                            const BASE_URL = API.replace('/api', '');
-                            const imageUrl = item.customerImage
-                                ? (item.customerImage.startsWith('http') ? item.customerImage : `${BASE_URL}${item.customerImage}`)
-                                : (item.adminImage ? (item.adminImage.startsWith('http') ? item.adminImage : `${BASE_URL}${item.adminImage}`) : null);
+                            const imageUrl = item.customerImage || item.adminImage || null;
 
                             return (
                                 <div key={item.id} className="glass-premium rounded-2xl p-3 flex flex-col sm:flex-row gap-4 items-center group transition-all duration-300 hover:border-sky-500/30">
