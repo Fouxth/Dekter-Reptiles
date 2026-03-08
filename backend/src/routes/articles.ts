@@ -85,9 +85,16 @@ router.put('/:id', authenticate, requireAdmin, async (req: Request, res: Respons
     try {
         const prisma: PrismaClient = (req as any).prisma;
         const { title, content, excerpt, image, category, author, published } = req.body;
+        const id = Number(req.params.id);
+
+        // Check if article exists first
+        const existing = await prisma.article.findUnique({ where: { id } });
+        if (!existing) {
+            return res.status(404).json({ error: 'Article not found' });
+        }
 
         const article = await prisma.article.update({
-            where: { id: Number(req.params.id) },
+            where: { id },
             data: {
                 title,
                 content,
@@ -101,8 +108,11 @@ router.put('/:id', authenticate, requireAdmin, async (req: Request, res: Respons
 
         res.json(article);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Failed to update article' });
+        console.error('Error updating article:', error);
+        res.status(500).json({
+            error: 'Failed to update article',
+            details: error instanceof Error ? error.message : String(error)
+        });
     }
 });
 
@@ -122,17 +132,49 @@ router.delete('/:id', authenticate, requireAdmin, async (req: Request, res: Resp
 });
 
 // Upload article image
-router.post('/upload', authenticate, requireAdmin, ...snakeUpload.single('image'), async (req: Request, res: Response) => {
+router.post('/upload', authenticate, requireAdmin, (req, res, next) => {
+    console.log('--- Article Upload Request ---');
+    const multerHandler = snakeUpload.single('image');
+
+    // Process each middleware in the array
+    let currentIdx = 0;
+    const runMiddlewares = (middlewares: any[]) => {
+        if (currentIdx >= middlewares.length) {
+            return next();
+        }
+
+        const mw = middlewares[currentIdx];
+        mw(req, res, (err: any) => {
+            if (err) {
+                console.error('Middleware error during upload:', err);
+                return res.status(400).json({
+                    error: err.message || 'Upload failed',
+                    status: 400
+                });
+            }
+            currentIdx++;
+            runMiddlewares(middlewares);
+        });
+    };
+
+    runMiddlewares(multerHandler);
+}, async (req: Request, res: Response) => {
     try {
+        console.log('--- Article Upload Final Handler ---');
         if (!req.file) {
+            console.warn('Upload attempt with no file in final handler');
             return res.status(400).json({ error: 'Please upload an image' });
         }
 
+        console.log('File successfully processed:', req.file.filename);
         const imageUrl = `/uploads/articles/${req.file.filename}`;
         res.json({ url: imageUrl });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Failed to upload image' });
+        console.error('Error in article upload final handler:', error);
+        res.status(500).json({
+            error: 'Failed to complete upload process',
+            details: error instanceof Error ? error.message : String(error)
+        });
     }
 });
 

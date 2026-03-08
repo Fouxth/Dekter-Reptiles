@@ -259,7 +259,32 @@ router.put('/:id', authenticate, requireAdmin, async (req: Request, res: Respons
 });
 
 // Upload snake image
-router.post('/upload', authenticate, requireAdmin, ...snakeUpload.single('image'), async (req: Request, res: Response) => {
+router.post('/upload', authenticate, requireAdmin, (req, res, next) => {
+    console.log('--- Snake Upload Request ---');
+    const multerHandler = snakeUpload.single('image');
+
+    let currentIdx = 0;
+    const runMiddlewares = (middlewares: any[]) => {
+        if (currentIdx >= middlewares.length) {
+            return next();
+        }
+
+        const mw = middlewares[currentIdx];
+        mw(req, res, (err: any) => {
+            if (err) {
+                console.error('Middleware error during snake upload:', err);
+                return res.status(400).json({
+                    error: err.message || 'Upload failed',
+                    status: 400
+                });
+            }
+            currentIdx++;
+            runMiddlewares(middlewares);
+        });
+    };
+
+    runMiddlewares(multerHandler);
+}, async (req: Request, res: Response) => {
     try {
         const type = req.query.type === 'admin' ? 'admin' : 'customer';
         if (!req.file) {
@@ -269,8 +294,11 @@ router.post('/upload', authenticate, requireAdmin, ...snakeUpload.single('image'
         const imageUrl = `/uploads/snakes/${type}/${req.file.filename}`;
         res.json({ url: imageUrl });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Failed to upload image' });
+        console.error('Error in snake upload final handler:', error);
+        res.status(500).json({
+            error: 'Failed to upload image',
+            details: error instanceof Error ? error.message : String(error)
+        });
     }
 });
 

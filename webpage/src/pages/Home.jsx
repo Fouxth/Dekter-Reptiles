@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import SEO from '../components/SEO';
 import ProductCard from '../components/ProductCard';
 import TikTokSection from '../components/TikTokSection';
-import { getSnakes, getSystemSettings, getArticles } from '../services/api';
+import { getSnakes, getSystemSettings, getArticles, BASE_URL } from '../services/api';
 
 const Home = ({ addToCart }) => {
     const navigate = useNavigate();
@@ -220,7 +220,7 @@ const Home = ({ addToCart }) => {
                                 <article key={article.id} className="glass-card rounded-3xl overflow-hidden hover:border-sky-500/30 transition-all duration-300 flex flex-col cursor-pointer group hover:-translate-y-2" onClick={() => navigate(`/article/${article.id}`)}>
                                     <div className="h-56 overflow-hidden relative">
                                         <div className="absolute inset-0 bg-stone-900/40 group-hover:bg-transparent transition-colors z-10"></div>
-                                        <img src={article.image?.startsWith('http') ? article.image : article.image} alt={article.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-80 group-hover:opacity-100" />
+                                        <img src={article.image?.startsWith('http') ? article.image : `${BASE_URL}${article.image}`} alt={article.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-80 group-hover:opacity-100" />
                                         <span className="absolute top-4 left-4 bg-stone-950/80 backdrop-blur-md border border-white/10 text-sky-400 text-xs font-bold px-3 py-1 rounded-lg z-20 uppercase tracking-widest">
                                             {article.category}
                                         </span>

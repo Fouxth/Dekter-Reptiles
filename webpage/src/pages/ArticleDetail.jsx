@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import SEO from '../components/SEO';
-import { getArticleById } from '../services/api';
+import { getArticleById, BASE_URL } from '../services/api';
 
 const ArticleDetail = () => {
     const { id } = useParams();
@@ -41,7 +41,7 @@ const ArticleDetail = () => {
 
     return (
         <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 animate-fade-in relative z-10">
-            <SEO title={article.title} description={article.excerpt} image={article.image} url={`/article/${article.id}`} type="article" />
+            <SEO title={article.title} description={article.excerpt} image={article.image?.startsWith('http') ? article.image : `${BASE_URL}${article.image}`} url={`/article/${article.id}`} type="article" />
 
             <button
                 onClick={() => navigate('/articles')}
@@ -54,7 +54,7 @@ const ArticleDetail = () => {
                 <div className="h-72 md:h-[28rem] w-full relative group">
                     <div className="absolute inset-0 bg-stone-900/40 group-hover:bg-transparent transition-colors z-10"></div>
                     <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-transparent to-transparent opacity-80 z-10"></div>
-                    <img src={article.image?.startsWith('http') ? article.image : article.image} alt={article.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                    <img src={article.image?.startsWith('http') ? article.image : `${BASE_URL}${article.image}`} alt={article.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                     <div className="absolute top-8 left-8 bg-stone-950/80 backdrop-blur-md border border-white/10 text-sky-400 text-xs font-bold px-4 py-1.5 rounded-lg z-20 uppercase tracking-widest shadow-lg">
                         {article.category}
                     </div>
