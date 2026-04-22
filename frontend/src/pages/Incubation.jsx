@@ -19,7 +19,7 @@ const capitalize = (str) => {
 };
 
 const EMPTY_FORM = {
-    femaleId: '', maleId: '', breedingId: '',
+    femaleId: '', maleIds: [''], breedingId: '',
     incubationStart: '', pippingDate: '', hatchDate: '',
     temperature: '', actualHatched: '', deadCount: '', notes: ''
 };
@@ -54,7 +54,6 @@ export default function Incubation() {
         setLoading(false);
     }
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => { load(); }, []);
 
     function openNew() {
@@ -66,7 +65,9 @@ export default function Incubation() {
     function openEdit(r) {
         setEditingId(r.id);
         setForm({
-            femaleId: r.femaleId, maleId: r.maleId, breedingId: r.breedingId || '',
+            femaleId: r.femaleId, 
+            maleIds: r.males?.length > 0 ? r.males.map(m => m.id) : [''], 
+            breedingId: r.breedingId || '',
             incubationStart: r.incubationStart?.slice(0, 10) || '',
             pippingDate: r.pippingDate?.slice(0, 10) || '',
             hatchDate: r.hatchDate?.slice(0, 10) || '',
@@ -78,15 +79,39 @@ export default function Incubation() {
         setIsOpen(true);
     }
 
+    function addMaleSlot() {
+        setForm(prev => ({ ...prev, maleIds: [...prev.maleIds, ''] }));
+    }
+
+    function removeMaleSlot(index) {
+        if (form.maleIds.length === 1) return;
+        setForm(prev => ({ ...prev, maleIds: prev.maleIds.filter((_, i) => i !== index) }));
+    }
+
+    function updateMale(index, value) {
+        setForm(prev => {
+            const newMales = [...prev.maleIds];
+            newMales[index] = value;
+            return { ...prev, maleIds: newMales };
+        });
+    }
+
     async function handleSave(e) {
         e.preventDefault();
+        const validMaleIds = form.maleIds.filter(Boolean);
+        if (validMaleIds.length === 0) {
+            toast.error('กรุณาเลือกตัวผู้อย่างน้อย 1 ตัว');
+            return;
+        }
+
         setSaving(true);
         const url = editingId ? `${API}/incubation-records/${editingId}` : `${API}/incubation-records`;
         const method = editingId ? 'PUT' : 'POST';
-        const payload = { ...form };
+        const payload = { ...form, maleIds: validMaleIds };
         if (!payload.breedingId) delete payload.breedingId;
         const res = await fetch(url, { method, headers: headers(), body: JSON.stringify(payload) });
         if (res.ok) { setIsOpen(false); load(); }
+        else { toast.error('เกิดข้อผิดพลาดในการบันทึก'); }
         setSaving(false);
     }
 
@@ -112,8 +137,15 @@ export default function Incubation() {
         }
     }
 
+    const InfoRow = ({ label, value, color }) => (
+        <div>
+            <div style={{ fontSize: '0.65rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
+            <div style={{ color: color || '#f8fafc', fontSize: '0.85rem', fontWeight: 500 }}>{value}</div>
+        </div>
+    );
+
     return (
-        <div className="page">
+        <div className="page incubation-page">
             <div className="page-header">
                 <div>
                     <h1>🔥 ฟักไข่</h1>
@@ -131,93 +163,55 @@ export default function Incubation() {
                         </div>
                     )}
 
-                    {/* Desktop Table */}
-                    <div className="hidden md:block data-table-wrapper">
-                        <table className="data-table" style={{ width: '100%' }}>
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>ตัวเมีย (0.1)</th>
-                                    <th>ตัวผู้ (1.0)</th>
-                                    <th>เข้าเครื่องฟัก</th>
-                                    <th>เริ่มบุ๋ม</th>
-                                    <th>วันฟัก</th>
-                                    <th>อุณหภูมิ</th>
-                                    <th>ฟักจริง</th>
-                                    <th>เสีย</th>
-                                    <th>หมายเหตุ</th>
-                                    <th>จัดการ</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {records.map((r, i) => (
-                                    <tr key={r.id}>
-                                        <td>{i + 1}</td>
-                                        <td>
-                                            <button onClick={() => navigate(`/snakes/${r.femaleId}`)} style={{ color: '#fca5a5', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.85rem', textDecoration: 'underline' }}>
-                                                {capitalize(r.female?.name)} {r.female?.code && <span style={{ opacity: 0.5 }}>({r.female.code})</span>}
-                                            </button>
-                                        </td>
-                                        <td>
-                                            <button onClick={() => navigate(`/snakes/${r.maleId}`)} style={{ color: '#93c5fd', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.85rem', textDecoration: 'underline' }}>
-                                                {capitalize(r.male?.name)} {r.male?.code && <span style={{ opacity: 0.5 }}>({r.male.code})</span>}
-                                            </button>
-                                        </td>
-                                        <td>{fmtDate(r.incubationStart)}</td>
-                                        <td>{fmtDate(r.pippingDate)}</td>
-                                        <td>{fmtDate(r.hatchDate)}</td>
-                                        <td>{r.temperature ? `${r.temperature}°C` : '-'}</td>
-                                        <td style={{ color: '#6ee7b7', fontWeight: 600 }}>{r.actualHatched ?? '-'}</td>
-                                        <td style={{ color: '#f87171', fontWeight: 600 }}>{r.deadCount ?? '-'}</td>
-                                        <td style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.notes || '-'}</td>
-                                        <td>
-                                            <div className="action-btns" style={{ justifyContent: 'flex-start' }}>
-                                                <button className="btn btn-sm btn-outline" onClick={() => openEdit(r)}>แก้ไข</button>
-                                                <button className="btn btn-sm btn-danger" onClick={() => handleDelete(r)}>ลบ</button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    {/* Mobile Card View */}
-                    <div className="md:hidden mobile-card-list">
-                        {records.map((r, i) => (
-                            <div key={r.id} className="card" style={{ padding: '1rem' }}>
-                                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
-                                    <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 600 }}>#{i + 1}</span>
-                                    <button onClick={() => navigate(`/snakes/${r.femaleId}`)} style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 6, padding: '0.2rem 0.5rem', color: '#fca5a5', cursor: 'pointer', fontSize: '0.75rem' }}>
-                                        ♀ {capitalize(r.female?.name)}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(340px, 100%),1fr))', gap: '1rem' }}>
+                        {records.map(r => (
+                            <div key={r.id} className="card" style={{ padding: '1.25rem' }}>
+                                {/* Pairing header */}
+                                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap' }}>
+                                    <button onClick={() => navigate(`/snakes/${r.femaleId}`)} style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, padding: '0.3rem 0.75rem', color: '#fca5a5', cursor: 'pointer', fontSize: '0.8rem' }}>
+                                        ♀ {capitalize(r.female?.name)} {r.female?.code && <span style={{ opacity: 0.6 }}>({r.female.code})</span>}
                                     </button>
-                                    <span style={{ color: '#64748b' }}>×</span>
-                                    <button onClick={() => navigate(`/snakes/${r.maleId}`)} style={{ background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 6, padding: '0.2rem 0.5rem', color: '#93c5fd', cursor: 'pointer', fontSize: '0.75rem' }}>
-                                        ♂ {capitalize(r.male?.name)}
-                                    </button>
+                                    <span style={{ color: '#64748b', fontSize: '1.1rem' }}>×</span>
+                                    {r.males?.map((m, idx) => (
+                                        <button key={idx} onClick={() => navigate(`/snakes/${m.id}`)} style={{ background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 8, padding: '0.3rem 0.75rem', color: '#93c5fd', cursor: 'pointer', fontSize: '0.8rem' }}>
+                                            ♂ {capitalize(m.name)} {m.code && <span style={{ opacity: 0.6 }}>({m.code})</span>}
+                                        </button>
+                                    ))}
                                 </div>
 
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem', fontSize: '0.8rem', marginBottom: '0.75rem' }}>
-                                    <div><span style={{ color: '#64748b', fontSize: '0.65rem' }}>เข้าเครื่อง</span><br /><span style={{ color: '#f8fafc' }}>{fmtDate(r.incubationStart)}</span></div>
-                                    <div><span style={{ color: '#64748b', fontSize: '0.65rem' }}>เริ่มบุ๋ม</span><br /><span style={{ color: '#f8fafc' }}>{fmtDate(r.pippingDate)}</span></div>
-                                    <div><span style={{ color: '#64748b', fontSize: '0.65rem' }}>วันฟัก</span><br /><span style={{ color: '#f8fafc' }}>{fmtDate(r.hatchDate)}</span></div>
-                                    <div><span style={{ color: '#64748b', fontSize: '0.65rem' }}>อุณหภูมิ</span><br /><span style={{ color: '#f8fafc' }}>{r.temperature ? `${r.temperature}°C` : '-'}</span></div>
-                                </div>
-
-                                <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.75rem' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                                        <CheckCircle size={14} style={{ color: '#6ee7b7' }} />
-                                        <span style={{ color: '#6ee7b7', fontWeight: 600, fontSize: '0.85rem' }}>{r.actualHatched ?? '-'}</span>
-                                        <span style={{ color: '#64748b', fontSize: '0.7rem' }}>ฟักจริง</span>
-                                    </div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                                        <XCircle size={14} style={{ color: '#f87171' }} />
-                                        <span style={{ color: '#f87171', fontWeight: 600, fontSize: '0.85rem' }}>{r.deadCount ?? '-'}</span>
-                                        <span style={{ color: '#64748b', fontSize: '0.7rem' }}>เสีย</span>
+                                {/* Incubation Details */}
+                                <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: 10, padding: '0.75rem', marginBottom: '0.75rem', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                    <div style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 600, marginBottom: '0.5rem', textTransform: 'uppercase' }}>📅 รายละเอียดการฟัก</div>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
+                                        <InfoRow label="เข้าเครื่องฟัก" value={fmtDate(r.incubationStart)} />
+                                        <InfoRow label="อุณหภูมิ" value={r.temperature ? `${r.temperature}°C` : '-'} color="#fbbf24" />
+                                        <InfoRow label="วันเริ่มบุ๋ม" value={fmtDate(r.pippingDate)} />
+                                        <InfoRow label="วันฟักจริง" value={fmtDate(r.hatchDate)} />
                                     </div>
                                 </div>
 
-                                {r.notes && <p style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.5rem' }}>{r.notes}</p>}
+                                {/* Results section */}
+                                <div style={{ background: 'rgba(110,231,183,0.05)', borderRadius: 10, padding: '0.75rem', marginBottom: '0.75rem', border: '1px solid rgba(110,231,183,0.1)' }}>
+                                    <div style={{ fontSize: '0.7rem', color: '#6ee7b7', fontWeight: 600, marginBottom: '0.5rem', textTransform: 'uppercase' }}>🐍 ผลการฟัก</div>
+                                    <div style={{ display: 'flex', gap: '2rem' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                            <CheckCircle size={16} style={{ color: '#6ee7b7' }} />
+                                            <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#6ee7b7' }}>{r.actualHatched ?? 0}</div>
+                                            <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>ฟักจริง</div>
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                            <XCircle size={16} style={{ color: '#f87171' }} />
+                                            <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#f87171' }}>{r.deadCount ?? 0}</div>
+                                            <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>เสีย</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {r.notes && (
+                                    <div style={{ padding: '0.5rem 0.75rem', background: 'rgba(255,255,255,0.03)', borderRadius: 8, marginBottom: '0.75rem', fontSize: '0.8rem', color: '#94a3b8' }}>
+                                        📝 {r.notes}
+                                    </div>
+                                )}
 
                                 <div className="action-btns">
                                     <button className="btn btn-sm btn-outline" onClick={() => openEdit(r)}>แก้ไข</button>
@@ -240,30 +234,50 @@ export default function Incubation() {
                         <form onSubmit={handleSave} style={{ padding: '1.25rem 1.5rem', overflowY: 'auto', maxHeight: 'calc(100vh - 10rem)' }}>
                             <div className="form-grid">
                                 {!editingId && <>
-                                    <div className="form-group">
+                                    <div className="form-group" style={{ gridColumn: '1/-1' }}>
                                         <label>ตัวเมีย ♀ *</label>
                                         <select value={form.femaleId} onChange={e => setForm({ ...form, femaleId: e.target.value })} required>
                                             <option value="">-- เลือก --</option>
                                             {femaleSnakes.map(s => <option key={s.id} value={s.id}>{s.code ? `${s.code} - ` : ''}{s.name}</option>)}
-                                            {femaleSnakes.length === 0 && snakes.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                                         </select>
                                     </div>
-                                    <div className="form-group">
-                                        <label>ตัวผู้ ♂ *</label>
-                                        <select value={form.maleId} onChange={e => setForm({ ...form, maleId: e.target.value })} required>
-                                            <option value="">-- เลือก --</option>
-                                            {maleSnakes.map(s => <option key={s.id} value={s.id}>{s.code ? `${s.code} - ` : ''}{s.name}</option>)}
-                                            {maleSnakes.length === 0 && snakes.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                                        </select>
+                                    <div className="form-group" style={{ gridColumn: '1/-1' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                                            <label style={{ marginBottom: 0 }}>ตัวผู้ ♂ *</label>
+                                            <button type="button" className="btn btn-sm btn-outline" onClick={addMaleSlot} style={{ padding: '0.1rem 0.4rem', fontSize: '0.7rem' }}>+ เพิ่มตัวผู้</button>
+                                        </div>
+                                        {form.maleIds.map((mId, idx) => (
+                                            <div key={idx} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                                                <select value={mId} onChange={e => updateMale(idx, e.target.value)} required style={{ flex: 1 }}>
+                                                    <option value="">-- เลือกตัวผู้ --</option>
+                                                    {maleSnakes.map(s => <option key={s.id} value={s.id}>{s.code ? `${s.code} - ` : ''}{s.name}</option>)}
+                                                </select>
+                                                {form.maleIds.length > 1 && (
+                                                    <button type="button" onClick={() => removeMaleSlot(idx)} style={{ background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.2)', color: '#f87171', borderRadius: 8, padding: '0 0.75rem', cursor: 'pointer' }}>✕</button>
+                                                )}
+                                            </div>
+                                        ))}
                                     </div>
                                     {breedingRecords.length > 0 && (
                                         <div className="form-group" style={{ gridColumn: '1/-1' }}>
                                             <label>เชื่อมโยงกับบันทึกผสมพันธุ์ (ถ้ามี)</label>
-                                            <select value={form.breedingId} onChange={e => setForm({ ...form, breedingId: e.target.value })}>
+                                            <select value={form.breedingId} onChange={e => {
+                                                const selectedId = e.target.value;
+                                                setForm(prev => {
+                                                    const newState = { ...prev, breedingId: selectedId };
+                                                    if (selectedId) {
+                                                        const breedingRec = breedingRecords.find(br => br.id == selectedId);
+                                                        if (breedingRec && breedingRec.males) {
+                                                            newState.maleIds = breedingRec.males.map(m => String(m.maleId));
+                                                        }
+                                                    }
+                                                    return newState;
+                                                });
+                                            }}>
                                                 <option value="">-- ไม่เชื่อมโยง --</option>
-                                                {breedingRecords.map(br => (
+                                                {breedingRecords.filter(br => !form.femaleId || String(br.femaleId) === String(form.femaleId)).map(br => (
                                                     <option key={br.id} value={br.id}>
-                                                        {br.female?.name} × {br.male?.name} ({fmtDate(br.pairedDate)})
+                                                        {br.female?.name} × {br.males?.map(m => m.male?.name).join(', ')} ({fmtDate(br.males?.[0]?.pairedDate || br.createdAt)})
                                                     </option>
                                                 ))}
                                             </select>
@@ -276,16 +290,16 @@ export default function Incubation() {
                                     <input type="date" value={form.incubationStart} onChange={e => setForm({ ...form, incubationStart: e.target.value })} />
                                 </div>
                                 <div className="form-group">
+                                    <label>อุณหภูมิ (°C)</label>
+                                    <input type="number" step="0.1" min="0" value={form.temperature} onChange={e => setForm({ ...form, temperature: e.target.value })} placeholder="เช่น 31.5" />
+                                </div>
+                                <div className="form-group">
                                     <label>วันเริ่มบุ๋ม (Pipping)</label>
                                     <input type="date" value={form.pippingDate} onChange={e => setForm({ ...form, pippingDate: e.target.value })} />
                                 </div>
                                 <div className="form-group">
                                     <label>วันฟัก (Hatch)</label>
                                     <input type="date" value={form.hatchDate} onChange={e => setForm({ ...form, hatchDate: e.target.value })} />
-                                </div>
-                                <div className="form-group">
-                                    <label>อุณหภูมิ (°C)</label>
-                                    <input type="number" step="0.1" min="0" value={form.temperature} onChange={e => setForm({ ...form, temperature: e.target.value })} placeholder="เช่น 31.5" />
                                 </div>
                                 <div className="form-group">
                                     <label>จำนวนฟักจริง</label>
@@ -309,14 +323,13 @@ export default function Incubation() {
                 </div>,
                 document.body
             )}
-            {/* Confirm Modal */}
             <ConfirmModal
                 isOpen={!!itemToDelete}
                 onClose={() => setItemToDelete(null)}
                 onConfirm={confirmDelete}
                 title="ยืนยันการลบบันทึก"
                 message="คุณต้องการลบบันทึกการฟักไข่นี้ใช่หรือไม่?"
-                itemName={itemToDelete ? `${capitalize(itemToDelete.female?.name)} × ${capitalize(itemToDelete.male?.name)}` : ''}
+                itemName={itemToDelete ? `${capitalize(itemToDelete.female?.name)}` : ''}
             />
         </div>
     );

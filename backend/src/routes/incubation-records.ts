@@ -14,8 +14,8 @@ router.get('/', async (req: Request, res: Response) => {
             where: breedingId ? { breedingId: Number(breedingId) } : undefined,
             include: {
                 female: { select: { id: true, name: true, code: true, morph: true } },
-                male: { select: { id: true, name: true, code: true, morph: true } },
-                breeding: { select: { id: true, pairedDate: true, clutchDate: true, eggCount: true } },
+                males: { select: { id: true, name: true, code: true, morph: true } },
+                breeding: { select: { id: true, clutchDate: true, eggCount: true } },
             },
             orderBy: { createdAt: 'desc' },
         });
@@ -30,20 +30,20 @@ router.get('/', async (req: Request, res: Response) => {
 router.post('/', async (req: Request, res: Response) => {
     const prisma: PrismaClient = (req as any).prisma;
     const {
-        breedingId, femaleId, maleId,
+        breedingId, femaleId, maleIds,
         incubationStart, pippingDate, hatchDate,
         temperature, actualHatched, deadCount, notes
     } = req.body;
 
-    if (!femaleId || !maleId) {
-        return res.status(400).json({ error: 'กรุณาระบุ femaleId และ maleId' });
+    if (!femaleId || !maleIds || !Array.isArray(maleIds) || maleIds.length === 0) {
+        return res.status(400).json({ error: 'กรุณาระบุ femaleId และ maleIds (อย่างน้อย 1 ตัว)' });
     }
     try {
         const record = await prisma.incubationRecord.create({
             data: {
                 breedingId: breedingId ? Number(breedingId) : undefined,
                 femaleId: Number(femaleId),
-                maleId: Number(maleId),
+                males: { connect: maleIds.map((id: any) => ({ id: Number(id) })) },
                 incubationStart: incubationStart ? new Date(incubationStart) : undefined,
                 pippingDate: pippingDate ? new Date(pippingDate) : undefined,
                 hatchDate: hatchDate ? new Date(hatchDate) : undefined,
@@ -54,7 +54,7 @@ router.post('/', async (req: Request, res: Response) => {
             },
             include: {
                 female: { select: { id: true, name: true, code: true, morph: true } },
-                male: { select: { id: true, name: true, code: true, morph: true } },
+                males: { select: { id: true, name: true, code: true, morph: true } },
             },
         });
         return res.status(201).json(record);
@@ -68,13 +68,16 @@ router.post('/', async (req: Request, res: Response) => {
 router.put('/:id', async (req: Request, res: Response) => {
     const prisma: PrismaClient = (req as any).prisma;
     const {
-        incubationStart, pippingDate, hatchDate,
+        maleIds, incubationStart, pippingDate, hatchDate,
         temperature, actualHatched, deadCount, notes
     } = req.body;
     try {
         const record = await prisma.incubationRecord.update({
             where: { id: Number(req.params.id) },
             data: {
+                ...(maleIds && Array.isArray(maleIds) && {
+                    males: { set: maleIds.map((id: any) => ({ id: Number(id) })) }
+                }),
                 incubationStart: incubationStart ? new Date(incubationStart) : incubationStart === null ? null : undefined,
                 pippingDate: pippingDate ? new Date(pippingDate) : pippingDate === null ? null : undefined,
                 hatchDate: hatchDate ? new Date(hatchDate) : hatchDate === null ? null : undefined,
@@ -85,7 +88,7 @@ router.put('/:id', async (req: Request, res: Response) => {
             },
             include: {
                 female: { select: { id: true, name: true, code: true, morph: true } },
-                male: { select: { id: true, name: true, code: true, morph: true } },
+                males: { select: { id: true, name: true, code: true, morph: true } },
             },
         });
         return res.json(record);

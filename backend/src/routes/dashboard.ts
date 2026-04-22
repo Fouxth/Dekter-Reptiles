@@ -75,7 +75,7 @@ router.get('/stats', authenticate, requireAdmin, async (req: Request, res: Respo
                 }),
                 // Breeding Summary
                 prisma.breedingRecord.findMany({
-                    include: { female: { select: { name: true } }, male: { select: { name: true } } }
+                    include: { female: { select: { name: true } }, males: { include: { male: { select: { name: true } } } } }
                 }),
                 // Daily Tasks (Health Records for today)
                 prisma.healthRecord.findMany({

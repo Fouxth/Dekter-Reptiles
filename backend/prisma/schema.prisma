@@ -59,9 +59,9 @@ model Snake {
   healthRecords      HealthRecord[]
   feedingLogs        FeedingLog[]
   breedingAsFemale   BreedingRecord[]   @relation("FemalePairing")
-  breedingAsMale     BreedingRecord[]   @relation("MalePairing")
+  breedingAsMale     BreedingMale[]     @relation("MalePairing")
   incubationAsFemale IncubationRecord[] @relation("IncubationFemale")
-  incubationAsMale   IncubationRecord[] @relation("IncubationMale")
+  incubationAsMale   IncubationRecord[] @relation("IncubationMales")
   stockLogs          StockLog[]
 }
 
@@ -149,16 +149,23 @@ model FeedingLog {
   createdAt DateTime @default(now())
 }
 
+model BreedingMale {
+  id               Int      @id @default(autoincrement())
+  breedingRecordId Int
+  breedingRecord   BreedingRecord @relation(fields: [breedingRecordId], references: [id], onDelete: Cascade)
+  maleId           Int
+  male             Snake    @relation("MalePairing", fields: [maleId], references: [id])
+  pairedDate       DateTime // วันเข้า
+  lockDate         DateTime? // วัน Lock
+  separateDate     DateTime? // วันแยก (ออก)
+  daysCohabited    Int? // จำนวนวันที่อยู่ด้วยกัน
+  isLockSuccessful Boolean  @default(false) // เป็นช็อตที่ถูก (Lock)
+}
+
 model BreedingRecord {
   id             Int                @id @default(autoincrement())
   femaleId       Int
   female         Snake              @relation("FemalePairing", fields: [femaleId], references: [id])
-  maleId         Int
-  male           Snake              @relation("MalePairing", fields: [maleId], references: [id])
-  pairedDate     DateTime // วันเข้า (เอาเข้าด้วยกัน)
-  lockDate       DateTime? // วัน Lock
-  separateDate   DateTime? // วันแยก (ออก)
-  daysCohabited  Int? // จำนวนวันที่อยู่ด้วยกัน
   ovulationDate  DateTime? // วันคลกไข่ / Ovulation
   preLayShed     Boolean? // ลอกคราบก่อนออกไข่ (Pre-Lay)
   clutchDate     DateTime? // วันออกไข่ / คลอดลูก
@@ -169,6 +176,7 @@ model BreedingRecord {
   notes          String?
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
+  males          BreedingMale[]
   incubation     IncubationRecord[]
 }
 
@@ -178,8 +186,7 @@ model IncubationRecord {
   breeding        BreedingRecord? @relation(fields: [breedingId], references: [id])
   femaleId        Int
   female          Snake           @relation("IncubationFemale", fields: [femaleId], references: [id])
-  maleId          Int
-  male            Snake           @relation("IncubationMale", fields: [maleId], references: [id])
+  males           Snake[]         @relation("IncubationMales")
   incubationStart DateTime? // วันเข้าเครื่องฟัก
   pippingDate     DateTime? // วันเริ่มบุ๋ม
   hatchDate       DateTime? // วันฟัก

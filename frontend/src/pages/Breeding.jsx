@@ -17,10 +17,11 @@ const capitalize = (str) => {
     return str.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
 };
 
+const EMPTY_MALE = { maleId: '', pairedDate: new Date().toISOString().slice(0, 10), lockDate: '', separateDate: '', daysCohabited: '', isLockSuccessful: false };
+
 const EMPTY_FORM = {
-    femaleId: '', maleId: '',
-    pairedDate: new Date().toISOString().slice(0, 10),
-    lockDate: '', separateDate: '', daysCohabited: '',
+    femaleId: '', 
+    males: [{ ...EMPTY_MALE }],
     ovulationDate: '', preLayShed: false,
     clutchDate: '', eggCount: '', goodEggs: '', badEggs: '',
     offspringCount: '', notes: ''
@@ -65,11 +66,15 @@ export default function Breeding() {
     function openEdit(r) {
         setEditingId(r.id);
         setForm({
-            femaleId: r.femaleId, maleId: r.maleId,
-            pairedDate: r.pairedDate?.slice(0, 10) || '',
-            lockDate: r.lockDate?.slice(0, 10) || '',
-            separateDate: r.separateDate?.slice(0, 10) || '',
-            daysCohabited: r.daysCohabited ?? '',
+            femaleId: r.femaleId, 
+            males: r.males?.length > 0 ? r.males.map(m => ({
+                maleId: m.maleId,
+                pairedDate: m.pairedDate?.slice(0, 10) || '',
+                lockDate: m.lockDate?.slice(0, 10) || '',
+                separateDate: m.separateDate?.slice(0, 10) || '',
+                daysCohabited: m.daysCohabited ?? '',
+                isLockSuccessful: m.isLockSuccessful || false
+            })) : [{ ...EMPTY_MALE }],
             ovulationDate: r.ovulationDate?.slice(0, 10) || '',
             preLayShed: r.preLayShed || false,
             clutchDate: r.clutchDate?.slice(0, 10) || '',
@@ -82,13 +87,39 @@ export default function Breeding() {
         setIsOpen(true);
     }
 
+    function addMaleSlot() {
+        setForm(prev => ({ ...prev, males: [...prev.males, { ...EMPTY_MALE }] }));
+    }
+
+    function removeMaleSlot(index) {
+        if (form.males.length === 1) return;
+        setForm(prev => ({ ...prev, males: prev.males.filter((_, i) => i !== index) }));
+    }
+
+    function updateMale(index, field, value) {
+        setForm(prev => {
+            const newMales = [...prev.males];
+            newMales[index] = { ...newMales[index], [field]: value };
+            return { ...prev, males: newMales };
+        });
+    }
+
     async function handleSave(e) {
         e.preventDefault();
+        
+        // Validation
+        const emptyMales = form.males.filter(m => !m.maleId);
+        if (emptyMales.length > 0) {
+            toast.error('กรุณาเลือกตัวผู้ให้ครบทุกช่อง');
+            return;
+        }
+
         setSaving(true);
         const url = editingId ? `${API}/breeding-records/${editingId}` : `${API}/breeding-records`;
         const method = editingId ? 'PUT' : 'POST';
         const res = await fetch(url, { method, headers: headers(), body: JSON.stringify(form) });
         if (res.ok) { setIsOpen(false); load(); }
+        else { toast.error('เกิดข้อผิดพลาดในการบันทึก'); }
         setSaving(false);
     }
 
@@ -148,41 +179,51 @@ export default function Breeding() {
                                         ♀ {capitalize(r.female?.name)} {r.female?.code && <span style={{ opacity: 0.6 }}>({r.female.code})</span>}
                                     </button>
                                     <span style={{ color: '#64748b', fontSize: '1.1rem' }}>×</span>
-                                    <button onClick={() => navigate(`/snakes/${r.maleId}`)} style={{ background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 8, padding: '0.3rem 0.75rem', color: '#93c5fd', cursor: 'pointer', fontSize: '0.8rem' }}>
-                                        ♂ {capitalize(r.male?.name)} {r.male?.code && <span style={{ opacity: 0.6 }}>({r.male.code})</span>}
-                                    </button>
+                                    {r.males?.map((m, idx) => (
+                                        <button key={idx} onClick={() => navigate(`/snakes/${m.maleId}`)} style={{ background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 8, padding: '0.3rem 0.75rem', color: '#93c5fd', cursor: 'pointer', fontSize: '0.8rem' }}>
+                                            ♂ {capitalize(m.male?.name)} {m.male?.code && <span style={{ opacity: 0.6 }}>({m.male.code})</span>}
+                                        </button>
+                                    ))}
                                 </div>
 
                                 {/* Timeline section - ก่อนผสม */}
                                 <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: 10, padding: '0.75rem', marginBottom: '0.75rem', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                    <div style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 600, marginBottom: '0.5rem', textTransform: 'uppercase' }}>📅 ไทม์ไลน์</div>
-                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
-                                        <InfoRow label="วันเข้า (Intro)" value={fmtDate(r.pairedDate)} />
-                                        <InfoRow label="วัน Lock" value={fmtDate(r.lockDate)} />
-                                        <InfoRow label="วันแยก (Out)" value={fmtDate(r.separateDate)} />
-                                        <InfoRow label="อยู่ด้วยกัน" value={r.daysCohabited ? `${r.daysCohabited} วัน` : '-'} />
-                                        <InfoRow label="Ovulation" value={fmtDate(r.ovulationDate)} />
-                                        <InfoRow label="Pre-Lay Shed" value={r.preLayShed ? '✅ ลอกแล้ว' : '-'} color={r.preLayShed ? '#6ee7b7' : undefined} />
-                                    </div>
+                                    <div style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 600, marginBottom: '0.5rem', textTransform: 'uppercase' }}>📅 พ่อพันธุ์ (ก่อนผสม)</div>
+                                    {r.males?.map((m, i) => (
+                                        <div key={i} style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem', marginBottom: '0.5rem', paddingBottom: '0.5rem', borderBottom: i < r.males.length - 1 ? '1px dashed rgba(255,255,255,0.1)' : 'none' }}>
+                                            <div style={{ gridColumn: '1/-1', color: '#93c5fd', fontSize: '0.8rem', fontWeight: 500 }}>
+                                                ♂ {capitalize(m.male?.name)} {m.isLockSuccessful && <span style={{ color: '#6ee7b7' }}>✅ (Lock)</span>}
+                                            </div>
+                                            <InfoRow label="วันเข้า (Intro)" value={fmtDate(m.pairedDate)} />
+                                            <InfoRow label="วัน Lock" value={fmtDate(m.lockDate)} />
+                                            <InfoRow label="วันแยก (Out)" value={fmtDate(m.separateDate)} />
+                                            <InfoRow label="อยู่ด้วยกัน" value={m.daysCohabited ? `${m.daysCohabited} วัน` : '-'} />
+                                        </div>
+                                    ))}
                                 </div>
 
                                 {/* Egg section - หลังผสม */}
-                                {(r.clutchDate || r.eggCount || r.offspringCount) && (
-                                    <div style={{ background: 'rgba(234,179,8,0.05)', borderRadius: 10, padding: '0.75rem', marginBottom: '0.75rem', border: '1px solid rgba(234,179,8,0.1)' }}>
-                                        <div style={{ fontSize: '0.7rem', color: '#eab308', fontWeight: 600, marginBottom: '0.5rem', textTransform: 'uppercase' }}>🥚 ข้อมูลไข่</div>
-                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
-                                            <InfoRow label="วันออกไข่" value={fmtDate(r.clutchDate)} />
-                                            <InfoRow label="จำนวนไข่" value={r.eggCount ?? '-'} />
-                                            <InfoRow label="ไข่ดี" value={r.goodEggs ?? '-'} color="#6ee7b7" />
-                                            <InfoRow label="ไข่เสีย" value={r.badEggs ?? '-'} color="#f87171" />
-                                            {r.offspringCount != null && <InfoRow label="จำนวนลูก" value={`🐍 ${r.offspringCount} ตัว`} color="#6ee7b7" />}
-                                        </div>
+                                <div style={{ background: 'rgba(234,179,8,0.05)', borderRadius: 10, padding: '0.75rem', marginBottom: '0.75rem', border: '1px solid rgba(234,179,8,0.1)' }}>
+                                    <div style={{ fontSize: '0.7rem', color: '#eab308', fontWeight: 600, marginBottom: '0.5rem', textTransform: 'uppercase' }}>🥚 หลังผสม / ข้อมูลไข่</div>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
+                                        <InfoRow label="Ovulation" value={fmtDate(r.ovulationDate)} />
+                                        <InfoRow label="Pre-Lay Shed" value={r.preLayShed ? '✅ ลอกแล้ว' : '-'} color={r.preLayShed ? '#6ee7b7' : undefined} />
+                                        {(r.clutchDate || r.eggCount || r.offspringCount) && (
+                                            <>
+                                                <div style={{ gridColumn: '1/-1', height: 1, background: 'rgba(234,179,8,0.1)', margin: '0.25rem 0' }} />
+                                                <InfoRow label="วันออกไข่" value={fmtDate(r.clutchDate)} />
+                                                <InfoRow label="จำนวนไข่" value={r.eggCount ?? '-'} />
+                                                <InfoRow label="ไข่ดี" value={r.goodEggs ?? '-'} color="#6ee7b7" />
+                                                <InfoRow label="ไข่เสีย" value={r.badEggs ?? '-'} color="#f87171" />
+                                                {r.offspringCount != null && <InfoRow label="จำนวนลูก" value={`🐍 ${r.offspringCount} ตัว`} color="#6ee7b7" />}
+                                            </>
+                                        )}
                                     </div>
-                                )}
+                                </div>
 
-                                {(r.female?.genetics || r.male?.genetics) && (
+                                {(r.female?.genetics || r.males?.some(m => m.male?.genetics)) && (
                                     <div style={{ background: 'rgba(139,92,246,0.08)', borderRadius: 8, padding: '0.5rem 0.75rem', marginBottom: '0.5rem', fontSize: '0.75rem', color: '#c4b5fd' }}>
-                                        🧬 {[capitalize(r.female?.genetics), capitalize(r.male?.genetics)].filter(Boolean).join(' × ')}
+                                        🧬 {capitalize(r.female?.genetics) || '?'} × {r.males?.map(m => capitalize(m.male?.genetics) || '?').join(', ')}
                                     </div>
                                 )}
 
@@ -209,48 +250,69 @@ export default function Breeding() {
                         <form onSubmit={handleSave} style={{ padding: '1.25rem 1.5rem', overflowY: 'auto', maxHeight: 'calc(100vh - 10rem)' }}>
                             <div className="form-grid">
                                 {/* Pairing Selection */}
-                                {!editingId && <>
-                                    <div className="form-group">
-                                        <label>ตัวเมีย ♀ (0.1) *</label>
-                                        <select value={form.femaleId} onChange={e => setForm({ ...form, femaleId: e.target.value })} required>
-                                            <option value="">-- เลือกตัวเมีย --</option>
-                                            {femaleSnakes.map(s => <option key={s.id} value={s.id}>{s.code ? `${s.code} - ` : ''}{s.name} {s.morph ? `(${s.morph})` : ''}</option>)}
-                                            {femaleSnakes.length === 0 && snakes.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                                        </select>
-                                    </div>
-                                    <div className="form-group">
-                                        <label>ตัวผู้ ♂ (1.0) *</label>
-                                        <select value={form.maleId} onChange={e => setForm({ ...form, maleId: e.target.value })} required>
-                                            <option value="">-- เลือกตัวผู้ --</option>
-                                            {maleSnakes.map(s => <option key={s.id} value={s.id}>{s.code ? `${s.code} - ` : ''}{s.name} {s.morph ? `(${s.morph})` : ''}</option>)}
-                                            {maleSnakes.length === 0 && snakes.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                                        </select>
-                                    </div>
-                                </>}
-
-                                {/* Timeline - ก่อนผสม */}
                                 <div className="form-group" style={{ gridColumn: '1/-1' }}>
-                                    <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#94a3b8', marginBottom: '0.5rem', textTransform: 'uppercase' }}>📅 ก่อนผสม</div>
+                                    <label>ตัวเมีย ♀ (0.1) *</label>
+                                    <select value={form.femaleId} onChange={e => setForm({ ...form, femaleId: e.target.value })} required disabled={!!editingId}>
+                                        <option value="">-- เลือกตัวเมีย --</option>
+                                        {femaleSnakes.map(s => <option key={s.id} value={s.id}>{s.code ? `${s.code} - ` : ''}{s.name} {s.morph ? `(${s.morph})` : ''}</option>)}
+                                        {femaleSnakes.length === 0 && snakes.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                    </select>
                                 </div>
-                                <div className="form-group">
-                                    <label>วันเข้า (Intro) *</label>
-                                    <input type="date" value={form.pairedDate} onChange={e => setForm({ ...form, pairedDate: e.target.value })} required />
-                                </div>
-                                <div className="form-group">
-                                    <label>วัน Lock</label>
-                                    <input type="date" value={form.lockDate} onChange={e => setForm({ ...form, lockDate: e.target.value })} />
-                                </div>
-                                <div className="form-group">
-                                    <label>วันแยก (ออก)</label>
-                                    <input type="date" value={form.separateDate} onChange={e => setForm({ ...form, separateDate: e.target.value })} />
-                                </div>
-                                <div className="form-group">
-                                    <label>อยู่ด้วยกัน (วัน)</label>
-                                    <input type="number" min="0" value={form.daysCohabited} onChange={e => setForm({ ...form, daysCohabited: e.target.value })} placeholder="จำนวนวัน" />
+
+                                {/* Timeline - ก่อนผสม (Multiple Males) */}
+                                <div className="form-group" style={{ gridColumn: '1/-1', marginTop: '0.5rem' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                                        <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase' }}>📅 พ่อพันธุ์ (ก่อนผสม)</div>
+                                        <button type="button" className="btn btn-sm btn-outline" onClick={addMaleSlot} style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }}>+ เพิ่มพ่อพันธุ์</button>
+                                    </div>
+                                    
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                        {form.males.map((maleSlot, idx) => (
+                                            <div key={idx} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '1rem', position: 'relative' }}>
+                                                {form.males.length > 1 && (
+                                                    <button type="button" onClick={() => removeMaleSlot(idx)} style={{ position: 'absolute', top: '0.5rem', right: '0.5rem', background: 'transparent', border: 'none', color: '#f87171', cursor: 'pointer', fontSize: '1rem' }}>✕</button>
+                                                )}
+                                                
+                                                <div className="form-group" style={{ marginBottom: '0.75rem' }}>
+                                                    <label>ตัวผู้ ♂ (1.0) *</label>
+                                                    <select value={maleSlot.maleId} onChange={e => updateMale(idx, 'maleId', e.target.value)} required>
+                                                        <option value="">-- เลือกตัวผู้ --</option>
+                                                        {maleSnakes.map(s => <option key={s.id} value={s.id}>{s.code ? `${s.code} - ` : ''}{s.name} {s.morph ? `(${s.morph})` : ''}</option>)}
+                                                        {maleSnakes.length === 0 && snakes.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                                    </select>
+                                                </div>
+
+                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                                                    <div className="form-group" style={{ marginBottom: 0 }}>
+                                                        <label>วันเข้า (Intro) *</label>
+                                                        <input type="date" value={maleSlot.pairedDate} onChange={e => updateMale(idx, 'pairedDate', e.target.value)} required />
+                                                    </div>
+                                                    <div className="form-group" style={{ marginBottom: 0 }}>
+                                                        <label>วันออก (Out)</label>
+                                                        <input type="date" value={maleSlot.separateDate} onChange={e => updateMale(idx, 'separateDate', e.target.value)} />
+                                                    </div>
+                                                    <div className="form-group" style={{ marginBottom: 0, gridColumn: '1/-1', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                                        <div style={{ flex: 1 }}>
+                                                            <label>วัน Lock</label>
+                                                            <input type="date" value={maleSlot.lockDate} onChange={e => updateMale(idx, 'lockDate', e.target.value)} />
+                                                        </div>
+                                                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '1.5rem', flex: 1, cursor: 'pointer' }}>
+                                                            <input type="checkbox" checked={maleSlot.isLockSuccessful} onChange={e => updateMale(idx, 'isLockSuccessful', e.target.checked)} style={{ width: 16, height: 16 }} />
+                                                            ✅ เป็นช็อตที่ถูก (Lock)
+                                                        </label>
+                                                    </div>
+                                                    <div className="form-group" style={{ marginBottom: 0, gridColumn: '1/-1' }}>
+                                                        <label>จำนวนวันที่อยู่ด้วยกัน</label>
+                                                        <input type="number" min="0" value={maleSlot.daysCohabited} onChange={e => updateMale(idx, 'daysCohabited', e.target.value)} placeholder="0" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
 
                                 {/* หลังผสม */}
-                                <div className="form-group" style={{ gridColumn: '1/-1' }}>
+                                <div className="form-group" style={{ gridColumn: '1/-1', marginTop: '1rem' }}>
                                     <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#eab308', marginBottom: '0.5rem', textTransform: 'uppercase' }}>🥚 หลังผสม</div>
                                 </div>
                                 <div className="form-group">
@@ -300,7 +362,7 @@ export default function Breeding() {
                 onConfirm={confirmDelete}
                 title="ยืนยันการลบบันทึก"
                 message="คุณต้องการลบบันทึกการผสมพันธุ์นี้ใช่หรือไม่?"
-                itemName={itemToDelete ? `${capitalize(itemToDelete.female?.name)} × ${capitalize(itemToDelete.male?.name)}` : ''}
+                itemName={itemToDelete ? `${capitalize(itemToDelete.female?.name)}` : ''}
             />
         </div>
     );

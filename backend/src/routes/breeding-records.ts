@@ -12,13 +12,13 @@ router.get('/', async (req: Request, res: Response) => {
     try {
         const records = await prisma.breedingRecord.findMany({
             where: snakeId ? {
-                OR: [{ femaleId: Number(snakeId) }, { maleId: Number(snakeId) }],
+                OR: [{ femaleId: Number(snakeId) }, { males: { some: { maleId: Number(snakeId) } } }],
             } : undefined,
             include: {
                 female: { select: { id: true, name: true, code: true, morph: true, genetics: true } },
-                male: { select: { id: true, name: true, code: true, morph: true, genetics: true } },
+                males: { include: { male: { select: { id: true, name: true, code: true, morph: true, genetics: true } } } },
             },
-            orderBy: { pairedDate: 'desc' },
+            orderBy: { createdAt: 'desc' },
         });
         return res.json(records);
     } catch (err) {
@@ -31,23 +31,27 @@ router.get('/', async (req: Request, res: Response) => {
 router.post('/', async (req: Request, res: Response) => {
     const prisma: PrismaClient = (req as any).prisma;
     const {
-        femaleId, maleId, pairedDate, lockDate, separateDate,
-        daysCohabited, ovulationDate, preLayShed, clutchDate,
+        femaleId, males, ovulationDate, preLayShed, clutchDate,
         eggCount, goodEggs, badEggs, offspringCount, notes
     } = req.body;
 
-    if (!femaleId || !maleId || !pairedDate) {
-        return res.status(400).json({ error: 'กรุณาระบุ femaleId, maleId และ pairedDate' });
+    if (!femaleId || !males || !Array.isArray(males) || males.length === 0) {
+        return res.status(400).json({ error: 'กรุณาระบุ femaleId และ males (อย่างน้อย 1 ตัว)' });
     }
     try {
         const record = await prisma.breedingRecord.create({
             data: {
                 femaleId: Number(femaleId),
-                maleId: Number(maleId),
-                pairedDate: new Date(pairedDate),
-                lockDate: lockDate ? new Date(lockDate) : undefined,
-                separateDate: separateDate ? new Date(separateDate) : undefined,
-                daysCohabited: daysCohabited ? Number(daysCohabited) : undefined,
+                males: {
+                    create: males.map((m: any) => ({
+                        maleId: Number(m.maleId),
+                        pairedDate: new Date(m.pairedDate),
+                        lockDate: m.lockDate ? new Date(m.lockDate) : undefined,
+                        separateDate: m.separateDate ? new Date(m.separateDate) : undefined,
+                        daysCohabited: m.daysCohabited ? Number(m.daysCohabited) : undefined,
+                        isLockSuccessful: Boolean(m.isLockSuccessful),
+                    }))
+                },
                 ovulationDate: ovulationDate ? new Date(ovulationDate) : undefined,
                 preLayShed: preLayShed !== undefined ? Boolean(preLayShed) : undefined,
                 clutchDate: clutchDate ? new Date(clutchDate) : undefined,
@@ -59,7 +63,7 @@ router.post('/', async (req: Request, res: Response) => {
             },
             include: {
                 female: { select: { id: true, name: true, code: true, morph: true, genetics: true } },
-                male: { select: { id: true, name: true, code: true, morph: true, genetics: true } },
+                males: { include: { male: { select: { id: true, name: true, code: true, morph: true, genetics: true } } } },
             },
         });
         return res.status(201).json(record);
@@ -73,20 +77,29 @@ router.post('/', async (req: Request, res: Response) => {
 router.put('/:id', async (req: Request, res: Response) => {
     const prisma: PrismaClient = (req as any).prisma;
     const {
-        femaleId, maleId, pairedDate, lockDate, separateDate,
-        daysCohabited, ovulationDate, preLayShed, clutchDate,
+        femaleId, males, ovulationDate, preLayShed, clutchDate,
         eggCount, goodEggs, badEggs, offspringCount, notes
     } = req.body;
     try {
+        if (males && Array.isArray(males)) {
+            await prisma.breedingMale.deleteMany({ where: { breedingRecordId: Number(req.params.id) } });
+        }
         const record = await prisma.breedingRecord.update({
             where: { id: Number(req.params.id) },
             data: {
                 ...(femaleId !== undefined && { femaleId: Number(femaleId) }),
-                ...(maleId !== undefined && { maleId: Number(maleId) }),
-                ...(pairedDate && { pairedDate: new Date(pairedDate) }),
-                lockDate: lockDate ? new Date(lockDate) : lockDate === null ? null : undefined,
-                separateDate: separateDate ? new Date(separateDate) : separateDate === null ? null : undefined,
-                daysCohabited: daysCohabited !== undefined ? (daysCohabited === null ? null : Number(daysCohabited)) : undefined,
+                ...(males && Array.isArray(males) && {
+                    males: {
+                        create: males.map((m: any) => ({
+                            maleId: Number(m.maleId),
+                            pairedDate: new Date(m.pairedDate),
+                            lockDate: m.lockDate ? new Date(m.lockDate) : undefined,
+                            separateDate: m.separateDate ? new Date(m.separateDate) : undefined,
+                            daysCohabited: m.daysCohabited ? Number(m.daysCohabited) : undefined,
+                            isLockSuccessful: Boolean(m.isLockSuccessful),
+                        }))
+                    }
+                }),
                 ovulationDate: ovulationDate ? new Date(ovulationDate) : ovulationDate === null ? null : undefined,
                 preLayShed: preLayShed !== undefined ? (preLayShed === null ? null : Boolean(preLayShed)) : undefined,
                 clutchDate: clutchDate ? new Date(clutchDate) : clutchDate === null ? null : undefined,
@@ -98,7 +111,7 @@ router.put('/:id', async (req: Request, res: Response) => {
             },
             include: {
                 female: { select: { id: true, name: true, code: true, morph: true } },
-                male: { select: { id: true, name: true, code: true, morph: true } },
+                males: { include: { male: { select: { id: true, name: true, code: true, morph: true } } } },
             },
         });
         return res.json(record);

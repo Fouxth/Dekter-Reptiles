@@ -325,8 +325,8 @@ router.delete('/:id', authenticate, requireAdmin, async (req: Request, res: Resp
             await tx.healthRecord.deleteMany({ where: { snakeId: id } });
             await tx.feedingLog.deleteMany({ where: { snakeId: id } });
 
-            await tx.incubationRecord.deleteMany({ where: { OR: [{ femaleId: id }, { maleId: id }] } });
-            await tx.breedingRecord.deleteMany({ where: { OR: [{ femaleId: id }, { maleId: id }] } });
+            await tx.incubationRecord.deleteMany({ where: { OR: [{ femaleId: id }, { males: { some: { id } } }] } });
+            await tx.breedingRecord.deleteMany({ where: { OR: [{ femaleId: id }, { males: { some: { maleId: id } } }] } });
 
             await tx.snake.delete({
                 where: { id },
