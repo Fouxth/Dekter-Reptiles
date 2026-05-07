@@ -6,11 +6,20 @@ import { getSnakes, getCategories } from '../services/api';
 
 
 
-const Shop = ({ searchQuery, addToCart }) => {
+const Shop = ({ searchQuery, addToCart, mode = 'all' }) => {
     const [filter, setFilter] = useState('All');
     const [products, setProducts] = useState([]);
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
+
+    const isSnakeCategory = (name) => {
+        const lowerName = name?.toLowerCase() || '';
+        // If it includes keywords related to accessories, it's NOT a snake category
+        if (lowerName.includes('อุปกรณ์') || lowerName.includes('ของจิปาถะ') || lowerName.includes('accessory') || lowerName.includes('อาหาร') || lowerName.includes('หนู')) {
+            return false;
+        }
+        return lowerName.includes('งู') || lowerName.includes('python') || lowerName.includes('snake') || lowerName.includes('hognose') || lowerName.includes('boa') || lowerName.includes('ball python');
+    };
 
     useEffect(() => {
         const fetchShopData = async () => {
@@ -29,6 +38,11 @@ const Shop = ({ searchQuery, addToCart }) => {
                 });
                 setProducts(sortedSnakes);
                 setCategories(categoriesData);
+
+                // If in accessories mode, filter categories to find an accessory one by default if 'All' is selected
+                if (mode === 'accessories') {
+                    setFilter('All');
+                }
             } catch (error) {
                 console.error("Error fetching shop data:", error);
             } finally {
@@ -37,10 +51,17 @@ const Shop = ({ searchQuery, addToCart }) => {
         };
 
         fetchShopData();
-    }, []);
+    }, [mode]);
 
     const filteredProducts = useMemo(() => {
         let result = products;
+
+        // Filter by Mode (Snakes vs Accessories)
+        if (mode === 'accessories') {
+            result = result.filter(p => !isSnakeCategory(categories.find(c => c.id === p.categoryId)?.name));
+        } else if (mode === 'snakes') {
+            result = result.filter(p => isSnakeCategory(categories.find(c => c.id === p.categoryId)?.name));
+        }
 
         // Filter by Category
         if (filter !== 'All') {
@@ -59,20 +80,20 @@ const Shop = ({ searchQuery, addToCart }) => {
         }
 
         return result;
-    }, [filter, searchQuery, products, categories]);
+    }, [filter, searchQuery, products, categories, mode]);
 
     // Extract categories that actually have available products
     const availableCategories = useMemo(() => {
-        const isSnakeCategory = (name) => {
-            const lowerName = name?.toLowerCase() || '';
-            return lowerName.includes('งู') || lowerName.includes('python') || lowerName.includes('snake') || lowerName.includes('hognose') || lowerName.includes('boa') || lowerName.includes('ของจิปาถะ') || lowerName.includes('ball python');
-        };
-
-        // Show all categories from database
-        const allCategories = [...categories];
+        // Filter categories based on mode
+        let filteredCats = categories;
+        if (mode === 'accessories') {
+            filteredCats = categories.filter(c => !isSnakeCategory(c.name));
+        } else if (mode === 'snakes') {
+            filteredCats = categories.filter(c => isSnakeCategory(c.name));
+        }
 
         // Sort categories: Snakes first, then alphabetically
-        allCategories.sort((a, b) => {
+        const sortedCats = [...filteredCats].sort((a, b) => {
             const aIsSnake = isSnakeCategory(a.name);
             const bIsSnake = isSnakeCategory(b.name);
             if (aIsSnake && !bIsSnake) return -1;
@@ -81,23 +102,30 @@ const Shop = ({ searchQuery, addToCart }) => {
         });
 
         return [
-            { id: 'All', name: 'ดูสินค้าทั้งหมด' },
-            ...allCategories
+            { id: 'All', name: mode === 'accessories' ? 'ดูอุปกรณ์ทั้งหมด' : (mode === 'snakes' ? 'ดูงูทั้งหมด' : 'ดูสินค้าทั้งหมด') },
+            ...sortedCats
         ];
-    }, [products, categories]);
+    }, [categories, mode]);
 
     return (
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 animate-fade-in min-h-[80vh]">
             <SEO
-                title="เลือกซื้องู"
-                description="เลือกซื้องู Ball Python, Corn Snake, Hognose หลากหลายมอร์ฟ อัปเดตสต๊อกล่าสุดพร้อมราคาที่ชัดเจน"
+                title={mode === 'accessories' ? "อุปกรณ์และของจิปาถะ" : "เลือกซื้องู"}
+                description={mode === 'accessories' ? "เลือกซื้ออุปกรณ์การเลี้ยงงู อาหารแช่แข็ง และของจิปาถะสำหรับสัตว์เลี้ยง" : "เลือกซื้องู Ball Python, Corn Snake, Hognose หลากหลายมอร์ฟ อัปเดตสต๊อกล่าสุดพร้อมราคาที่ชัดเจน"}
             />
 
             <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
                 <div>
-                    <div className="text-sky-500 font-bold tracking-widest uppercase text-sm mb-2">Available Products</div>
-                    <h1 className="text-4xl font-light text-stone-100">เลือกชม<span className="font-bold">สินค้า</span></h1>
-                    <p className="text-stone-400 mt-2">พบกับงูสวยงามกว่า {loading ? '...' : products.length} รายการ</p>
+                    <div className="text-sky-500 font-bold tracking-widest uppercase text-sm mb-2">
+                        {mode === 'accessories' ? 'Accessories & More' : 'Available Products'}
+                    </div>
+                    <h1 className="text-4xl font-light text-stone-100">
+                        {mode === 'accessories' ? 'อุปกรณ์และ' : 'เลือกชม'}
+                        <span className="font-bold">{mode === 'accessories' ? 'ของจิปาถะ' : 'สินค้า'}</span>
+                    </h1>
+                    <p className="text-stone-400 mt-2">
+                        {mode === 'accessories' ? 'พบกับอุปกรณ์และของใช้' : 'พบกับงูสวยงาม'}กว่า {loading ? '...' : filteredProducts.length} รายการ
+                    </p>
                 </div>
 
                 <div className="flex items-center gap-3 w-full md:w-auto relative group">

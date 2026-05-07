@@ -8,6 +8,10 @@ const Footer = () => {
         line: '@siamreptiles',
         facebookText: 'Siam Reptiles',
         facebookUrl: '#',
+        tiktokText: '',
+        tiktokUrl: '#',
+        instagramText: '',
+        instagramUrl: '#',
         hours: '10:00 - 20:00 น.'
     });
 
@@ -19,18 +23,68 @@ const Footer = () => {
                     return data[key] ? data[key] : fallback;
                 };
 
+                // Facebook processing
                 let fbVal = getText('contact_facebook', '');
                 let fbUrl = fbVal;
                 let fbText = 'Dexter Reptiles';
 
                 if (fbVal && fbVal !== '' && fbVal !== '#') {
-                    // Prepend domain if it's just a username/ID
                     if (!fbVal.startsWith('http')) {
                         fbUrl = `https://www.facebook.com/${fbVal.replace(/^@/, '')}`;
+                        fbText = fbVal.replace(/^@/, '');
+                    } else {
+                        try {
+                            const url = new URL(fbVal);
+                            const pathParts = url.pathname.split('/').filter(part => part !== '');
+                            if (pathParts.length > 0) {
+                                fbText = pathParts[0];
+                            } else {
+                                fbText = 'Facebook Page';
+                            }
+                        } catch (e) {
+                            fbText = 'Facebook Page';
+                        }
                     }
-                    fbText = fbVal.replace(/https?:\/\/(www\.)?facebook\.com\//, '').split('/')[0].split('?')[0] || 'Facebook Page';
                 } else {
                     fbUrl = '#';
+                }
+
+                // TikTok processing
+                let ttVal = getText('contact_tiktok', '');
+                let ttUrl = ttVal;
+                let ttText = '';
+                if (ttVal && ttVal !== '' && ttVal !== '#') {
+                    if (!ttVal.startsWith('http')) {
+                        ttUrl = `https://www.tiktok.com/@${ttVal.replace(/^@/, '')}`;
+                        ttText = ttVal.startsWith('@') ? ttVal : `@${ttVal}`;
+                    } else {
+                        try {
+                            const url = new URL(ttVal);
+                            const pathParts = url.pathname.split('/').filter(part => part !== '');
+                            ttText = pathParts[0] || 'TikTok';
+                        } catch (e) {
+                            ttText = 'TikTok';
+                        }
+                    }
+                }
+
+                // Instagram processing
+                let igVal = getText('contact_instagram', '');
+                let igUrl = igVal;
+                let igText = '';
+                if (igVal && igVal !== '' && igVal !== '#') {
+                    if (!igVal.startsWith('http')) {
+                        igUrl = `https://www.instagram.com/${igVal.replace(/^@/, '')}`;
+                        igText = igVal.startsWith('@') ? igVal : `@${igVal}`;
+                    } else {
+                        try {
+                            const url = new URL(igVal);
+                            const pathParts = url.pathname.split('/').filter(part => part !== '');
+                            igText = pathParts[0] || 'Instagram';
+                        } catch (e) {
+                            igText = 'Instagram';
+                        }
+                    }
                 }
 
                 setSettings({
@@ -38,6 +92,10 @@ const Footer = () => {
                     line: getText('contact_line', '@dexterreptiles'),
                     facebookText: fbText,
                     facebookUrl: fbUrl,
+                    tiktokText: ttText,
+                    tiktokUrl: ttUrl,
+                    instagramText: igText,
+                    instagramUrl: igUrl,
                     hours: getText('opening_hours', '10:00 - 20:00 น.')
                 });
             } catch (error) {
@@ -84,6 +142,7 @@ const Footer = () => {
                     <ul className="space-y-2">
                         <li><Link to="/" className="hover:text-sky-400 transition-colors">หน้าแรก</Link></li>
                         <li><Link to="/shop" className="hover:text-sky-400 transition-colors">ร้านค้า</Link></li>
+                        <li><Link to="/accessories" className="hover:text-sky-400 transition-colors">อุปกรณ์และของจิปาถะ</Link></li>
                         <li><Link to="/articles" className="hover:text-sky-400 transition-colors">บทความ/วิธีเลี้ยง</Link></li>
                         <li><Link to="/contact" className="hover:text-sky-400 transition-colors">ติดต่อเรา</Link></li>
                     </ul>
@@ -94,6 +153,12 @@ const Footer = () => {
                         <li>โทร: {settings.phone}</li>
                         <li>Line: {settings.line}</li>
                         <li>Facebook: <a href={settings.facebookUrl} target="_blank" rel="noopener noreferrer" className="hover:text-sky-400 transition-colors">{settings.facebookText}</a></li>
+                        {settings.tiktokText && (
+                            <li>TikTok: <a href={settings.tiktokUrl} target="_blank" rel="noopener noreferrer" className="hover:text-sky-400 transition-colors">{settings.tiktokText}</a></li>
+                        )}
+                        {settings.instagramText && (
+                            <li>Instagram: <a href={settings.instagramUrl} target="_blank" rel="noopener noreferrer" className="hover:text-sky-400 transition-colors">{settings.instagramText}</a></li>
+                        )}
                         <li className="whitespace-pre-line">เปิดบริการ: {settings.hours}</li>
                     </ul>
                 </div>

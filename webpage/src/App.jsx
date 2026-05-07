@@ -87,6 +87,7 @@ function App() {
           }>
             <Route index element={<Home addToCart={addToCart} />} />
             <Route path="shop" element={<Shop searchQuery={searchQuery} addToCart={addToCart} />} />
+            <Route path="accessories" element={<Shop searchQuery={searchQuery} addToCart={addToCart} mode="accessories" />} />
             <Route path="product/:id" element={<ProductDetail addToCart={addToCart} />} />
             <Route path="cart" element={
               <Cart

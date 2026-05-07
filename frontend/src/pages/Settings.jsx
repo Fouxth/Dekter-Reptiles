@@ -160,6 +160,8 @@ export default function Settings() {
         contact_email: '',
         contact_line: '',
         contact_facebook: '',
+        contact_tiktok: '',
+        contact_instagram: '',
         contact_address: '',
         opening_hours: '',
         // Notifications
@@ -323,6 +325,14 @@ export default function Settings() {
                                     <div className="form-group">
                                         <label>Facebook</label>
                                         <input value={settings.contact_facebook} onChange={e => set('contact_facebook', e.target.value)} placeholder="Facebook Page Name / URL" />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>TikTok</label>
+                                        <input value={settings.contact_tiktok} onChange={e => set('contact_tiktok', e.target.value)} placeholder="TikTok Username / URL" />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Instagram</label>
+                                        <input value={settings.contact_instagram} onChange={e => set('contact_instagram', e.target.value)} placeholder="Instagram Username / URL" />
                                     </div>
                                     <div className="form-group" style={{ gridColumn: 'span 2' }}>
                                         <label>ที่อยู่</label>

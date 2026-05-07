@@ -54,6 +54,7 @@ const Navbar = ({ cartItemCount, isMobileMenuOpen, setIsMobileMenuOpen, searchQu
                     <div className="hidden md:flex items-center space-x-8">
                         <button onClick={() => navigate('/')} className="text-stone-300 hover:text-sky-400 font-medium transition-colors text-sm uppercase tracking-wide">หน้าแรก</button>
                         <button onClick={() => navigate('/shop')} className="text-stone-300 hover:text-sky-400 font-medium transition-colors text-sm uppercase tracking-wide">ร้านค้า</button>
+                        <button onClick={() => navigate('/accessories')} className="text-stone-300 hover:text-sky-400 font-medium transition-colors text-sm uppercase tracking-wide">อุปกรณ์และของจิปาถะ</button>
                         <button onClick={() => navigate('/articles')} className="text-stone-300 hover:text-sky-400 font-medium transition-colors text-sm uppercase tracking-wide">บทความ</button>
                         <button onClick={() => navigate('/contact')} className="text-stone-300 hover:text-sky-400 font-medium transition-colors text-sm uppercase tracking-wide">ติดต่อเรา</button>
                     </div>
