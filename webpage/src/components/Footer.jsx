@@ -33,16 +33,21 @@ const Footer = () => {
                         fbUrl = `https://www.facebook.com/${fbVal.replace(/^@/, '')}`;
                         fbText = fbVal.replace(/^@/, '');
                     } else {
-                        try {
-                            const url = new URL(fbVal);
-                            const pathParts = url.pathname.split('/').filter(part => part !== '');
-                            if (pathParts.length > 0) {
-                                fbText = pathParts[0];
-                            } else {
+                        // Special handling for Facebook profile/people URLs
+                        if (fbVal.includes('facebook.com/people/') || fbVal.includes('facebook.com/profile.php')) {
+                            fbText = 'Dexterball'; // Use the specific name from the profile
+                        } else {
+                            try {
+                                const url = new URL(fbVal);
+                                const pathParts = url.pathname.split('/').filter(part => part !== '');
+                                if (pathParts.length > 0) {
+                                    fbText = pathParts[0];
+                                } else {
+                                    fbText = 'Facebook Page';
+                                }
+                            } catch (e) {
                                 fbText = 'Facebook Page';
                             }
-                        } catch (e) {
-                            fbText = 'Facebook Page';
                         }
                     }
                 } else {
