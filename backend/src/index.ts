@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import { createServer } from 'http';
 import { PrismaClient } from '@prisma/client';
 import { initIO } from './socket';
+import { initBackupScheduler } from './services/backupService';
 
 // Routes
 import snakeRoutes from './routes/snakes';
@@ -126,6 +127,11 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 httpServer.listen(PORT, () => {
     console.log(`🐍 Snake POS API running on http://localhost:${PORT}`);
     console.log(`🔔 Socket.io ready`);
+    
+    // Start the automatic database backup engine
+    initBackupScheduler().catch(err => {
+        console.error('❌ Failed to initialize automatic backup engine:', err);
+    });
 });
 
 // Graceful shutdown
