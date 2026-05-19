@@ -146,7 +146,7 @@ const Footer = () => {
                     <h4 className="text-white font-bold mb-4">ลิงก์ด่วน</h4>
                     <ul className="space-y-2">
                         <li><Link to="/" className="hover:text-sky-400 transition-colors">หน้าแรก</Link></li>
-                        <li><Link to="/shop" className="hover:text-sky-400 transition-colors">ร้านค้า</Link></li>
+                        <li><Link to="/shop" className="hover:text-sky-400 transition-colors">เลือกซื้องู</Link></li>
                         <li><Link to="/accessories" className="hover:text-sky-400 transition-colors">อุปกรณ์และของจิปาถะ</Link></li>
                         <li><Link to="/articles" className="hover:text-sky-400 transition-colors">บทความ/วิธีเลี้ยง</Link></li>
                         <li><Link to="/contact" className="hover:text-sky-400 transition-colors">ติดต่อเรา</Link></li>

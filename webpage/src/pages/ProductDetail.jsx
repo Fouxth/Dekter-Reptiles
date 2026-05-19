@@ -74,7 +74,7 @@ const ProductDetail = ({ addToCart }) => {
             />
 
             <button
-                onClick={() => navigate('/shop')}
+                onClick={() => navigate(checkIsSnakeCategory(product) ? '/shop' : '/accessories')}
                 className="flex items-center text-stone-500 hover:text-sky-400 mb-6 transition-colors uppercase gap-2 tracking-widest text-[0.65rem] font-bold group w-max"
             >
                 <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> กลับไปหน้าร้านค้า

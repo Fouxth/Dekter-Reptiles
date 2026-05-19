@@ -53,7 +53,7 @@ const Navbar = ({ cartItemCount, isMobileMenuOpen, setIsMobileMenuOpen, searchQu
                     {/* Desktop Menu */}
                     <div className="hidden md:flex items-center space-x-8">
                         <button onClick={() => navigate('/')} className="text-stone-300 hover:text-sky-400 font-medium transition-colors text-sm uppercase tracking-wide">หน้าแรก</button>
-                        <button onClick={() => navigate('/shop')} className="text-stone-300 hover:text-sky-400 font-medium transition-colors text-sm uppercase tracking-wide">ร้านค้า</button>
+                        <button onClick={() => navigate('/shop')} className="text-stone-300 hover:text-sky-400 font-medium transition-colors text-sm uppercase tracking-wide">เลือกซื้องู</button>
                         <button onClick={() => navigate('/accessories')} className="text-stone-300 hover:text-sky-400 font-medium transition-colors text-sm uppercase tracking-wide">อุปกรณ์และของจิปาถะ</button>
                         <button onClick={() => navigate('/articles')} className="text-stone-300 hover:text-sky-400 font-medium transition-colors text-sm uppercase tracking-wide">บทความ</button>
                         <button onClick={() => navigate('/contact')} className="text-stone-300 hover:text-sky-400 font-medium transition-colors text-sm uppercase tracking-wide">ติดต่อเรา</button>
@@ -135,7 +135,8 @@ const Navbar = ({ cartItemCount, isMobileMenuOpen, setIsMobileMenuOpen, searchQu
                         <Search className="absolute left-3 top-3.5 text-stone-400" size={20} />
                     </div>
                     <button onClick={() => { navigate('/'); setIsMobileMenuOpen(false); }} className="block w-full text-left px-4 py-3 rounded-xl text-stone-300 hover:text-sky-400 hover:bg-white/5 font-medium transition-colors">หน้าแรก</button>
-                    <button onClick={() => { navigate('/shop'); setIsMobileMenuOpen(false); }} className="block w-full text-left px-4 py-3 rounded-xl text-stone-300 hover:text-sky-400 hover:bg-white/5 font-medium transition-colors">ร้านค้า</button>
+                    <button onClick={() => { navigate('/shop'); setIsMobileMenuOpen(false); }} className="block w-full text-left px-4 py-3 rounded-xl text-stone-300 hover:text-sky-400 hover:bg-white/5 font-medium transition-colors">เลือกซื้องู</button>
+                    <button onClick={() => { navigate('/accessories'); setIsMobileMenuOpen(false); }} className="block w-full text-left px-4 py-3 rounded-xl text-stone-300 hover:text-sky-400 hover:bg-white/5 font-medium transition-colors">อุปกรณ์และของจิปาถะ</button>
                     <button onClick={() => { navigate('/articles'); setIsMobileMenuOpen(false); }} className="block w-full text-left px-4 py-3 rounded-xl text-stone-300 hover:text-sky-400 hover:bg-white/5 font-medium transition-colors">บทความ/วิธีเลี้ยง</button>
                     <button onClick={() => { navigate('/contact'); setIsMobileMenuOpen(false); }} className="block w-full text-left px-4 py-3 rounded-xl text-stone-300 hover:text-sky-400 hover:bg-white/5 font-medium transition-colors">ติดต่อเรา</button>
                     <div className="pt-4 border-t border-white/5">
