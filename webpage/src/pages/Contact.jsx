@@ -39,6 +39,29 @@ const Contact = () => {
         fetchSettings();
     }, []);
 
+    const getFacebookLabel = (value) => {
+        if (!value) return 'Facebook Page';
+        const trimmed = value.trim();
+        if (!trimmed) return 'Facebook Page';
+
+        try {
+            const url = trimmed.startsWith('http')
+                ? new URL(trimmed)
+                : new URL(`https://facebook.com/${trimmed.replace(/^@/, '')}`);
+            const segments = url.pathname.replace(/^\/+|\/+$/g, '').split('/').filter(Boolean);
+            if (!segments.length) return 'Facebook Page';
+            if (segments[0] === 'people' && segments[1]) return decodeURIComponent(segments[1]);
+            return decodeURIComponent(segments[0]);
+        } catch {
+            return trimmed
+                .replace(/^@/, '')
+                .replace(/https?:\/\/(www\.)?facebook\.com\//, '')
+                .split('/')[0]
+                .split('?')[0]
+                || 'Facebook Page';
+        }
+    };
+
     return (
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 animate-fade-in relative min-h-[80vh]">
             <SEO title="ติดต่อเรา" description="ติดต่อ Dexter Reptiles สอบถามข้อมูลสัตว์เลี้ยง ปรึกษาการดูแล หรือแจ้งปัญหาการใช้งาน" url="/contact" />
@@ -145,7 +168,7 @@ const Contact = () => {
                                                 rel="noopener noreferrer"
                                                 className="text-blue-400 font-bold hover:underline"
                                             >
-                                                {contactInfo.facebook.replace(/https?:\/\/(www\.)?facebook\.com\//, '').split('/')[0].split('?')[0] || 'Facebook Page'}
+                                                {getFacebookLabel(contactInfo.facebook)}
                                             </a>
                                         </p>
                                     )}
